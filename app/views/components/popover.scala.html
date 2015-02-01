@@ -1,0 +1,11 @@
+@* reusable play component hiding twitter bootstrap atrocities in encapsulation.
+   takes clean parameters, and produces ugly bootstrap source html that produces desired pretty, functioning result *@
+
+@(popoverTitle: Option[String] = None, popoverContent: String)
+
+   data-toggle="popover" 
+          data-trigger="hover" 
+          data-placement="auto" 
+          data-html="true" 
+          @if(popoverTitle.isDefined) { title="@popoverTitle.get" }
+          data-content="@popoverContent"

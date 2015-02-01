@@ -1,0 +1,35 @@
+<!doctype html>
+<html ng-app="myApp">
+  <head>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.3/angular.js"></script>
+    <script src="http://pineconellc.github.io/angular-foundation/mm-foundation-tpls-0.5.1.js"></script>
+    <script src="example.js"></script>
+    <link href="http://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.0/css/foundation.css" rel="stylesheet">
+  </head>
+  <body>
+
+    <div class="row">
+      <div class="small-12.columns">
+<div ng-controller="PopoverDemoCtrl">
+    <h4>Dynamic</h4>
+    <div class="form-group">
+      <label>Popup Text:</label>
+      <input type="text" ng-model="dynamicPopover" class="form-control">
+    </div>
+    <div class="form-group">
+      <label>Popup Title:</label>
+      <input type="text" ng-model="dynamicPopoverTitle" class="form-control">
+    </div>
+    <button popover="{{dynamicPopover}}"
+      popover-title="{{dynamicPopoverTitle}}" class="button">Dynamic Popover</button>
+    
+    <hr />
+    <h4>Triggers</h4>
+    <p>
+      <button popover="I appeared on mouse enter!" popover-trigger="mouseenter" class="button">Mouseenter</button>
+    </p>
+    <input type="text" value="Click me!" popover="I appeared on focus! Click away and I'll vanish..."  popover-trigger="focus" class="form-control">
+
+</div>
+      </div>
+    </div>

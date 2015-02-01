@@ -1,0 +1,36 @@
+# Play stuff #
+bin/
+/db
+.eclipse
+/lib/
+/logs/
+/modules
+/project/project
+/project/target
+/target
+tmp/
+test-result
+server.pid
+*.iml
+*.eml
+/dist/
+.cache
+
+# Ignore output files #
+*.csv
+
+# Ignore output dir #
+data/
+
+# Ignore compilation managed directories if any #
+lib_managed/
+src_managed/
+
+# Eclipse styff #
+.project
+.classpath
+.cache
+
+# idea stuff #
+/.idea/
+/bin

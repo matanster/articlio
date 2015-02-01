@@ -1,0 +1,20 @@
+@* dropDownButton Template File *@
+
+@(buttonText: String, dropDownItems: List[(String, String)])
+
+   <span class="dropdown">     
+     <button type="button" 
+             class="btn btn-default dropdown-toggle" 
+             data-toggle="dropdown">
+             @buttonText 
+             <span class="caret"></span>
+     </button>
+     <ul class="dropdown-menu" 
+         role="menu">
+         @dropDownItems.map {i => 
+           <li><a role="presentation" 
+                  role="menuitem" tabindex="-1"
+                  href=@i._1>@i._2</a></li>
+         }
+     </ul>
+   </span>

@@ -1,0 +1,34 @@
+@* result page *@
+@(runIDs : List[String], selectedRunID: String, article: String, matches: List[Match1])
+
+@import components._
+
+@base() {
+
+  <div>
+  
+    <!-- runID display and selection -->    	   
+    <span>You are viewing the output for run ID:</span>
+	    <span 
+	      @popover(popoverContent="you may also select a different run's results here, by clicking here and selecting a different run ID")>
+	      @dropDownButton(selectedRunID, runIDs.map {r => (routes.Application.showExtract(r, article).toString, r) })
+		  </span>
+
+    <!-- button for showing original article -->
+    @buttonWithPopover("View Original", routes.Application.showOriginal(article).toString, "click here to go to the original article")
+	 	 
+  </div>
+  
+  <!-- output table -->
+  <table class="table">
+    @matches.map { m => 
+      <tr>
+        <td class="matchIndication">@m.matchIndication</td>
+        <td style="width: 80ch"
+          @popover(Some("why is this here?"), s"it matched pattern: <b>${m.matchPattern}</b><br>in section: <b>${m.locationActual}</b>")>
+          @m.sentence
+        </td>
+      </tr>
+    }
+  </table>
+}

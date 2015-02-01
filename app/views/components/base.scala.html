@@ -1,0 +1,37 @@
+@* base Template File *@
+@(title: String = "articlio research system")(content: Html)
+
+<!doctype html>
+<html ng-app="showExtract">
+	<head>
+	  <!-- bootstrap includes -->
+	  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+	  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+	  <!-- Latest compiled and minified CSS -->
+	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+	  <!-- Optional theme -->
+	  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap-theme.min.css">
+	  <!-- Latest compiled and minified JavaScript -->
+	  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+	  
+	  <title>@title</title>
+	</head>
+	
+	<script type="text/javascript">
+	
+	  // some bootstrap recommended ugliness to enable all popovers on page
+	  $(function () { $("[data-toggle='popover']").popover(); });
+	  
+	  // some ugliness to dismiss popovers upon click, via event fiddling 
+	  $('html').on('click', function(e) {
+	      if (typeof $(e.target).data('original-title') == 'undefined') {
+	        $('[data-original-title]').popover('hide');
+	      }
+	    });
+	  
+	</script>
+	
+	<body>
+	  @content
+	</body>
+</html>

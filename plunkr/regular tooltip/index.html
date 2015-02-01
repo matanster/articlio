@@ -1,0 +1,35 @@
+<!doctype html>
+<html ng-app="plunker">
+  <head>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.3/angular.js"></script>
+    <script src="http://pineconellc.github.io/angular-foundation/mm-foundation-tpls-0.5.1.js"></script>
+    <script src="example.js"></script>
+    <link href="http://cdnjs.cloudflare.com/ajax/libs/foundation/5.2.0/css/foundation.css" rel="stylesheet">
+  </head>
+  <body>
+
+    <div class="row">
+      <div class="small-12.columns">
+<div ng-controller="TooltipDemoCtrl">
+    <div class="form-group">
+      <label>Dynamic Tooltip Text</label>
+      <input type="text" ng-model="dynamicTooltipText" class="form-control">
+    </div>
+    <div class="form-group">
+      <label>Dynamic Tooltip Popup Text</label>
+      <input type="text" ng-model="dynamicTooltip" class="form-control">
+    </div>
+    
+    <p>
+      I can even contain HTML. <a href="#" class="has-tip" tooltip-html-unsafe="{{htmlTooltip}}">Check me out!</a>
+    </p>
+
+    <form role="form">
+      <div class="form-group">
+        <label>Or use custom triggers, like focus: </label>
+        <input type="text" value="Click me!" tooltip="See? Now click away..."  tooltip-trigger="focus" tooltip-placement="right" class="form-control" />
+      </div>
+    </form>
+</div>
+      </div>
+    </div>

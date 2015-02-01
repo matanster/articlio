@@ -1,0 +1,12 @@
+@* reusable play component hiding twitter bootstrap atrocities in encapsulation.
+   takes clean parameters, and produces ugly bootstrap source html that produces desired pretty, functioning result *@
+
+@(buttonText: String, href: String, popoverContent: String)
+
+    <a href=@href>
+      <button type="button" 
+              class="btn btn-default" 
+              @popover(popoverContent=popoverContent)>
+              @buttonText
+      </button>
+    </a>
