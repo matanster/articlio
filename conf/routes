@@ -2,26 +2,44 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
 # Home page
-GET  /                                controllers.Application.index
+GET  /                                      controllers.Application.index
 
 # Map static resources from the /public folder to the /assets URL path
-GET  /assets/*file                    controllers.Assets.at(path="/public", file)
+GET  /assets/*file                          controllers.Assets.at(path="/public", file)
 
 # Show article extract
-GET  /showExtract/:article            controllers.Application.showExtract(runID: String ?= "matan-2015-01-18 00:15:35.225", article: String)
+GET  /showExtract/:article                  controllers.Application.showExtract(runID: String ?= "matan-2015-01-18 00:15:35.225", article: String)
 
 # Show article extract
-GET  /showExtractFoundation/:article  controllers.Application.showExtract(runID: String ?= "matan-2015-01-18 00:15:35.225", article: String)
+GET  /showExtractFoundation/:article        controllers.Application.showExtract(runID: String ?= "matan-2015-01-18 00:15:35.225", article: String)
 
 # Show article extract
-GET  /showOriginal/:article           controllers.Application.showOriginal(article: String)
+GET  /showOriginal/:article                 controllers.Application.showOriginal(article: String)
+
+###
+
+GET  /semantic/single/pdf/:inputFileName    controllers.Ldb.singlePdfSourced(inputFileName: String)
+GET  /semantic/single/eLife/:inputFileName  controllers.Ldb.singleeLifeSourced(inputFileName: String)
+GET  /semantic/all/                         controllers.Ldb.all
+GET  /semantic/all/pdf                      controllers.Ldb.allPdf
+GET  /semantic/all/eLife                    controllers.Ldb.alleLife
+
+GET  /export                                controllers.Ldb.export
+GET  /purge/semantic/matchesTable           controllers.Ldb.purge
+
+###
 
 # Show admin page
-GET  /admin/                          controllers.Application.adminPage
+GET  /admin/                                controllers.Application.adminPage
 
 # development playground route
-GET  /playground/                     controllers.Application.playground
+GET  /playground/                           controllers.Application.playground
 
 # Map the JS resource paths - is this really still relevant?!
-GET  /*file                           controllers.Assets.versioned(path="/public", file: Asset)
+GET  /*file                                 controllers.Assets.versioned(path="/public", file: Asset)
+

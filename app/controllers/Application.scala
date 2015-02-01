@@ -82,7 +82,7 @@ object Application extends Controller with Match with slickGenerated.Tables {
       Redirect(s"http://ubuntu.local:8000/${article}.xml") // assuming path ../data/eLife-JATS/2-styled is being web served
                                                            // e.g. by "python -m SimpleHTTPServer"
   }
-  
+            
   def adminPage = Action { implicit request =>
     Ok(views.html.adminPage())
   }

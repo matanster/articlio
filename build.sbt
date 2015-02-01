@@ -98,3 +98,12 @@ lazy val play = (project in file(".")).enablePlugins(PlayScala)
 //
 
 unmanagedSourceDirectories in Compile += baseDirectory.value / "src"
+
+//
+// enable multiple routes files
+//
+
+scalacOptions ++= Seq(
+  "-feature", // Shows warnings in detail in the stdout
+  "-language:reflectiveCalls" 
+)

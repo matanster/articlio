@@ -1,3 +1,11 @@
+/*
+ * 
+ * This spray code is now dead code - been migrated to the play routes.. to be deleted soon 
+ * 
+ */
+
+/*
+
 package com.articlio.semantic
 import com.articlio.input.JATS
 import com.articlio.util.runID
@@ -90,3 +98,5 @@ object HttpService {
   IO(Http) ? Http.Bind(service, interface = "localhost", port = 3001)
  
 }
+
+*/

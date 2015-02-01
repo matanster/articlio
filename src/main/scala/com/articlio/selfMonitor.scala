@@ -57,12 +57,13 @@ object SelfMonitor /* extends Verticle */ {
   }
 
   def shutdown {
+    Console.log("Shutting down self-monitoring...", "startup")
     logUsage("before shutting down self-monitoring is")
     timer.cancel
   }
 
   /* override */ def start { /* keep function name for vert.x compatibility */
-    println("starting self-monitoring...")
+    Console.log("Starting self-monitoring...", "startup")
 
     val maxHeapLimit = maxMemory // This is determined by the JVM runtime according to the XMX value, but does not precisely equal it (http://stackoverflow.com/questions/13729652/runtime-maxmemory-and-xmx)
     Console.log(f"JVM Max Heap Allocation Limit (determined mostly by its XMX) is ${maxHeapLimit/1024/1024}%.0fMB", "performance")
