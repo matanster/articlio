@@ -2,6 +2,10 @@ package com.articlio
 import com.typesafe.config.ConfigFactory
 import java.io.File
 
+// TODO: leave this object just making the connection to the config file, 
+//       letting callers pick their key. that will reduce bloat and make
+//       callers more traceable. Just makes more sense.
+
 object config {
   
   val config = ConfigFactory.parseFile(new File("../config/config.json"))
