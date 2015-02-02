@@ -34,6 +34,11 @@ GET  /export/analytic                       controllers.Ldb.exportAnalytic
 
 GET  /purge/semantic/matchesTable           controllers.Ldb.purge
 
+GET  /pipe                                  controllers.pipe.pipe
+
+GET  /pdf/convert/all                       controllers.pdf.convertAll
+GET  /pdf/convert/single/:location          controllers.pdf.convertSingle(location: String)
+
 ###
 
 # Show admin page

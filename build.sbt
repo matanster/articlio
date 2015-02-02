@@ -100,10 +100,28 @@ lazy val play = (project in file(".")).enablePlugins(PlayScala)
 unmanagedSourceDirectories in Compile += baseDirectory.value / "src"
 
 //
-// enable multiple routes files
+// enable multiple routes files - this wasn't enough though, attempt abandoned
 //
 
 scalacOptions ++= Seq(
   "-feature", // Shows warnings in detail in the stdout
   "-language:reflectiveCalls" 
+)
+
+//
+// SistaNLP
+//
+
+libraryDependencies ++= {
+  //val version = "4.0-SNAPSHOT"
+  val version = "3.3"
+  Seq("edu.arizona.sista" % "processors" % version,
+      "edu.arizona.sista" % "processors" % version classifier "models")
+}
+
+//
+// enable play http client calls
+//
+libraryDependencies ++= Seq(
+  ws
 )

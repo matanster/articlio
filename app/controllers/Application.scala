@@ -35,7 +35,6 @@ object Application extends Controller with Match with slickGenerated.Tables {
   }
   
   def index = Action { implicit request =>
-    println()
     Ok(s"app is up, got request [$request]")
   }
  
