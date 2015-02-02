@@ -30,6 +30,8 @@ GET  /semantic/all/pdf                      controllers.Ldb.allPdf
 GET  /semantic/all/eLife                    controllers.Ldb.alleLife
 
 GET  /export                                controllers.Ldb.export
+GET  /export/analytic                       controllers.Ldb.exportAnalytic
+
 GET  /purge/semantic/matchesTable           controllers.Ldb.purge
 
 ###

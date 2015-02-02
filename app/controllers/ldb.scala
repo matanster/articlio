@@ -18,36 +18,41 @@ object Ldb extends Controller with Match with slickGenerated.Tables {
     ldb.ldb.go("SingleFileRun" + "-" + (new runID).id, new JATS(s"${config.pdf}/$inputFileName", "pdf-converted"))
     Ok("Done processing file")
   }
-  
+
   def singleeLifeSourced(inputFileName: String) = Action { implicit request =>
     ldb.ldb.go("SingleFileRun" + "-" + (new runID).id, new JATS(s"${config.eLife}/$inputFileName"))
-    Ok("Done processing file")  
+    Ok("Done processing file")
   }
-  
+
   import com.articlio.semantic.Bulk
   def all = Action { implicit request =>
     val bulk = new Bulk((new runID).id)
     bulk.all
     Ok("Done processing all files... but you probably timed out by now")
   }
-  
+
   def allPdf = Action { implicit request =>
     val bulk = new Bulk((new runID).id)
     bulk.allPDF
     Ok("Done processing all files... but you probably timed out by now")
   }
-  
+
   def alleLife = Action { implicit request =>
     val bulk = new Bulk((new runID).id)
     bulk.alleLife
     Ok("Done processing all files... but you probably timed out by now")
   }
-  
+
   def export = Action { implicit request =>
-  com.articlio.storage.createCSV.go()
-  Ok("Done producing result CSVs")
+    com.articlio.storage.createCSV.go()
+    Ok("Done producing result CSVs")
   }
-  
+
+  def exportAnalytic = Action { implicit request =>
+    com.articlio.storage.createAnalyticSummary.go()
+    Ok("Done producing analytic result CSVs")
+  }
+
   import com.articlio.semantic.AppActorSystem
   def purge = Action { implicit request =>
     AppActorSystem.outDB ! "dropCreate"
