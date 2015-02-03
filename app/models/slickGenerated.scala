@@ -2,7 +2,7 @@
 // clone of slick auto-generated code from project's slick-generated directory / sub-project
 //
 
-package slickGenerated
+package models
 // AUTO-GENERATED Slick data model
 /** Slick data model trait for extension, choice of backend or usage in the cake pattern. (Make sure to initialize this late.) */
 trait Tables {

@@ -28,7 +28,7 @@ trait Match {
   val matches = TableQuery[Matches]
 }
 
-object Application extends Controller with Match with slickGenerated.Tables {
+object Application extends Controller with Match with Tables {
 
   def playground = Action { implicit request =>
     Ok(s"nothing here...")  

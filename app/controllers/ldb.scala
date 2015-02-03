@@ -8,7 +8,7 @@ import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 import play.api.http.MimeTypes
 
-object Ldb extends Controller with Match with slickGenerated.Tables {
+object Ldb extends Controller with Match with Tables {
 
   import com.articlio.ldb
   import com.articlio.util.runID
