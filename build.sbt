@@ -12,7 +12,7 @@ version       := "0.1-SNAPSHOT"
 // akka & spray
 //
 
-scalaVersion  := "2.11.2"
+scalaVersion  := "2.11.5"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
@@ -122,6 +122,13 @@ libraryDependencies ++= {
 //
 // enable play http client calls
 //
+
 libraryDependencies ++= Seq(
   ws
 )
+
+//
+// avoid the play auto refresh plugin opening a browser window on startup 
+//
+
+com.jamesward.play.BrowserNotifierKeys.shouldOpenBrowser := false

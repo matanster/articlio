@@ -18,7 +18,6 @@ import scala.concurrent.Future
 
 import com.articlio.config
 
-
 object pdf extends Controller {
   
   def convertAll = Action.async { 

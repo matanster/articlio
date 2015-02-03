@@ -26,10 +26,11 @@ data/
 lib_managed/
 src_managed/
 
-# Eclipse styff #
+# Eclipse stuff #
 .project
 .classpath
 .cache
+.settings
 
 # idea stuff #
 /.idea/
