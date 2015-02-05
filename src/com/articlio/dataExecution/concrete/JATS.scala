@@ -2,16 +2,18 @@ package com.articlio.dataExecution
 
 import util._
 import com.articlio.config
+import com.articlio.pipe.pipelines.JATScreateSingle
 
-case class JATSs(articleName: String) extends Data
+case class JATS(articleName: String) extends DataWrapper
 {
   
-  def isReady = {
+  def isReady: Boolean = {
     filePathExists(s"${config.eLife}/$articleName")
   } 
   
-  def Create = {
-    controllers.Ldb.singleeLifeSourced(articleName) // TODO: need be a wrapper of it
+  def create : Data = {
+    val optimisticResult = new JATScreateSingle(articleName) // TODO: need be a wrapper of it
+    return Data(true, Some(optimisticResult))
   }  
   
 }

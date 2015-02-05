@@ -6,5 +6,5 @@ import com.articlio.dataExecution.ExecutionManager
 
 class driver {
   val e = ExecutionManager
-  e.processRequest(JATSs("aaa"))
+  e.processRequest(JATS("aaa"))
 }
