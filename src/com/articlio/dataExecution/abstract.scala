@@ -1,12 +1,17 @@
 package com.articlio.dataExecution
 
-abstract trait HowToAccess {}
+abstract class Access
 
-case class Data(ok: Boolean, data: Any) {
-}
+//case class Data(ok: Boolean, data: Any) {}
 
-abstract trait DataWrapper {
+abstract class DataWrapper {
+
   def isReady: Boolean
-  def create:  Data 
+  
+  def create: Boolean
+  
+  def access: Access
+  
+  def dependsOn: Seq[DataWrapper]
 }
 

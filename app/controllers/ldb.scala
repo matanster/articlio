@@ -14,6 +14,12 @@ object Ldb extends Controller with Match with Tables {
   import com.articlio.util.runID
   import com.articlio.input.JATS
   import com.articlio.config
+  
+  def a(inputFileName: String) = Action { implicit request =>
+    import com.articlio.dataExecution._
+    Ok("no real path action implemented")    
+  }
+  
   def singlePdfSourced(inputFileName: String) = Action { implicit request =>
     ldb.ldb.go("SingleFileRun" + "-" + (new runID).id, new JATS(s"${config.pdf}/$inputFileName", "pdf-converted"))
     Ok("Done processing file")

@@ -24,6 +24,9 @@ GET  /showOriginal/:article                 controllers.Application.showOriginal
 ###
 
 GET  /semantic/single/pdf/:inputFileName    controllers.Ldb.singlePdfSourced(inputFileName: String)
+
+GET  /semantic/single/new/:inputFileName    controllers.Ldb.a(inputFileName: String)
+
 GET  /semantic/single/eLife/:inputFileName  controllers.Ldb.singleeLifeSourced(inputFileName: String)
 GET  /semantic/all/                         controllers.Ldb.all
 GET  /semantic/all/pdf                      controllers.Ldb.allPdf

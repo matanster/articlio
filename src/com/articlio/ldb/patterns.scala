@@ -211,7 +211,12 @@ object ldb extends Match {
   //val ahoCorasick = new Array[AhoCorasickActor](concurrency)
                                                                        
   val SPACE = " "
-                                                                       
+                                   
+  def goWrapper(articleName: String, JATSfile: String) {
+    import com.articlio.config
+    go("SingleFileRun" + "-" + (new runID).id, new JATS(JATSfile))
+  }
+  
   def go (runID: String, document: JATS) : Seq[Match] = {
 
     val logger = new Logger(document.name)
