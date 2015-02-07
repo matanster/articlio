@@ -4,18 +4,23 @@ import com.articlio.ldb.ldb
 import com.articlio.util.runID
 import com.articlio.dataExecution.concrete._
 
-class ExecutionManager {
+//
+// executes data preparation by dependencies
+//
+class DataExecutionManager extends ReadyState {
 
-  def get(dw: DataWrapper): Option[Access] = {
-    if (dw.isReady) // already ready? 
+  // returns: access details for ready data,
+  //          or None if data is not ready
+  def getDataAccess(dw: DataWrapper): Option[Access] = {
+    if (dw.ReadyState == Ready) // already ready? 
       return Some(dw.access)
     else {
-      if (depsGet(dw)) { // dependencies ready?
-        try { // TODO: re-factor to use function that returns false on either false value or exception
+      if (dataDependenciesReady(dw)) { // no missing dependencies?
+        try { 
           val data = dw.create
           return data match {
-            case true  => Some(dw.access)
-            case false => None
+            case Ready  => Some(dw.access)
+            case NotReady => None
           }
         } catch { case _ : Throwable => return None}
       }
@@ -23,9 +28,10 @@ class ExecutionManager {
     }
   }
   
-  def depsGet(dataWrapper: DataWrapper) : Boolean = {
-    val deps = dataWrapper.dependsOn.map(dep => get(dep))
-    !deps.exists (dep => dep.isEmpty) 
+  // returns whether all dependency data are ready or not
+  def dataDependenciesReady(dataWrapper: DataWrapper) : Boolean = {
+    val depsGet = dataWrapper.dependsOn.map(dep => getDataAccess(dep))
+    !depsGet.exists(d => d == None)
   }
 
 }

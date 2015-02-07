@@ -48,7 +48,6 @@ trait JATScreate {
   
 }
 
-// TODO: refactor to use one function that runs a modifier function and writes its output to file
 class JATSpipeline extends JATScreate {
 
   val steps: Seq[Step] = Seq(Step(config.JATSinput, config.JATSformatted, prettify, nullInitializer),
@@ -60,9 +59,13 @@ class JATSpipeline extends JATScreate {
   println("pipeline invoked for originally JATS input")
 }
 
+// TODO: re-factor to use one function that runs a modifier function and writes its output to file
 class JATScreateSingle(articleName: String) extends JATScreate {
-  prettify(config.JATSinput, config.JATSformatted, articleName)
-  copyXSL(config.JATSstyled)
-  applyXSL(config.JATSformatted, config.JATSstyled, articleName)
-  applyClean(config.JATSinput, config.JATSout, articleName)
-} 
+  def go: Boolean = {
+    prettify(config.JATSinput, config.JATSformatted, articleName)
+    copyXSL(config.JATSstyled)
+    applyXSL(config.JATSformatted, config.JATSstyled, articleName)
+    applyClean(config.JATSinput, config.JATSout, articleName)
+    true
+  } 
+}

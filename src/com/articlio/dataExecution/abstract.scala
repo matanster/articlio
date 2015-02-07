@@ -1,14 +1,29 @@
 package com.articlio.dataExecution
 
-abstract class Access
+trait ReadyState { // well, this is really used like an enumeration
+  object Ready extends ReadyState 
+  object NotReady extends ReadyState
+}
 
-//case class Data(ok: Boolean, data: Any) {}
+abstract class Access 
 
-abstract class DataWrapper {
+abstract class DataWrapper extends Access with ReadyState {
 
-  def isReady: Boolean
+  def wrapper(func: => Boolean): ReadyState = { // this form of prototype takes a function by name
+    try {
+      return func match {
+        case true => Ready
+        case false => NotReady
+      } 
+    } catch { 
+        case anyException : Throwable => 
+          println(anyException.toString)
+          return NotReady }
+  } 
   
-  def create: Boolean
+  def ReadyState: ReadyState
+  
+  def create: ReadyState
   
   def access: Access
   

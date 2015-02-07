@@ -212,9 +212,10 @@ object ldb extends Match {
                                                                        
   val SPACE = " "
                                    
-  def goWrapper(articleName: String, JATSfile: String) {
+  def goWrapper(articleName: String, JATSfile: String) : Boolean = {
     import com.articlio.config
     go("SingleFileRun" + "-" + (new runID).id, new JATS(JATSfile))
+    true 
   }
   
   def go (runID: String, document: JATS) : Seq[Match] = {

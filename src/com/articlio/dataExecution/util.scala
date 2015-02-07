@@ -14,5 +14,14 @@ package object util {
     } catch { case _ : Throwable => return None}
   }
   
+  def isReady(func: => Boolean) : Boolean = {
+    try {
+      return func match {
+        case true => true
+        case false => false
+      } 
+    } catch { case _ : Throwable => return false}
+  } 
+  
 }
 
