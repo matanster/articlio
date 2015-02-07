@@ -14,7 +14,7 @@ import scala.slick.jdbc.meta._
 
 case class SemanticAccess() extends Access
 
-case class Semantic(articleName: String, runID: String) extends DataWrapper with ReadyState with Connection with Match
+case class Semantic(articleName: String, runID: String) extends DataWrapper with Connection with Match
 {
   val dependsOn = Seq(JATS(articleName))
   

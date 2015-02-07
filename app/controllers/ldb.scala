@@ -15,9 +15,14 @@ object Ldb extends Controller with Match with Tables {
   import com.articlio.input.JATS
   import com.articlio.config
   
-  def a(inputFileName: String) = Action { implicit request =>
+  def a(articleName: String) = Action { implicit request =>
     import com.articlio.dataExecution._
-    Ok("no real path action implemented")    
+    import com.articlio.dataExecution.concrete._
+    val executionManager = new DataExecutionManager
+    val newRunID = "SingleFileRun" + "-" + (new runID).id
+    println("addressing data execution manager...")
+    executionManager.getDataAccess(Semantic(articleName, newRunID))
+    Redirect(routes.Application.showExtract(newRunID, articleName))
   }
   
   def singlePdfSourced(inputFileName: String) = Action { implicit request =>

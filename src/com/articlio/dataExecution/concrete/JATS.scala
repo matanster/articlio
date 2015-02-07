@@ -6,7 +6,7 @@ import com.articlio.pipe.pipelines.JATScreateSingle
 
 case class JATSaccess(path: String) extends Access
 
-case class JATS(articleName: String) extends DataWrapper with ReadyState
+case class JATS(articleName: String) extends DataWrapper
 {
   val dependsOn = Seq()
   

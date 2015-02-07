@@ -17,7 +17,7 @@ object Global extends GlobalSettings {
   Logger.info("Global object started")
   println("Global object started")
   
-  SelfMonitor
+  //SelfMonitor
   
   //AppActorSystem.outDB ! "createIfNeeded"
   

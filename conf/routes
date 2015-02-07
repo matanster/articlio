@@ -13,6 +13,7 @@ GET  /                                      controllers.Application.index
 GET  /assets/*file                          controllers.Assets.at(path="/public", file)
 
 # Show article extract
+GET  /showExtract/new/:articleName          controllers.Ldb.a(articleName: String)
 GET  /showExtract/:article                  controllers.Application.showExtract(runID: String ?= "matan-2015-01-18 00:15:35.225", article: String)
 
 # Show article extract
@@ -25,7 +26,6 @@ GET  /showOriginal/:article                 controllers.Application.showOriginal
 
 GET  /semantic/single/pdf/:inputFileName    controllers.Ldb.singlePdfSourced(inputFileName: String)
 
-GET  /semantic/single/new/:inputFileName    controllers.Ldb.a(inputFileName: String)
 
 GET  /semantic/single/eLife/:inputFileName  controllers.Ldb.singleeLifeSourced(inputFileName: String)
 GET  /semantic/all/                         controllers.Ldb.all

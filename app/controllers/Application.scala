@@ -52,22 +52,42 @@ object Application extends Controller with Match with Tables {
   //Ok(views.html.showExtractFoundation(Json.toJson(runIDs), runID, article, content))
   }
   
-  def showExtract(runID: String, article: String) = DBAction { implicit request =>
-    import play.api.libs.json._
-    val rows = matches.filter(_.runID === runID).filter(_.docName === s"${article}.xml").list
-    val content: List[Match1] = rows.map(r => Match1(r._1, r._2, r._3, r._4, r._5, r._6, r._7, r._8)).filter(_.isFinalMatch)
-    //println(content)
-    //val runIDs = List("ubuntu-2014-12-15 21:09:52.072", "ubuntu-2014-12-21 09:04:30.084")
+  def showExtract(runID: String, articleName: String) = DBAction { implicit request =>
+    //import play.api.libs.json._
     
-    //val runIDs = Runids.map(r => r.runid.get).list // this would work when that table means anything
-    val runIDs = matches.map(m => m.runID).list.distinct.sorted(Ordering[String].reverse)
+    import com.articlio.ldb
+    import com.articlio.util.runID
+    import com.articlio.input.JATS
+    import com.articlio.config
     
-    println(article)
-    println(rows)
-    println(runID)
-    println(content)
-    Ok(views.html.showExtract(runIDs, runID, article, content))
-    //Ok(views.html.showExtractFoundation(Json.toJson(runIDs), runID, article, content))
+    import com.articlio.dataExecution._
+    import com.articlio.dataExecution.concrete._
+    
+    val executionManager = new DataExecutionManager
+    val newRunID = "SingleFileRun" + "-" + (new runID).id
+    println("addressing data execution manager...")
+    
+    executionManager.getDataAccess(Semantic(articleName, newRunID)) match {
+      case None =>
+        Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
+      case dataAccessDetail : Some[Access] => { 
+        val rows = matches.filter(_.runID === runID).filter(_.docName === s"${articleName}.xml").list
+        val content: List[Match1] = rows.map(r => Match1(r._1, r._2, r._3, r._4, r._5, r._6, r._7, r._8)).filter(_.isFinalMatch)
+        //println(content)
+        //val runIDs = List("ubuntu-2014-12-15 21:09:52.072", "ubuntu-2014-12-21 09:04:30.084")
+        
+        //val runIDs = Runids.map(r => r.runid.get).list // this would work when that table means anything
+        val runIDs = matches.map(m => m.runID).list.distinct.sorted(Ordering[String].reverse)
+        
+        println(articleName)
+        println(runID)
+    
+        //println(rows)
+        //println(content)
+        Ok(views.html.showExtract(runIDs, runID, articleName, content))
+        //Ok(views.html.showExtractFoundation(Json.toJson(runIDs), runID, article, content))
+      }
+    }
   }
  
   def showOriginal(article: String) = Action { implicit request =>

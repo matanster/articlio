@@ -7,21 +7,24 @@ import com.articlio.dataExecution.concrete._
 //
 // executes data preparation by dependencies
 //
-class DataExecutionManager extends ReadyState {
+class DataExecutionManager {
 
   // returns: access details for ready data,
   //          or None if data is not ready
   def getDataAccess(dw: DataWrapper): Option[Access] = {
-    if (dw.ReadyState == Ready) // already ready? 
+    println(Ready)
+    println(dw.ReadyState)
+    if (dw.ReadyState == Ready) { // already ready? 
+      println(s"data for ${dw.getClass} is ready")
       return Some(dw.access)
+    }
     else {
+      println(s"data for ${dw.getClass} is not yet ready")
       if (dataDependenciesReady(dw)) { // no missing dependencies?
         try { 
           val data = dw.create
-          return data match {
-            case Ready  => Some(dw.access)
-            case NotReady => None
-          }
+          if (data == Ready) return Some(dw.access)
+          else return None
         } catch { case _ : Throwable => return None}
       }
       else return None
