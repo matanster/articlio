@@ -14,7 +14,7 @@ import scala.slick.jdbc.meta._
 
 case class SemanticAccess() extends Access
 
-case class Semantic(articleName: String) extends DataWrapper with ReadyState with Connection with Match
+case class Semantic(articleName: String, runID: String) extends DataWrapper with ReadyState with Connection with Match
 {
   val dependsOn = Seq(JATS(articleName))
   
@@ -23,11 +23,11 @@ case class Semantic(articleName: String) extends DataWrapper with ReadyState wit
   }
   
   def ReadyState: ReadyState = {
-    matches.filter(_.docName === s"${articleName}.xml").list.nonEmpty match {
+    matches.filter(_.runID === runID).filter(_.docName === s"${articleName}.xml").list.nonEmpty match {
       case true => Ready
       case false => NotReady
     }
   } 
   
-  val access = SemanticAccess() // no refined access details right now
+  val access = SemanticAccess() // no refined access details for now
 }
