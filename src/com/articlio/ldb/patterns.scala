@@ -7,8 +7,8 @@ import com.articlio.LanguageModel._
 import com.articlio.SelfMonitor
 import com.articlio.semantic.AppActorSystem
 import com.articlio.storage
-import com.articlio.storage.Match
-import scala.collection.JavaConverters._    // convert Java colllections to Scala ones
+//import com.articlio.storage.Match
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.Await
 import akka.actor.Actor
@@ -20,6 +20,7 @@ import akka.routing.BalancingPool
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
+import models.Tables
 
 abstract class PlugType
 case object    RefAppendable  extends PlugType // self reference is potentially *appendable* to target phrase
@@ -54,7 +55,7 @@ case class ExpandedRule (rule: SimpleRule) extends Rule {
 }
 
 
-object ldb extends Match {
+object ldb extends Tables {
 
   val globalLogger = new Logger("global-ldb")
   val overallLogger = new Logger("overall")
@@ -217,7 +218,7 @@ object ldb extends Match {
     true 
   }
   
-  def go (runID: String, document: JATS) : Seq[Match] = {
+  def go (runID: String, document: JATS) : Boolean = {
 
     val logger = new Logger(document.name)
     
@@ -229,7 +230,7 @@ object ldb extends Match {
     //val document = new JATS("/home/matan/ingi/repos/fileIterator/data/prep/elife03399.xml")
     val sections : Seq[JATSsection] = document.sections // elife04395, elife-articles(XML)/elife00425styled.xml
     //if (sections.isEmpty) return s"${document.name} appears to have no sections and was not processed"  
-    if (sections.isEmpty) return Seq.empty[Match]  
+    if (sections.isEmpty) return true // Seq.empty[Matches]  
     
     //
     // separate into util file
@@ -332,7 +333,7 @@ object ldb extends Match {
     def processSentences (sentences : Seq[LocatedText]) = {
   
       val sentenceMatchCount = scala.collection.mutable.ArrayBuffer.empty[Integer] 
-      var rdbmsData = Seq.newBuilder[Match]
+      var rdbmsData = Seq.newBuilder[MatchesRow]
       
       implicit val timeout = Timeout(60.seconds)
       
@@ -383,22 +384,23 @@ object ldb extends Match {
         
         val possibleMatches = for (pattern <- possiblePatternMatches.result 
                                 if (isInOrder (db.patterns2fragments.get(pattern).get, -1))) 
-                                  yield (pattern, 
-                                         extraction(sentence), 
-                                         db.patterns2indications.get(pattern).get, 
-                                         db.patterns2rules(pattern))
+                                  yield (new {var a: String = pattern;
+                                         var b: LocatedText = extraction(sentence);
+                                         var c: String = db.patterns2indications.get(pattern).get;
+                                         var d: SimpleRule =db.patterns2rules(pattern)})
 
         possibleMatches.foreach(p =>
-          logger.write(Seq(s"sentence '${p._2.text}'",
-                           s"in section ${p._2.section}",
-                           s"matches pattern '${p._1}'",
-                           s"which indicates '${p._3}'").mkString("\n") + "\n","sentence-pattern-matches (location agnostic)"))
+          logger.write(Seq(s"sentence '${p.b.text}'",
+                           s"in section ${p.b.section}",
+                           s"matches pattern '${p.a}'",
+                           s"which indicates '${p.c}'").mkString("\n") + "\n","sentence-pattern-matches (location agnostic)"))
 
         //if (!possibleMatches.isEmpty)logger.write(sentence.text, "output (location agnostic)")
                           
         //
         // checks whether a potential match satisfies its location criteria if any
         // 
+        
         def locationTest(p: (String, LocatedText, String, SimpleRule)) : Boolean = {
             var isFinalMatch = false
                 if (!p._4.locationProperty.isDefined) {
@@ -448,41 +450,41 @@ object ldb extends Match {
         	return isFinalMatch
         }
         
-	      val tentativeMatches : Seq[(String, LocatedText, String, SimpleRule, Boolean, Boolean)] = 
-	        possibleMatches.map(p => (p._1, 
-            	    						  	  p._2,
-            	    						  	  p._3,
-            	    						  	  p._4,
-            	    						  	  locationTest(p),
-            	    						  	  selfishRefTest(p))).toSeq
+	      val tentativeMatches = 
+	        possibleMatches.map(p => new { val a = p.a; 
+                                         val b = p.b;
+                                         val c = p.c;
+                                         val d = p.d;
+                                         val e = locationTest(p.a , p.b, p.c, p.d);
+                                         val f = selfishRefTest(p.a, p.b, p.c, p.d) }).toSeq
      	
-        tentativeMatches.foreach(m => if (!m._6) println(s"sentence {${m._2.text}} matching pattern {${m._4.pattern}} does not contain selfish reference and therefore not matched."))
+        tentativeMatches.foreach(m => if (!m.f) println(s"sentence {${m.b.text}} matching pattern {${m.d.pattern}} does not contain selfish reference and therefore not matched."))
 
-        val finalMatches = tentativeMatches.filter(m => m._5 && m._6)
+        val finalMatches = tentativeMatches.filter(m => m.e && m.f)
         
         if (!finalMatches.isEmpty) {
           //logger.write(sentence.text, "output")
-          logger.write(finalMatches.map(_._2.text).distinct.mkString("\n"), ("output"))  
+          logger.write(finalMatches.map(_.b.text).distinct.mkString("\n"), ("output"))  
           
 	      finalMatches.foreach(m =>
-	        logger.write(Seq(s"sentence '${m._2.text}'",
-	                         s"in section ${m._2.section}",
-	                         s"matches pattern '${m._1}'",
-	                         s"which indicates '${m._3}'").mkString("\n") + "\n","sentence-pattern-matches"))
+	        logger.write(Seq(s"sentence '${m.b.text}'",
+	                         s"in section ${m.b.section}",
+	                         s"matches pattern '${m.a}'",
+	                         s"which indicates '${m.c}'").mkString("\n") + "\n","sentence-pattern-matches"))
         }
           
       	rdbmsData ++= 
-          tentativeMatches.filter(_._6).map(m => (runID,
+          tentativeMatches.filter(_.f).map(m => (runID,
                             document.name, 
-                            m._2.text, 
-                  				  m._1,
-                  				  m._4.locationProperty.isEmpty match {
+                            m.b.text, 
+                  				  m.a,
+                  				  m.d.locationProperty.isEmpty match {
                   				  	case true  => "any"
-                  				  	case false => m._4.locationProperty.get.head.asInstanceOf[LocationProperty].parameters.mkString(" | ")
+                  				  	case false => m.d.locationProperty.get.head.asInstanceOf[LocationProperty].parameters.mkString(" | ")
                   				  },
-                  				  m._2.section,
-                  				  m._5,
-                  				  m._3)).toSeq
+                  				  m.b.section,
+                  				  m.e,
+                  				  m.c).asInstanceOf[MatchesRow])
         //println(rdbmsData)
 	           
         //val LocationFiltered = possiblePatternMatches.result.filter(patternMatched => patternMatched.locationProperty.isDefined)
@@ -502,7 +504,8 @@ object ldb extends Match {
 
     //AppActorSystem.timelog ! "matching"
     //AppActorSystem.timelog ! "matching"
-    return processSentences(sentences)
+    processSentences(sentences)
+    true    
   }                                                                             
                                                                              
 }

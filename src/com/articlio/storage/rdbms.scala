@@ -21,7 +21,7 @@ import scala.slick.jdbc.meta._
  * 
  */
 
-trait Match {
+/* trait Match {
   type Match = (String, String, String, String, String, String, Boolean, String)
 
   // slick class binding definition
@@ -40,6 +40,7 @@ trait Match {
   // the table handle
   val matches = TableQuery[Matches]
 }
+*/
 
 trait Connection {
   // connection parameters
@@ -54,43 +55,43 @@ trait Connection {
   implicit val session: Session = db.createSession
 }
 
-class OutDB extends Actor with Connection with Match {
+class OutDB extends Actor with Connection with models.Tables {
 
   // Table write functions
-  private def write (data: Seq[Match]) = {
+  private def write (data: Seq[MatchesRow]) = {
     println
     println(s"writing ${data.length} records to database")
     println
-    matches ++= data
+    Matches ++= data
     println(s"done writing ${data.length} records to database")    
   }
   
-  var buffer = Seq.empty[Match]
+  var buffer = Seq.empty[MatchesRow]
   
   def flushToDB = {
     println("Flushing bulk run's results to database")
       write(buffer)
-      buffer = Seq.empty[Match]
+      buffer = Seq.empty[MatchesRow]
   }
   
-  def addToBuffer (data: Seq[Match]) = buffer ++= data
+  def addToBuffer (data: Seq[MatchesRow]) = buffer ++= data
   
-  private def += (data: Match) = matches += data
+  private def += (data: MatchesRow) = Matches += data
   
   private def ++= (data: Seq[String]) = println("stringgggggggggggggg")
   
   private def createIfNeeded {
     if (MTable.getTables("Matches").list.isEmpty) 
-      matches.ddl.create
+      Matches.ddl.create
   }
   
   private def dropCreate {
     try {
-      matches.ddl.drop 
+      Matches.ddl.drop 
       println("existing table dropped")
     } catch { case e: Exception => } // exception type not documented
     println("creating table")
-    matches.ddl.create
+    Matches.ddl.create
   }
 
   private def close = session.close
@@ -103,7 +104,8 @@ class OutDB extends Actor with Connection with Match {
     case "dropCreate" => dropCreate
     case "createIfNeeded" => createIfNeeded
     //case s: Seq[Match @unchecked] => write(s) // annotating to avoid compilation warning about type erasure here
-    case s: Seq[Match @unchecked] => addToBuffer(s) // annotating to avoid compilation warning about type erasure here
+    case s: Seq[MatchesRow @unchecked] => addToBuffer(s) // annotating to avoid compilation warning about type erasure here,
+                                                         // maybe no longer necessary?
     case "flushToDB" => flushToDB
     case _ => throw new Exception("unexpected actor message type received")
   }
@@ -116,32 +118,32 @@ trait googleSpreadsheetCreator {
   }
 }
 
-object createCSV extends Connection with Match with googleSpreadsheetCreator {
+object createCSV extends Connection with models.Tables with googleSpreadsheetCreator {
   import com.github.tototoshi.csv._ // only good for "small" csv files; https://github.com/tototoshi/scala-csv/issues/11
-  def go(runID: String = matches.map(m => m.runID).list.distinct.sorted(Ordering[String].reverse).head) = {
+  def go(runID: String = Matches.map(m => m.runid).list.distinct.sorted(Ordering[String].reverse).head) = {
     val outFile = new java.io.File("out.csv")
     val writer = CSVWriter.open(outFile)
 
-    val filteredData = matches.filter(m => m.runID === runID).list.map(m => 
-    List(m._1, 
-        withHyperlink("showOriginal/" + m._2.dropRight(4),"view original"),          
-        withHyperlink("showExtractFoundation/" + m._2.dropRight(4) + s"?runID=${m._1}","view result"),
-        m._2, m._3, m._4, m._5, m._6, m._7, m._8))
+    val filteredData = Matches.filter(m => m.runid === runID).list.map(m => 
+    List(m.docname, 
+        withHyperlink("showOriginal/" + m.runid.toString.dropRight(4),"view original"),          
+        withHyperlink("showExtractFoundation/" + m.runid.toString.dropRight(4) + s"?runID=${m.runid}","view result"),
+        m.runid, m.sentence, m.matchpattern, m.locationactual, m.locationtest, m.fullmatch, m.matchindication))
         val data = List("Run ID", "", "", "Article", "Sentence", "Pattern", "Location Test", "Location Actual", "Final Match?", "Match Indication") :: filteredData 
         writer.writeAll(data)
   }
 }
 
 import models.Tables
-object createAnalyticSummary extends Connection with Match with Tables with googleSpreadsheetCreator {
+object createAnalyticSummary extends Connection with models.Tables with googleSpreadsheetCreator {
   import com.github.tototoshi.csv._ // only good for "small" csv files; https://github.com/tototoshi/scala-csv/issues/11
-  def go(runID: String = matches.map(m => m.runID).list.distinct.sorted(Ordering[String].reverse).head) = {
+  def go(runID: String = Matches.map(m => m.runid).list.distinct.sorted(Ordering[String].reverse).head) = {
     val outFile = new java.io.File("outAnalytic.csv")
     val writer = CSVWriter.open(outFile)
     
-    val matchIndications : Seq[String] = matches.filter(m => m.runID === runID).map(m => m.matchIndication).list.distinct 
-    val grouped = matches.filter(m => m.runID === runID && m.isFinalMatch).run
-                          .groupBy(f => f._2)
+    val matchIndications : Seq[String] = Matches.filter(m => m.runid === runID).map(m => m.matchindication).list.distinct 
+    val grouped = Matches.filter(m => m.runid === runID && m.fullmatch).run
+                          .groupBy(f => f.runid)
     
     def hasLimitationSection(docName: String) =
       Headers.filter(_.docname === docName).filter(h => h.header === "limitation").exists.run match {
@@ -151,7 +153,7 @@ object createAnalyticSummary extends Connection with Match with Tables with goog
                           
     val result : List[List[Any]] = grouped.map { case(docName, matches) =>  
                                      List(withHyperlink("showOriginal/" + docName.dropRight(4), docName), hasLimitationSection("ubuntu-2014-11-21T12:06:51.286Z")) ++
-                                         matchIndications.map(i => matches.filter(m => m._8 == i).length)}.toList
+                                         matchIndications.map(i => matches.filter(m => m.matchindication == i).length)}.toList
 
     val headerRow = List(List("Article", "has limitation section?") ++ matchIndications.toList)
     val output = headerRow ++ result

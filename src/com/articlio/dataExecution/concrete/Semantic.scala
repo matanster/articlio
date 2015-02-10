@@ -6,15 +6,15 @@ import com.articlio.pipe.pipelines.JATScreateSingle
 import com.articlio.ldb.ldb
 import com.articlio.util.runID
 import com.articlio.dataExecution._
-
-import com.articlio.storage.{Connection, Match}
+import models.Tables
+import com.articlio.storage.{Connection}
 import play.api.db.slick._
 import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 
 case class SemanticAccess() extends Access
 
-case class Semantic(articleName: String, runID: String) extends DataWrapper with Connection with Match
+case class Semantic(articleName: String, runID: String) extends DataWrapper with Connection with Tables
 {
   val dependsOn = Seq(JATS(articleName))
   
@@ -23,8 +23,8 @@ case class Semantic(articleName: String, runID: String) extends DataWrapper with
   }
   
   def ReadyState: ReadyState = {
-    println(s"result matches count for $runID: ${matches.filter(_.runID === runID).filter(_.docName === s"${articleName}.xml").list.size}")
-    matches.filter(_.runID === runID).filter(_.docName === s"${articleName}.xml").list.nonEmpty match {
+    println(s"result matches count for $runID: ${Matches.filter(_.runid === runID).filter(_.docname === s"${articleName}.xml").list.size}")
+    Matches.filter(_.runid === runID).filter(_.docname === s"${articleName}.xml").list.nonEmpty match {
       case true => Ready
       case false => NotReady
     }

@@ -6,38 +6,39 @@
 //
 
 package com.articlio.analyze
-import com.articlio.storage.{Connection,Match}
+import com.articlio.storage.{Connection}
 import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 import scala.slick.util.CloseableIterator
 import com.articlio.semantic.AppActorSystem
+import models.Tables
 
-object Indels extends Connection with Match {
+object Indels extends Connection with Tables {
 
   val changeAnalyticsLogger= new com.articlio.util.Logger("global-change-analytics")
   
-  val newResults = matches.filter(_.runID === "ubuntu-2014-12-15 21:09:52.072").sortBy(_.sentence).iterator
-  val oldResults = matches.filter(_.runID === "ubuntu-2014-12-13 18:37:53.728").sortBy(_.sentence).iterator
+  val newResults = Matches.filter(_.runid === "ubuntu-2014-12-15 21:09:52.072").sortBy(_.sentence).iterator
+  val oldResults = Matches.filter(_.runid === "ubuntu-2014-12-13 18:37:53.728").sortBy(_.sentence).iterator
   
-  val dropped = Seq.newBuilder[Match]
-  val added = Seq.newBuilder[Match]
+  val dropped = Seq.newBuilder[MatchesRow]
+  val added = Seq.newBuilder[MatchesRow]
   
-  def myCompare(a: Option[Match], b: Option[Match]) : Int = {
+  def myCompare(a: Option[MatchesRow], b: Option[MatchesRow]) : Int = {
     
     if (a.isDefined && !b.isDefined) return -1
     if (!a.isDefined && b.isDefined) return  1
     
-    return (a.get._3 compare b.get._3)
+    return (a.get.sentence compare b.get.sentence)
   }
   
-  def myNext(i: CloseableIterator[Match]) : Option[Match] = {
+  def myNext(i: CloseableIterator[MatchesRow]) : Option[MatchesRow] = {
     i.hasNext match {
       case true  => Some(i.next)
       case false => None
     }
   }
   
-  def go (newResult: Option[Match], oldResult: Option[Match]): Unit = {
+  def go (newResult: Option[MatchesRow], oldResult: Option[MatchesRow]): Unit = {
     if (!newResult.isDefined && !oldResult.isDefined) return
     
     myCompare(newResult, oldResult) match {
@@ -59,8 +60,8 @@ object Indels extends Connection with Match {
   println(dropped.result.length)
   println(added.result.length)
 
-  changeAnalyticsLogger.write(dropped.result.map(_._3).mkString("\n"), "rows-dropped")
-  changeAnalyticsLogger.write(added.result.map(_._3).mkString("\n"), "rows-added")
+  changeAnalyticsLogger.write(dropped.result.map(_.sentence).mkString("\n"), "rows-dropped")
+  changeAnalyticsLogger.write(added.result.map(_.sentence).mkString("\n"), "rows-added")
   
   //println(added.result.mkString("\n"))
   
@@ -77,7 +78,7 @@ object Indels extends Connection with Match {
   } yield r1.sentence
   */
     
-  matches.foreach { 
-    case(runID, docName, sentence, matchPattern, locationTest, locationActual, isFinalMatch, matchIndication) =>
-  }
+  //Matches.foreach { 
+  //  case(runID, docName, sentence, matchPattern, locationTest, locationActual, isFinalMatch, matchIndication) =>
+  //}
 }
