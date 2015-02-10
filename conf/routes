@@ -13,11 +13,7 @@ GET  /                                      controllers.Application.index
 GET  /assets/*file                          controllers.Assets.at(path="/public", file)
 
 # Show article extract
-GET  /showExtract/new/:articleName          controllers.Ldb.a(articleName: String)
-GET  /showExtract/:article                  controllers.Application.showExtract(runID: String ?= "matan-2015-01-18 00:15:35.225", article: String)
-
-# Show article extract
-GET  /showExtractFoundation/:article        controllers.Application.showExtract(runID: String ?= "matan-2015-01-18 00:15:35.225", article: String)
+GET  /showExtract/:articleName              controllers.Application.showExtract(articleName: String, runID: Option[String])
 
 # Show article extract
 GET  /showOriginal/:article                 controllers.Application.showOriginal(article: String)
@@ -53,3 +49,8 @@ GET  /playground/                           controllers.Application.playground
 # Map the JS resource paths - is this really still relevant?!
 GET  /*file                                 controllers.Assets.versioned(path="/public", file: Asset)
 
+
+
+
+# Show article extract
+# GET  /showExtractFoundation/:article        controllers.Application.showExtract(runID: String ?= "matan-2015-01-20 00:41:43.448", article: String)

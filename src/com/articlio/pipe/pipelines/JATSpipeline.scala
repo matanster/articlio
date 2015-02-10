@@ -63,7 +63,7 @@ class JATSpipeline extends JATScreate {
 class JATScreateSingle(articleName: String) extends JATScreate {
   def go: Boolean = {
     prettify(config.JATSinput, config.JATSformatted, articleName)
-    //copyXSL(config.JATSstyled)
+    copyXSL(config.JATSstyled)
     applyXSL(config.JATSformatted, config.JATSstyled, articleName)
     applyClean(config.JATSinput, config.JATSout, articleName)
     true

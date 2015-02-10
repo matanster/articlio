@@ -29,6 +29,6 @@ object Global extends GlobalSettings {
   override def onStop(app: Application) {
     println("Global object stopping non-Play stuff...")
     Logger.info("Global object stopping non-Play stuff...")    
-    SelfMonitor.shutdown
+    //SelfMonitor.shutdown
   }  
 }

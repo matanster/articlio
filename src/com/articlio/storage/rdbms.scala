@@ -12,6 +12,15 @@ import scala.slick.jdbc.meta._
 //import Database.dynamicSession
 //import scala.slick.jdbc.{GetResult, StaticQuery}
 
+/*
+ *
+ * Note: to reuse these definitions for database access on the REPL, use e.g. 
+ * 
+ * import...
+ * object a extends Match with Connection { println(matches.map(m => m.runID).list.distinct.sorted(Ordering[String].reverse).mkString("\n")) }; a;
+ * 
+ */
+
 trait Match {
   type Match = (String, String, String, String, String, String, Boolean, String)
 
@@ -123,7 +132,7 @@ object createCSV extends Connection with Match with googleSpreadsheetCreator {
   }
 }
 
-import com.articlio.slickGenerated.Tables
+import models.Tables
 object createAnalyticSummary extends Connection with Match with Tables with googleSpreadsheetCreator {
   import com.github.tototoshi.csv._ // only good for "small" csv files; https://github.com/tototoshi/scala-csv/issues/11
   def go(runID: String = matches.map(m => m.runID).list.distinct.sorted(Ordering[String].reverse).head) = {

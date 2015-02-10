@@ -11,14 +11,14 @@ case class JATS(articleName: String) extends DataWrapper
   val dependsOn = Seq()
   
   def ReadyState: ReadyState = {
-    filePathExists(s"${config.eLife}/$articleName") match {
+    filePathExists(s"${config.eLife}/$articleName.xml") match {
       case true => Ready
       case false => NotReady
     }
   } 
   
   def create : ReadyState = {
-    wrapper(new JATScreateSingle(articleName).go)
+    wrapper(new JATScreateSingle(s"$articleName").go)
   }  
 
   val access = JATSaccess(config.JATSout)

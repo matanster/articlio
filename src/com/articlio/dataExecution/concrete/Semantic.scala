@@ -23,6 +23,7 @@ case class Semantic(articleName: String, runID: String) extends DataWrapper with
   }
   
   def ReadyState: ReadyState = {
+    println(s"result matches count for $runID: ${matches.filter(_.runID === runID).filter(_.docName === s"${articleName}.xml").list.size}")
     matches.filter(_.runID === runID).filter(_.docName === s"${articleName}.xml").list.nonEmpty match {
       case true => Ready
       case false => NotReady

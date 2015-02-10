@@ -1,5 +1,5 @@
 @* result page *@
-@(runIDs : List[String], selectedRunID: String, article: String, matches: List[Match1])
+@(runIDs : List[String], selectedRunID: String, article: String, matches: List[Tables.MatchesRow])
 
 @import components._
 
@@ -11,7 +11,7 @@
     <span>You are viewing the output for run ID:</span>
 	    <span 
 	      @popover(popoverContent="you may also select a different run's results here, by clicking here and selecting a different run ID")>
-	      @dropDownButton(selectedRunID, runIDs.map {r => (routes.Application.showExtract(r, article).toString, r) })
+	      @dropDownButton(selectedRunID, runIDs.map {r => (routes.Application.showExtract(article, Some(r)).toString, r) })
 		  </span>
 
     <!-- button for showing original article -->
@@ -23,9 +23,9 @@
   <table class="table">
     @matches.map { m => 
       <tr>
-        <td class="matchIndication">@m.matchIndication</td>
+        <td class="matchIndication">@m.matchindication</td>
         <td style="width: 80ch"
-          @popover(Some("why is this here?"), s"it matched pattern: <b>${m.matchPattern}</b><br>in section: <b>${m.locationActual}</b>")>
+          @popover(Some("why is this here?"), s"it matched pattern: <b>${m.matchpattern}</b><br>in section: <b>${m.locationactual}</b>")>
           @m.sentence
         </td>
       </tr>

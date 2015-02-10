@@ -1,20 +1,20 @@
-package com.articlio.slickGenerated
-//
-// clone of slick auto-generated code from project's slick-generated directory / sub-project
-//
-
+package models
 // AUTO-GENERATED Slick data model
+/** Stand-alone Slick data model for immediate use */
+object Tables extends {
+  //val profile = scala.slick.driver.MySQLDriver
+} with Tables
+
 /** Slick data model trait for extension, choice of backend or usage in the cake pattern. (Make sure to initialize this late.) */
 trait Tables {
-  val profile = scala.slick.driver.MySQLDriver // hardwired to the same driver used in auto-generation,
-                                               // as it makes using this trait simpler (boilerplate free)
+  val profile = scala.slick.driver.MySQLDriver
   import profile.simple._
   import scala.slick.model.ForeignKeyAction
   // NOTE: GetResult mappers for plain SQL are only generated for tables where Slick knows how to map the types of all columns.
   import scala.slick.jdbc.{GetResult => GR}
   
   /** DDL for all tables. Call .create to execute. */
-  lazy val ddl = Abstract.ddl ++ Autoproperties.ddl ++ Diffs.ddl ++ Grading.ddl ++ Headers.ddl ++ Matches.ddl ++ Pdffonts.ddl ++ Pdfmeta.ddl ++ Pdftohtml.ddl ++ Runids.ddl ++ Runs.ddl ++ Sentences.ddl ++ Title.ddl
+  lazy val ddl = Abstract.ddl ++ Autoproperties.ddl ++ Diffs.ddl ++ Grading.ddl ++ Headers.ddl ++ Matches.ddl ++ Pdffonts.ddl ++ Pdfmeta.ddl ++ Pdftohtml.ddl ++ Runids.ddl ++ Runidsg1.ddl ++ Runs.ddl ++ Sentences.ddl ++ Title.ddl
   
   /** Entity class storing rows of table Abstract
    *  @param `abstract` Database column abstract DBType(VARCHAR), Length(20000,true), Default(None)
@@ -208,9 +208,6 @@ trait Tables {
     val fullmatch: Column[Boolean] = column[Boolean]("fullMatch")
     /** Database column matchIndication DBType(VARCHAR), Length(254,true) */
     val matchindication: Column[String] = column[String]("matchIndication", O.Length(254,varying=true))
-    
-    /** Index over (runid) (database name index1) */
-    val index1 = index("index1", runid)
   }
   /** Collection-like TableQuery object for table Matches */
   lazy val Matches = new TableQuery(tag => new Matches(tag))
@@ -309,6 +306,38 @@ trait Tables {
   }
   /** Collection-like TableQuery object for table Runids */
   lazy val Runids = new TableQuery(tag => new Runids(tag))
+  
+  /** Entity class storing rows of table Runidsg1
+   *  @param runid Database column runID DBType(BIGINT), AutoInc, PrimaryKey
+   *  @param autodbtime Database column autoDbTime DBType(TIMESTAMP)
+   *  @param softwaresenttime Database column softwareSentTime DBType(TIMESTAMP)
+   *  @param server Database column server DBType(VARCHAR), Length(45,true)
+   *  @param terminationstatus Database column terminationStatus DBType(VARCHAR), Length(1024,true) */
+  case class Runidsg1Row(runid: Long, autodbtime: Option[java.sql.Timestamp], softwaresenttime: java.sql.Timestamp, server: String, terminationstatus: String)
+  /** GetResult implicit for fetching Runidsg1Row objects using plain SQL queries */
+  implicit def GetResultRunidsg1Row(implicit e0: GR[Long], e1: GR[Option[java.sql.Timestamp]], e2: GR[java.sql.Timestamp], e3: GR[String]): GR[Runidsg1Row] = GR{
+    prs => import prs._
+    Runidsg1Row.tupled((<<[Long], <<?[java.sql.Timestamp], <<[java.sql.Timestamp], <<[String], <<[String]))
+  }
+  /** Table description of table runIDsG1. Objects of this class serve as prototypes for rows in queries. */
+  class Runidsg1(_tableTag: Tag) extends Table[Runidsg1Row](_tableTag, "runIDsG1") {
+    def * = (runid, autodbtime, softwaresenttime, server, terminationstatus) <> (Runidsg1Row.tupled, Runidsg1Row.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (runid.?, autodbtime, softwaresenttime.?, server.?, terminationstatus.?).shaped.<>({r=>import r._; _1.map(_=> Runidsg1Row.tupled((_1.get, _2, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    
+    /** Database column runID DBType(BIGINT), AutoInc, PrimaryKey */
+    val runid: Column[Long] = column[Long]("runID", O.AutoInc, O.PrimaryKey)
+    /** Database column autoDbTime DBType(TIMESTAMP) */
+    val autodbtime: Column[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("autoDbTime")
+    /** Database column softwareSentTime DBType(TIMESTAMP) */
+    val softwaresenttime: Column[java.sql.Timestamp] = column[java.sql.Timestamp]("softwareSentTime")
+    /** Database column server DBType(VARCHAR), Length(45,true) */
+    val server: Column[String] = column[String]("server", O.Length(45,varying=true))
+    /** Database column terminationStatus DBType(VARCHAR), Length(1024,true) */
+    val terminationstatus: Column[String] = column[String]("terminationStatus", O.Length(1024,varying=true))
+  }
+  /** Collection-like TableQuery object for table Runidsg1 */
+  lazy val Runidsg1 = new TableQuery(tag => new Runidsg1(tag))
   
   /** Entity class storing rows of table Runs
    *  @param runid Database column runID DBType(VARCHAR), Length(255,true), Default(None)

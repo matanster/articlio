@@ -1,6 +1,6 @@
 package com.articlio.dataExecution
 
-class ReadyState
+sealed abstract class ReadyState
 object Ready extends ReadyState 
 object NotReady extends ReadyState
 
@@ -12,7 +12,7 @@ abstract class DataWrapper extends Access {
     println(s"exception message: ${exception.getMessage}")
     println(s"exception cause  : ${exception.getCause}")
     println(s"exception class  : ${exception.getClass}")
-    println(s"exception stack trace:\n ${exception.getStackTraceString}")
+    println(s"exception stack trace:\n ${exception.getStackTrace.toList.mkString("\n")}")
   }
   
   def wrapper(func: => Boolean): ReadyState = { // this form of prototype takes a function by name

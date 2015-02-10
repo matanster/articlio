@@ -7,28 +7,9 @@ import play.api.db.slick._
 import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 import play.api.http.MimeTypes
+//import play.api.libs.json._
 
-trait Match {
-  type Match = (String, String, String, String, String, String, Boolean, String)
-
-  // slick class binding definition
-  class Matches(tag: Tag) extends Table[Match](tag, "Matches") {
-    def docName = column[String]("docName")
-    def runID = column[String]("runID")
-    def sentence = column[String]("sentence", O.Length(20000,varying=true), O.DBType("binary"))
-    def matchPattern = column[String]("matchPattern")
-    def locationActual = column[String]("locationActual")
-    def locationTest = column[String]("locationTest")    
-    def isFinalMatch = column[Boolean]("fullMatch")
-    def matchIndication = column[String]("matchIndication")
-    def * = (runID, docName, sentence, matchPattern, locationTest, locationActual, isFinalMatch, matchIndication)
-  }
-  
-  // the table handle
-  val matches = TableQuery[Matches]
-}
-
-object Application extends Controller with Match with Tables {
+object Application extends Controller with Tables {
 
   def playground = Action { implicit request =>
     Ok(s"nothing here...")  
@@ -38,23 +19,8 @@ object Application extends Controller with Match with Tables {
     Ok(s"app is up, got request [$request]")
   }
  
-  def showExtractFoundation(runID: String, article: String) = DBAction { implicit request =>
-  import play.api.libs.json._
-  val rows = matches.filter(_.runID === runID).filter(_.docName === s"${article}.xml").list
-  val content: List[Match1] = rows.map(r => Match1(r._1, r._2, r._3, r._4, r._5, r._6, r._7, r._8)).filter(_.isFinalMatch)
-  //println(content)
-  //val runIDs = List("ubuntu-2014-12-15 21:09:52.072", "ubuntu-2014-12-21 09:04:30.084")
-  
-  //val runIDs = Runids.map(r => r.runid.get).list // this would work when that table means anything
-  val runIDs = matches.map(m => m.runID).list.distinct.sorted(Ordering[String].reverse)
-  
-  Ok(views.html.showExtractFoundation(runIDs, runID, article, content))
-  //Ok(views.html.showExtractFoundation(Json.toJson(runIDs), runID, article, content))
-  }
-  
-  def showExtract(runID: String, articleName: String) = DBAction { implicit request =>
-    //import play.api.libs.json._
-    
+  def showExtract(articleName: String, runID: Option[String]) = DBAction { implicit request =>
+
     import com.articlio.ldb
     import com.articlio.util.runID
     import com.articlio.input.JATS
@@ -63,30 +29,42 @@ object Application extends Controller with Match with Tables {
     import com.articlio.dataExecution._
     import com.articlio.dataExecution.concrete._
     
-    val executionManager = new DataExecutionManager
-    val newRunID = "SingleFileRun" + "-" + (new runID).id
-    println("addressing data execution manager...")
+    def foo(articleName: String, runID: String) = {
     
-    executionManager.getDataAccess(Semantic(articleName, newRunID)) match {
-      case None =>
-        Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
-      case dataAccessDetail : Some[Access] => { 
-        val rows = matches.filter(_.runID === runID).filter(_.docName === s"${articleName}.xml").list
-        val content: List[Match1] = rows.map(r => Match1(r._1, r._2, r._3, r._4, r._5, r._6, r._7, r._8)).filter(_.isFinalMatch)
-        //println(content)
-        //val runIDs = List("ubuntu-2014-12-15 21:09:52.072", "ubuntu-2014-12-21 09:04:30.084")
-        
-        //val runIDs = Runids.map(r => r.runid.get).list // this would work when that table means anything
-        val runIDs = matches.map(m => m.runID).list.distinct.sorted(Ordering[String].reverse)
-        
-        println(articleName)
-        println(runID)
-    
-        //println(rows)
-        //println(content)
-        Ok(views.html.showExtract(runIDs, runID, articleName, content))
-        //Ok(views.html.showExtractFoundation(Json.toJson(runIDs), runID, article, content))
+      val executionManager = new DataExecutionManager
+      
+      executionManager.getDataAccess(Semantic(articleName, runID)) match {
+        case None =>
+          Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
+        case dataAccessDetail : Some[Access] => { 
+          val content = Matches.filter(_.runid === runID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)
+          val runIDs = Matches.map(m => m.runid).list.distinct.sorted(Ordering[String].reverse)
+          val unlifted = content.asInstanceOf[List[models.Tables.MatchesRow]]
+          //println(unlifted.head.runid)
+          Ok(views.html.showExtract(runIDs, runID, articleName, unlifted))
+        }
       }
+    }
+    
+    runID match {
+      
+      case None => {
+        // get all run id's where this article had results. TODO: this does not distinguish between no run and a run with no line results!
+        val runIDs = Matches.filter(_.docname === s"${articleName}.xml").map(m => m.runid).list.distinct.sorted(Ordering[String].reverse)
+        runID.nonEmpty match {
+          
+          case true => {
+            val latestRunID = runIDs.head
+            foo(articleName, latestRunID)
+          }
+          case false =>
+            val newRunID = (new runID).id
+            foo(articleName, newRunID)
+        }
+        
+      }
+      
+      case Some(runID) => foo(articleName, runID)
     }
   }
  

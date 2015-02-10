@@ -173,7 +173,7 @@ object ldb extends Match {
     val allFragmentsDistinct : Set[String] = rules.map(rule => rule.fragments).flatten.toSet
 
     AppActorSystem.timelog ! "patterns representation building"
-    SelfMonitor.logUsage("after patterns representation building is")
+    // TODO: uncomment SelfMonitor.logUsage("after patterns representation building is")
     globalLogger.write(allFragmentsDistinct.mkString("\n"), "db-distinct-fragments")
     globalLogger.write(patterns2fragments.mkString("\n"), "db-rule-fragments")
 
@@ -212,9 +212,8 @@ object ldb extends Match {
                                                                        
   val SPACE = " "
                                    
-  def goWrapper(articleName: String, JATSfile: String) : Boolean = {
-    import com.articlio.config
-    go("SingleFileRun" + "-" + (new runID).id, new JATS(JATSfile))
+  def goWrapper(articleName: String, JATSdirectoryPath: String) : Boolean = {
+    go("SingleFileRun" + "-" + (new runID).id, new JATS(s"$JATSdirectoryPath/$articleName.xml"))
     true 
   }
   

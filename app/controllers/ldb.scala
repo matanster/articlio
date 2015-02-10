@@ -8,22 +8,12 @@ import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 import play.api.http.MimeTypes
 
-object Ldb extends Controller with Match with Tables {
+object Ldb extends Controller with Tables {
 
   import com.articlio.ldb
   import com.articlio.util.runID
   import com.articlio.input.JATS
   import com.articlio.config
-  
-  def a(articleName: String) = Action { implicit request =>
-    import com.articlio.dataExecution._
-    import com.articlio.dataExecution.concrete._
-    val executionManager = new DataExecutionManager
-    val newRunID = "SingleFileRun" + "-" + (new runID).id
-    println("addressing data execution manager...")
-    executionManager.getDataAccess(Semantic(articleName, newRunID))
-    Redirect(routes.Application.showExtract(newRunID, articleName))
-  }
   
   def singlePdfSourced(inputFileName: String) = Action { implicit request =>
     ldb.ldb.go("SingleFileRun" + "-" + (new runID).id, new JATS(s"${config.pdf}/$inputFileName", "pdf-converted"))
