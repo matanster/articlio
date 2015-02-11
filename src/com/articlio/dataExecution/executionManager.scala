@@ -12,16 +12,23 @@ class DataExecutionManager extends Execute {
   // returns: access details for ready data,
   //          or None if data is not ready
   def getDataAccess(dw: DataWrapper): Option[Access] = {
+    
+    dw.ReadyState match {
+      case Ready => {  
+        println(s"data for ${dw.getClass} is ready")
+        return Some(dw.access)
+      }
+      
+      case NotReady => {
+        println(s"data for ${dw.getClass} is not yet ready")
+        
+        // no missing dependencies, and own create successful?
+        if (dataDependenciesReady(dw)) 
+          if (dw.create == Ready) return Some(dw.access)
 
-    if (dw.ReadyState == Ready) { // already ready? 
-      println(s"data for ${dw.getClass} is ready")
-      return Some(dw.access)
-    }
-    else {
-      println(s"data for ${dw.getClass} is not yet ready")
-      if (dataDependenciesReady(dw)) // no missing dependencies?
-        if (execute(dw.create) == Some(Ready)) return Some(dw.access)
-      return None
+        // otherwise..
+        return None 
+      }
     }
   }
   

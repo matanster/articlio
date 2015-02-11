@@ -19,7 +19,7 @@ case class Semantic(articleName: String, runID: String) extends DataWrapper with
   val dependsOn = Seq(JATS(articleName))
   
   def create : ReadyState = {
-    wrapper(ldb.goWrapper(articleName, dependsOn.head.access.path))
+    resultWrapper(ldb.goWrapper(articleName, dependsOn.head.access.path))
   }
   
   def ReadyState: ReadyState = {

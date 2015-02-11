@@ -18,7 +18,7 @@ case class JATS(articleName: String) extends DataWrapper
   } 
   
   def create : ReadyState = {
-    wrapper(new JATScreateSingle(s"$articleName").go)
+    resultWrapper(new JATScreateSingle(s"$articleName").go)
   }  
 
   val access = JATSaccess(config.JATSout)

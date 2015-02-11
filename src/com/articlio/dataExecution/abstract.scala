@@ -27,7 +27,7 @@ trait Execute extends RecordException {
 
 abstract class DataWrapper extends Access with Execute with RecordException {
 
-  def wrapper(func: => Boolean): ReadyState = { // this form of prototype takes a function by name
+  def resultWrapper(func: => Boolean): ReadyState = { // this form of prototype takes a function by name
 
     execute(func) match {
       case Some(bool) => bool match {
