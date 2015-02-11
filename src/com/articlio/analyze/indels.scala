@@ -13,6 +13,10 @@ import scala.slick.util.CloseableIterator
 import com.articlio.semantic.AppActorSystem
 import models.Tables
 
+/*
+ *  TODO: parameterize and connect from http routes..
+ */
+
 object Indels extends Connection with Tables {
 
   val changeAnalyticsLogger= new com.articlio.util.Logger("global-change-analytics")

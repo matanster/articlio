@@ -382,18 +382,18 @@ object ldb extends Tables {
             return sentence
         }
         
-        val possibleMatches = for (pattern <- possiblePatternMatches.result 
-                                if (isInOrder (db.patterns2fragments.get(pattern).get, -1))) 
-                                  yield (new {var a: String = pattern;
-                                         var b: LocatedText = extraction(sentence);
-                                         var c: String = db.patterns2indications.get(pattern).get;
-                                         var d: SimpleRule =db.patterns2rules(pattern)})
+        val possibleMatches = for (pat <- possiblePatternMatches.result 
+                                if (isInOrder (db.patterns2fragments.get(pat).get, -1))) 
+                                  yield ( new { var pattern: String = pat;
+                                                var locatedText: LocatedText = extraction(sentence);
+                                                var indication: String = db.patterns2indications.get(pat).get;
+                                                var simpleRule: SimpleRule =db.patterns2rules(pat)})
 
         possibleMatches.foreach(p =>
-          logger.write(Seq(s"sentence '${p.b.text}'",
-                           s"in section ${p.b.section}",
-                           s"matches pattern '${p.a}'",
-                           s"which indicates '${p.c}'").mkString("\n") + "\n","sentence-pattern-matches (location agnostic)"))
+          logger.write(Seq(s"sentence '${p.locatedText.text}'",
+                           s"in section ${p.locatedText.section}",
+                           s"matches pattern '${p.pattern}'",
+                           s"which indicates '${p.indication}'").mkString("\n") + "\n","sentence-pattern-matches (location agnostic)"))
 
         //if (!possibleMatches.isEmpty)logger.write(sentence.text, "output (location agnostic)")
                           
@@ -451,40 +451,40 @@ object ldb extends Tables {
         }
         
 	      val tentativeMatches = 
-	        possibleMatches.map(p => new { val a = p.a; 
-                                         val b = p.b;
-                                         val c = p.c;
-                                         val d = p.d;
-                                         val e = locationTest(p.a , p.b, p.c, p.d);
-                                         val f = selfishRefTest(p.a, p.b, p.c, p.d) }).toSeq
+	        possibleMatches.map(p => new { val pattern = p.pattern; 
+                                         val locatedText = p.locatedText;
+                                         val indication = p.indication;
+                                         val simpleRule = p.simpleRule;
+                                         val matchesLocation = locationTest(p.pattern , p.locatedText, p.indication, p.simpleRule);
+                                         val selfishRef = selfishRefTest(p.pattern, p.locatedText, p.indication, p.simpleRule) }).toSeq
      	
-        tentativeMatches.foreach(m => if (!m.f) println(s"sentence {${m.b.text}} matching pattern {${m.d.pattern}} does not contain selfish reference and therefore not matched."))
+        tentativeMatches.foreach(m => if (!m.selfishRef) println(s"sentence {${m.locatedText.text}} matching pattern {${m.simpleRule.pattern}} does not contain selfish reference and therefore not matched."))
 
-        val finalMatches = tentativeMatches.filter(m => m.e && m.f)
+        val finalMatches = tentativeMatches.filter(m => m.matchesLocation && m.selfishRef)
         
         if (!finalMatches.isEmpty) {
           //logger.write(sentence.text, "output")
-          logger.write(finalMatches.map(_.b.text).distinct.mkString("\n"), ("output"))  
+          logger.write(finalMatches.map(_.locatedText.text).distinct.mkString("\n"), ("output"))  
           
 	      finalMatches.foreach(m =>
-	        logger.write(Seq(s"sentence '${m.b.text}'",
-	                         s"in section ${m.b.section}",
-	                         s"matches pattern '${m.a}'",
-	                         s"which indicates '${m.c}'").mkString("\n") + "\n","sentence-pattern-matches"))
+	        logger.write(Seq(s"sentence '${m.locatedText.text}'",
+	                         s"in section ${m.locatedText.section}",
+	                         s"matches pattern '${m.pattern}'",
+	                         s"which indicates '${m.indication}'").mkString("\n") + "\n","sentence-pattern-matches"))
         }
           
       	rdbmsData ++= 
-          tentativeMatches.filter(_.f).map(m => (runID,
+          tentativeMatches.filter(_.selfishRef).map(m => (runID,
                             document.name, 
-                            m.b.text, 
-                  				  m.a,
-                  				  m.d.locationProperty.isEmpty match {
+                            m.locatedText.text, 
+                  				  m.pattern,
+                  				  m.simpleRule.locationProperty.isEmpty match {
                   				  	case true  => "any"
-                  				  	case false => m.d.locationProperty.get.head.asInstanceOf[LocationProperty].parameters.mkString(" | ")
+                  				  	case false => m.simpleRule.locationProperty.get.head.asInstanceOf[LocationProperty].parameters.mkString(" | ")
                   				  },
-                  				  m.b.section,
-                  				  m.e,
-                  				  m.c).asInstanceOf[MatchesRow])
+                  				  m.locatedText.section,
+                  				  m.matchesLocation,
+                  				  m.indication).asInstanceOf[MatchesRow])
         //println(rdbmsData)
 	           
         //val LocationFiltered = possiblePatternMatches.result.filter(patternMatched => patternMatched.locationProperty.isDefined)
