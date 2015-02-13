@@ -2,19 +2,19 @@ package models
 // AUTO-GENERATED Slick data model
 /** Stand-alone Slick data model for immediate use */
 object Tables extends {
-  //val profile = scala.slick.driver.MySQLDriver
+  val profile = scala.slick.driver.MySQLDriver
 } with Tables
 
 /** Slick data model trait for extension, choice of backend or usage in the cake pattern. (Make sure to initialize this late.) */
 trait Tables {
-  val profile = scala.slick.driver.MySQLDriver
+  val profile: scala.slick.driver.JdbcProfile
   import profile.simple._
   import scala.slick.model.ForeignKeyAction
   // NOTE: GetResult mappers for plain SQL are only generated for tables where Slick knows how to map the types of all columns.
   import scala.slick.jdbc.{GetResult => GR}
   
   /** DDL for all tables. Call .create to execute. */
-  lazy val ddl = Abstract.ddl ++ Autoproperties.ddl ++ Diffs.ddl ++ Grading.ddl ++ Headers.ddl ++ Matches.ddl ++ Pdffonts.ddl ++ Pdfmeta.ddl ++ Pdftohtml.ddl ++ Runids.ddl ++ Runidsg1.ddl ++ Runs.ddl ++ Sentences.ddl ++ Title.ddl
+  lazy val ddl = Abstract.ddl ++ Autoproperties.ddl ++ Diffs.ddl ++ Grading.ddl ++ Headers.ddl ++ Matches.ddl ++ Pdffonts.ddl ++ Pdfmeta.ddl ++ Pdftohtml.ddl ++ Runids.ddl ++ Runs.ddl ++ Runsg1.ddl ++ Runstodelete.ddl ++ Sentences.ddl ++ Title.ddl
   
   /** Entity class storing rows of table Abstract
    *  @param `abstract` Database column abstract DBType(VARCHAR), Length(20000,true), Default(None)
@@ -307,38 +307,6 @@ trait Tables {
   /** Collection-like TableQuery object for table Runids */
   lazy val Runids = new TableQuery(tag => new Runids(tag))
   
-  /** Entity class storing rows of table Runidsg1
-   *  @param runid Database column runID DBType(BIGINT), AutoInc, PrimaryKey
-   *  @param autodbtime Database column autoDbTime DBType(TIMESTAMP)
-   *  @param softwaresenttime Database column softwareSentTime DBType(TIMESTAMP)
-   *  @param server Database column server DBType(VARCHAR), Length(45,true)
-   *  @param terminationstatus Database column terminationStatus DBType(VARCHAR), Length(1024,true) */
-  case class Runidsg1Row(runid: Long, autodbtime: Option[java.sql.Timestamp], softwaresenttime: java.sql.Timestamp, server: String, terminationstatus: String)
-  /** GetResult implicit for fetching Runidsg1Row objects using plain SQL queries */
-  implicit def GetResultRunidsg1Row(implicit e0: GR[Long], e1: GR[Option[java.sql.Timestamp]], e2: GR[java.sql.Timestamp], e3: GR[String]): GR[Runidsg1Row] = GR{
-    prs => import prs._
-    Runidsg1Row.tupled((<<[Long], <<?[java.sql.Timestamp], <<[java.sql.Timestamp], <<[String], <<[String]))
-  }
-  /** Table description of table runIDsG1. Objects of this class serve as prototypes for rows in queries. */
-  class Runidsg1(_tableTag: Tag) extends Table[Runidsg1Row](_tableTag, "runIDsG1") {
-    def * = (runid, autodbtime, softwaresenttime, server, terminationstatus) <> (Runidsg1Row.tupled, Runidsg1Row.unapply)
-    /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (runid.?, autodbtime, softwaresenttime.?, server.?, terminationstatus.?).shaped.<>({r=>import r._; _1.map(_=> Runidsg1Row.tupled((_1.get, _2, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
-    
-    /** Database column runID DBType(BIGINT), AutoInc, PrimaryKey */
-    val runid: Column[Long] = column[Long]("runID", O.AutoInc, O.PrimaryKey)
-    /** Database column autoDbTime DBType(TIMESTAMP) */
-    val autodbtime: Column[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("autoDbTime")
-    /** Database column softwareSentTime DBType(TIMESTAMP) */
-    val softwaresenttime: Column[java.sql.Timestamp] = column[java.sql.Timestamp]("softwareSentTime")
-    /** Database column server DBType(VARCHAR), Length(45,true) */
-    val server: Column[String] = column[String]("server", O.Length(45,varying=true))
-    /** Database column terminationStatus DBType(VARCHAR), Length(1024,true) */
-    val terminationstatus: Column[String] = column[String]("terminationStatus", O.Length(1024,varying=true))
-  }
-  /** Collection-like TableQuery object for table Runidsg1 */
-  lazy val Runidsg1 = new TableQuery(tag => new Runidsg1(tag))
-  
   /** Entity class storing rows of table Runs
    *  @param runid Database column runID DBType(VARCHAR), Length(255,true), Default(None)
    *  @param docname Database column docName DBType(VARCHAR), Length(255,true), Default(None)
@@ -365,6 +333,82 @@ trait Tables {
   }
   /** Collection-like TableQuery object for table Runs */
   lazy val Runs = new TableQuery(tag => new Runs(tag))
+  
+  /** Entity class storing rows of table Runsg1
+   *  @param globaluniqueid Database column globalUniqueID DBType(BIGINT), AutoInc, PrimaryKey
+   *  @param datatype Database column dataType DBType(VARCHAR), Length(45,true)
+   *  @param datatopic Database column dataTopic DBType(VARCHAR), Length(45,true)
+   *  @param terminationstatus Database column terminationStatus DBType(VARCHAR), Length(45,true)
+   *  @param error Database column error DBType(VARCHAR), Length(10000,true), Default(None)
+   *  @param server Database column server DBType(VARCHAR), Length(45,true)
+   *  @param serverstarttime Database column serverStartTime DBType(TIMESTAMP)
+   *  @param serverendtime Database column serverEndTime DBType(TIMESTAMP)
+   *  @param dependedon Database column dependedOn DBType(BIGINT), Default(None) */
+  case class Runsg1Row(globaluniqueid: Long, datatype: String, datatopic: String, terminationstatus: String, error: Option[String] = None, server: String, serverstarttime: java.sql.Timestamp, serverendtime: java.sql.Timestamp, dependedon: Option[Long] = None)
+  /** GetResult implicit for fetching Runsg1Row objects using plain SQL queries */
+  implicit def GetResultRunsg1Row(implicit e0: GR[Long], e1: GR[String], e2: GR[Option[String]], e3: GR[java.sql.Timestamp], e4: GR[Option[Long]]): GR[Runsg1Row] = GR{
+    prs => import prs._
+    Runsg1Row.tupled((<<[Long], <<[String], <<[String], <<[String], <<?[String], <<[String], <<[java.sql.Timestamp], <<[java.sql.Timestamp], <<?[Long]))
+  }
+  /** Table description of table runsG1. Objects of this class serve as prototypes for rows in queries. */
+  class Runsg1(_tableTag: Tag) extends Table[Runsg1Row](_tableTag, "runsG1") {
+    def * = (globaluniqueid, datatype, datatopic, terminationstatus, error, server, serverstarttime, serverendtime, dependedon) <> (Runsg1Row.tupled, Runsg1Row.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (globaluniqueid.?, datatype.?, datatopic.?, terminationstatus.?, error, server.?, serverstarttime.?, serverendtime.?, dependedon).shaped.<>({r=>import r._; _1.map(_=> Runsg1Row.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7.get, _8.get, _9)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    
+    /** Database column globalUniqueID DBType(BIGINT), AutoInc, PrimaryKey */
+    val globaluniqueid: Column[Long] = column[Long]("globalUniqueID", O.AutoInc, O.PrimaryKey)
+    /** Database column dataType DBType(VARCHAR), Length(45,true) */
+    val datatype: Column[String] = column[String]("dataType", O.Length(45,varying=true))
+    /** Database column dataTopic DBType(VARCHAR), Length(45,true) */
+    val datatopic: Column[String] = column[String]("dataTopic", O.Length(45,varying=true))
+    /** Database column terminationStatus DBType(VARCHAR), Length(45,true) */
+    val terminationstatus: Column[String] = column[String]("terminationStatus", O.Length(45,varying=true))
+    /** Database column error DBType(VARCHAR), Length(10000,true), Default(None) */
+    val error: Column[Option[String]] = column[Option[String]]("error", O.Length(10000,varying=true), O.Default(None))
+    /** Database column server DBType(VARCHAR), Length(45,true) */
+    val server: Column[String] = column[String]("server", O.Length(45,varying=true))
+    /** Database column serverStartTime DBType(TIMESTAMP) */
+    val serverstarttime: Column[java.sql.Timestamp] = column[java.sql.Timestamp]("serverStartTime")
+    /** Database column serverEndTime DBType(TIMESTAMP) */
+    val serverendtime: Column[java.sql.Timestamp] = column[java.sql.Timestamp]("serverEndTime")
+    /** Database column dependedOn DBType(BIGINT), Default(None) */
+    val dependedon: Column[Option[Long]] = column[Option[Long]]("dependedOn", O.Default(None))
+  }
+  /** Collection-like TableQuery object for table Runsg1 */
+  lazy val Runsg1 = new TableQuery(tag => new Runsg1(tag))
+  
+  /** Entity class storing rows of table Runstodelete
+   *  @param runid Database column runID DBType(BIGINT), AutoInc, PrimaryKey
+   *  @param autodbtime Database column autoDbTime DBType(TIMESTAMP)
+   *  @param softwaresenttime Database column softwareSentTime DBType(TIMESTAMP)
+   *  @param server Database column server DBType(VARCHAR), Length(45,true)
+   *  @param terminationstatus Database column terminationStatus DBType(VARCHAR), Length(1024,true) */
+  case class RunstodeleteRow(runid: Long, autodbtime: Option[java.sql.Timestamp], softwaresenttime: java.sql.Timestamp, server: String, terminationstatus: String)
+  /** GetResult implicit for fetching RunstodeleteRow objects using plain SQL queries */
+  implicit def GetResultRunstodeleteRow(implicit e0: GR[Long], e1: GR[Option[java.sql.Timestamp]], e2: GR[java.sql.Timestamp], e3: GR[String]): GR[RunstodeleteRow] = GR{
+    prs => import prs._
+    RunstodeleteRow.tupled((<<[Long], <<?[java.sql.Timestamp], <<[java.sql.Timestamp], <<[String], <<[String]))
+  }
+  /** Table description of table runsToDelete. Objects of this class serve as prototypes for rows in queries. */
+  class Runstodelete(_tableTag: Tag) extends Table[RunstodeleteRow](_tableTag, "runsToDelete") {
+    def * = (runid, autodbtime, softwaresenttime, server, terminationstatus) <> (RunstodeleteRow.tupled, RunstodeleteRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (runid.?, autodbtime, softwaresenttime.?, server.?, terminationstatus.?).shaped.<>({r=>import r._; _1.map(_=> RunstodeleteRow.tupled((_1.get, _2, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    
+    /** Database column runID DBType(BIGINT), AutoInc, PrimaryKey */
+    val runid: Column[Long] = column[Long]("runID", O.AutoInc, O.PrimaryKey)
+    /** Database column autoDbTime DBType(TIMESTAMP) */
+    val autodbtime: Column[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("autoDbTime")
+    /** Database column softwareSentTime DBType(TIMESTAMP) */
+    val softwaresenttime: Column[java.sql.Timestamp] = column[java.sql.Timestamp]("softwareSentTime")
+    /** Database column server DBType(VARCHAR), Length(45,true) */
+    val server: Column[String] = column[String]("server", O.Length(45,varying=true))
+    /** Database column terminationStatus DBType(VARCHAR), Length(1024,true) */
+    val terminationstatus: Column[String] = column[String]("terminationStatus", O.Length(1024,varying=true))
+  }
+  /** Collection-like TableQuery object for table Runstodelete */
+  lazy val Runstodelete = new TableQuery(tag => new Runstodelete(tag))
   
   /** Entity class storing rows of table Sentences
    *  @param sentence Database column sentence DBType(VARCHAR), Length(20000,true), Default(None)

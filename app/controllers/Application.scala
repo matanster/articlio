@@ -19,7 +19,7 @@ object Application extends Controller with Tables {
     Ok(s"app is up, got request [$request]")
   }
  
-  def showExtract(articleName: String, runID: Option[String]) = DBAction { implicit request =>
+  def showExtract(articleName: String, runID: Option[BigInt]) = DBAction { implicit request =>
 
     import com.articlio.ldb
     import com.articlio.util.runID

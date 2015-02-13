@@ -1,5 +1,7 @@
 package com.articlio.dataExecution
 
+import com.articlio.util.runID
+
 sealed abstract class ReadyState
 object Ready extends ReadyState 
 object NotReady extends ReadyState
@@ -25,16 +27,19 @@ trait Execute extends RecordException {
   } 
 }
 
-abstract class DataWrapper extends Access with Execute with RecordException {
-
+abstract class Data(suppliedRunID: Option[Integer] = None) extends Access with Execute with RecordException { // TODO: replace prototype types with database derived columns from Slick
+  
+  /*
+   *  following function can be avoided, if the execution manager object will assume responsibility 
+   *  for safely running all 'create' methods of concrete classes, as makes sense.
+   */
   def resultWrapper(func: => Boolean): ReadyState = { // this form of prototype takes a function by name
 
     execute(func) match {
       case Some(bool) => bool match {
-        case true => Ready
+        case true  => Ready
         case false => NotReady
-      }
-      case None => NotReady
+      } case None  => NotReady
     } 
   } 
    
@@ -44,6 +49,6 @@ abstract class DataWrapper extends Access with Execute with RecordException {
   
   def access: Access
   
-  def dependsOn: Seq[DataWrapper]
+  def dependsOn: Seq[Data]
 }
 

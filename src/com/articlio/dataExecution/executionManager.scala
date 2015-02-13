@@ -11,20 +11,20 @@ class DataExecutionManager extends Execute {
 
   // returns: access details for ready data,
   //          or None if data is not ready
-  def getDataAccess(dw: DataWrapper): Option[Access] = {
+  def getDataAccess(data: Data): Option[Access] = {
     
-    dw.ReadyState match {
+    data.ReadyState match {
       case Ready => {  
-        println(s"data for ${dw.getClass} is ready")
-        return Some(dw.access)
+        println(s"data for ${data.getClass} is ready")
+        return Some(data.access)
       }
       
       case NotReady => {
-        println(s"data for ${dw.getClass} is not yet ready")
+        println(s"data for ${data.getClass} is not yet ready")
         
         // no missing dependencies, and own create successful?
-        if (dataDependenciesReady(dw)) 
-          if (dw.create == Ready) return Some(dw.access)
+        if (dataDependenciesReady(data)) 
+          if (data.create == Ready) return Some(data.access)
 
         // otherwise..
         return None 
@@ -33,7 +33,7 @@ class DataExecutionManager extends Execute {
   }
   
   // returns whether all dependency data are ready or not
-  def dataDependenciesReady(dataWrapper: DataWrapper) : Boolean = {
+  def dataDependenciesReady(dataWrapper: Data) : Boolean = {
     val depsGet = dataWrapper.dependsOn.map(dep => getDataAccess(dep))
     !depsGet.exists(d => d == None)
   }
