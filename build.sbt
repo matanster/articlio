@@ -132,3 +132,40 @@ libraryDependencies ++= Seq(
 //
 
 com.jamesward.play.BrowserNotifierKeys.shouldOpenBrowser := false
+
+//
+// dummy task that does nothing
+//
+lazy val dummytask = taskKey[Unit]("dummy task")
+
+dummytask := {
+  println("Running task that does nothing...")
+  println("...done.")
+}
+
+// sbt task that auto-generates Slick classes for a given existing database
+// Usage: sbt slickGenerate
+
+libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "2.1.0"
+
+lazy val slickGenerate = TaskKey[Seq[File]]("slick code generation")
+
+slickGenerate <<= slickGenerateTask 
+
+lazy val slickGenerateTask = {
+    (sourceManaged in Compile, dependencyClasspath in Compile, runner in Compile, streams) map { (dir, cp, r, s) =>
+      val dbName = "articlio"
+      val userName = "articlio"
+      val password = "" // no password for this user
+      val url = s"jdbc:mysql://localhost:3306/$dbName" 
+      val jdbcDriver = "com.mysql.jdbc.Driver"
+      val slickDriver = "scala.slick.driver.MySQLDriver"
+      val targetPackageName = "models"
+      val outputDir = (dir / dbName).getPath // place generated files in sbt's managed sources folder
+      val fname = outputDir + s"/$targetPackageName/Tables.scala"
+      println(s"\nauto-generating slick source for database schema at $url...")
+      println(s"output source file file: file://$fname\n")
+      r.run("scala.slick.codegen.SourceCodeGenerator", cp.files, Array(slickDriver, jdbcDriver, url, outputDir, targetPackageName, userName, password), s.log)
+      Seq(file(fname))
+    }
+}
