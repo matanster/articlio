@@ -47,13 +47,14 @@ object CSV {
   // Extract raw values from the database CSV
   // Slow (https://github.com/tototoshi/scala-csv/issues/11) but global initialization is currently insignificant
   //
-  def getCSV: Seq[RawCSVInput] = {
+  def getCSV(csvFile: String): Seq[RawCSVInput] = {
 
     AppActorSystem.timelog ! "reading CSV"
 
     //val reader = CSVReader.open("ldb/July 24 2014 database - Markers - filtered.csv")
     //val reader = CSVReader.open("ldb/Normalized from July 24 2014 database - Markers - filtered - take 1.csv")
-    val reader = CSVReader.open(config.ldb)
+    //ldb/Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv
+    val reader = CSVReader.open(config.ldb + "/" + csvFile)
     val iterator = reader.iterator
     iterator.next // skip first row assumed to be headers
 
@@ -85,7 +86,7 @@ object CSV {
   //
   // build rules from the raw CSV input rows
   //
-  def deriveFromCSV: Seq[RuleInput] = {
+  def deriveFromCSV(csvFile: String): Seq[RuleInput] = {
     
     //
     // ldb beefer: add abstract location criteria wherever introduction and conclusion are included
@@ -97,10 +98,6 @@ object CSV {
         case Some(s) => {
           s.foreach(b => 
           	if (b.contains("introduction") || b.contains("conclusion")) {
-          	  //println
-          	  //println("EXPANDEDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
-          	  //println(s)
-          	  //println
           	  return Some(s :+ "abstract")
           	})
           return Some(s)
@@ -125,7 +122,7 @@ object CSV {
     AppActorSystem.timelog ! "manipulating CSV input"
 
     val rules = scala.collection.mutable.Seq.newBuilder[RuleInput]
-    val rawInput = getCSV
+    val rawInput = getCSV(csvFile)
 
     rawInput map { rawInputRule =>
 

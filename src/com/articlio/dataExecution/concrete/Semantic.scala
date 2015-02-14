@@ -14,12 +14,14 @@ import scala.slick.jdbc.meta._
 
 case class SemanticAccess() extends Access
 
-case class Semantic(articleName: String, runID: BigInt) extends Data with Connection with Tables
+case class Semantic(articleName: String, pdbFile: String, runID: BigInt) extends Data with Connection with Tables
 {
-  val dependsOn = Seq(JATS(articleName))
+  val dependsOn = Seq(JATS(articleName), 
+                      PDB(pdbFile))
   
   def create : ReadyState = {
-    resultWrapper(ldb.goWrapper(articleName, dependsOn.head.access.path))
+    val pdb = ldb(pdbFile)
+    resultWrapper(pdb.goWrapper(articleName, dependsOn.head.access.path))
   }
   
   def ReadyState: ReadyState = {

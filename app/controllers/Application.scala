@@ -19,7 +19,9 @@ object Application extends Controller with Tables {
     Ok(s"app is up, got request [$request]")
   }
  
-  def showExtract(articleName: String, runID: Option[BigInt]) = DBAction { implicit request =>
+  def showExtract(articleName: String, 
+                  pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", 
+                  runID: Option[BigInt]) = DBAction { implicit request =>
 
     import com.articlio.ldb
     import com.articlio.util.runID
@@ -33,7 +35,7 @@ object Application extends Controller with Tables {
     
       val executionManager = new DataExecutionManager
       
-      executionManager.getDataAccess(Semantic(articleName, runID)) match {
+      executionManager.getDataAccess(Semantic(articleName, pdb, runID)) match {
         case None =>
           Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
         case dataAccessDetail : Some[Access] => { 

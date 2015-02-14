@@ -7,7 +7,9 @@ import play.api.db.slick._
 import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 import play.api.http.MimeTypes
-
+import com.articlio.dataExecution._
+import com.articlio.dataExecution.concrete._
+    
 object Ldb extends Controller with Tables {
 
   import com.articlio.ldb
@@ -15,13 +17,22 @@ object Ldb extends Controller with Tables {
   import com.articlio.input.JATS
   import com.articlio.config
   
-  def singlePdfSourced(inputFileName: String) = Action { implicit request =>
-    ldb.ldb.go("SingleFileRun" + "-" + (new runID).id, new JATS(s"${config.pdf}/$inputFileName", "pdf-converted"))
-    Ok("Done processing file")
+  val pdb = ldb.ldb("Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
+  
+  def singlePdfSourced(articleName: String, pdb: 
+                       String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", 
+                       runID: Option[BigInt]) = Action { implicit request =>
+    val executionManager = new DataExecutionManager
+    executionManager.getDataAccess(Semantic(articleName, pdb, runID)) match {
+      case None =>
+        Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
+      case dataAccessDetail : Some[Access] =>  
+        Ok("Done processing file")
+    }
   }
 
-  def singleeLifeSourced(inputFileName: String) = Action { implicit request =>
-    ldb.ldb.go("SingleFileRun" + "-" + (new runID).id, new JATS(s"${config.eLife}/$inputFileName"))
+  def singleeLifeSourced(articleName: String) = Action { implicit request =>
+    pdb.go("SingleFileRun" + "-" + (new runID).id, new JATS(s"${config.eLife}/articleName"))
     Ok("Done processing file")
   }
 

@@ -55,7 +55,7 @@ case class ExpandedRule (rule: SimpleRule) extends Rule {
 }
 
 
-object ldb extends Tables {
+case class ldb(csvFile: String) extends Tables {
 
   val globalLogger = new Logger("global-ldb")
   val overallLogger = new Logger("overall")
@@ -185,7 +185,7 @@ object ldb extends Tables {
   //
   // match rules per sentence    
   //
-  val inputRules = CSV.deriveFromCSV
+  val inputRules = CSV.deriveFromCSV(csvFile)
   val db = new LDB(inputRules)
     
   case class Go(sentence : String, logger: Logger)
