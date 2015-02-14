@@ -6,7 +6,7 @@ cd ../slick-codegen
 sbt slickGenerate
 cd ../articlio
 echo -e ${color}"backing up current model..." ${detail_color}
-mv app/models/Tables.scala app/models/TablesOld.scala
+mv app/models/Tables.scala app/models/Tables.scala.old
 echo -e ${color}"copying new generated slick model..." ${detail_color}
 cp ../slick-codegen/target/scala-2.11/src_managed/articlio/models/Tables.scala app/models/
 echo -e ${color}"if no errors - done" ${detail_color}

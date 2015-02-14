@@ -34,7 +34,7 @@ libraryDependencies ++= {
 seq(SbtStartScript.startScriptForClassesSettings: _*)
 
 //
-// spray revolver, only for development
+// spray revolver, only for development, not really relevant with play framework
 //
 
 Revolver.settings 
@@ -43,6 +43,8 @@ Revolver.settings
 libraryDependencies += "io.spray" %%  "spray-json" % "1.3.1"
 
 libraryDependencies += "org.ahocorasick" % "ahocorasick" % "0.2.3"
+
+libraryDependencies += "org.sorm-framework" % "sorm" % "0.3.16"
 
 libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.11.2"
 
@@ -68,6 +70,7 @@ libraryDependencies += "com.github.verbalexpressions" %% "scalaverbalexpression"
 resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"
 
 libraryDependencies += "com.typesafe.play" %% "anorm" % "2.3.6"
+
 
 scalacOptions ++= Seq( "-unchecked", "-feature" )
 
@@ -143,8 +146,10 @@ dummytask := {
   println("...done.")
 }
 
-// sbt task that auto-generates Slick classes for a given existing database
-// Usage: sbt slickGenerate
+//
+// sbt task that auto-generates Slick classes for a given existing database. Usage: sbt slickGenerate
+// This doesn't work yet - see http://stackoverflow.com/questions/28511698/adding-task-to-sbt-13-x-build-sbt
+//
 
 libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "2.1.0"
 
