@@ -120,7 +120,7 @@ trait googleSpreadsheetCreator {
 
 object createCSV extends Connection with models.Tables with googleSpreadsheetCreator {
   import com.github.tototoshi.csv._ // only good for "small" csv files; https://github.com/tototoshi/scala-csv/issues/11
-  def go(runID: String = Matches.map(m => m.runid).list.distinct.sorted(Ordering[String].reverse).head) = {
+  def go(runID: Long = Matches.map(m => m.runid).list.distinct.sorted(Ordering[Long].reverse).head) = {
     val outFile = new java.io.File("out.csv")
     val writer = CSVWriter.open(outFile)
 
@@ -137,7 +137,7 @@ object createCSV extends Connection with models.Tables with googleSpreadsheetCre
 import models.Tables
 object createAnalyticSummary extends Connection with models.Tables with googleSpreadsheetCreator {
   import com.github.tototoshi.csv._ // only good for "small" csv files; https://github.com/tototoshi/scala-csv/issues/11
-  def go(runID: String = Matches.map(m => m.runid).list.distinct.sorted(Ordering[String].reverse).head) = {
+  def go(runID: Long = Matches.map(m => m.runid).list.distinct.sorted(Ordering[Long].reverse).head) = {
     val outFile = new java.io.File("outAnalytic.csv")
     val writer = CSVWriter.open(outFile)
     
@@ -150,7 +150,8 @@ object createAnalyticSummary extends Connection with models.Tables with googleSp
       case true => "yes"
       case _ =>    "no"
     }                          
-                          
+    
+    /*
     val result : List[List[Any]] = grouped.map { case(docName, matches) =>  
                                      List(withHyperlink("showOriginal/" + docName.dropRight(4), docName), hasLimitationSection("ubuntu-2014-11-21T12:06:51.286Z")) ++
                                          matchIndications.map(i => matches.filter(m => m.matchindication == i).length)}.toList
@@ -158,7 +159,7 @@ object createAnalyticSummary extends Connection with models.Tables with googleSp
     val headerRow = List(List("Article", "has limitation section?") ++ matchIndications.toList)
     val output = headerRow ++ result
     writer.writeAll(output)
-
+    */
   }
 }
 

@@ -7,14 +7,14 @@ object Tables extends {
 
 /** Slick data model trait for extension, choice of backend or usage in the cake pattern. (Make sure to initialize this late.) */
 trait Tables {
-  val profile: scala.slick.driver.JdbcProfile
+  val profile: scala.slick.driver.MySQLDriver
   import profile.simple._
   import scala.slick.model.ForeignKeyAction
   // NOTE: GetResult mappers for plain SQL are only generated for tables where Slick knows how to map the types of all columns.
   import scala.slick.jdbc.{GetResult => GR}
   
   /** DDL for all tables. Call .create to execute. */
-  lazy val ddl = Abstract.ddl ++ Autoproperties.ddl ++ Bulkdatapreparations.ddl ++ Datagroupings.ddl ++ Datapreparations.ddl ++ Diffs.ddl ++ Grading.ddl ++ Headers.ddl ++ Matches.ddl ++ Pdffonts.ddl ++ Pdfmeta.ddl ++ Pdftohtml.ddl ++ Runids.ddl ++ Runs.ddl ++ Runstodelete.ddl ++ Sentences.ddl ++ Title.ddl
+  lazy val ddl = Abstract.ddl ++ Autoproperties.ddl ++ Bulkdatagroups.ddl ++ Data.ddl ++ Datagroupings.ddl ++ Diffs.ddl ++ Grading.ddl ++ Headers.ddl ++ Matches.ddl ++ Pdffonts.ddl ++ Pdfmeta.ddl ++ Pdftohtml.ddl ++ Runids.ddl ++ Runs.ddl ++ Runstodelete.ddl ++ Sentences.ddl ++ Title.ddl
   
   /** Entity class storing rows of table Abstract
    *  @param `abstract` Database column abstract DBType(VARCHAR), Length(20000,true), Default(None)
@@ -69,28 +69,72 @@ trait Tables {
   /** Collection-like TableQuery object for table Autoproperties */
   lazy val Autoproperties = new TableQuery(tag => new Autoproperties(tag))
   
-  /** Entity class storing rows of table Bulkdatapreparations
+  /** Entity class storing rows of table Bulkdatagroups
    *  @param bulkid Database column bulkID DBType(INT), PrimaryKey
-   *  @param preparationid Database column preparationID DBType(BIGINT) */
-  case class BulkdatapreparationsRow(bulkid: Int, preparationid: Long)
-  /** GetResult implicit for fetching BulkdatapreparationsRow objects using plain SQL queries */
-  implicit def GetResultBulkdatapreparationsRow(implicit e0: GR[Int], e1: GR[Long]): GR[BulkdatapreparationsRow] = GR{
+   *  @param dataid Database column dataID DBType(BIGINT) */
+  case class BulkdatagroupsRow(bulkid: Int, dataid: Long)
+  /** GetResult implicit for fetching BulkdatagroupsRow objects using plain SQL queries */
+  implicit def GetResultBulkdatagroupsRow(implicit e0: GR[Int], e1: GR[Long]): GR[BulkdatagroupsRow] = GR{
     prs => import prs._
-    BulkdatapreparationsRow.tupled((<<[Int], <<[Long]))
+    BulkdatagroupsRow.tupled((<<[Int], <<[Long]))
   }
-  /** Table description of table BulkDataPreparations. Objects of this class serve as prototypes for rows in queries. */
-  class Bulkdatapreparations(_tableTag: Tag) extends Table[BulkdatapreparationsRow](_tableTag, "BulkDataPreparations") {
-    def * = (bulkid, preparationid) <> (BulkdatapreparationsRow.tupled, BulkdatapreparationsRow.unapply)
+  /** Table description of table BulkDataGroups. Objects of this class serve as prototypes for rows in queries. */
+  class Bulkdatagroups(_tableTag: Tag) extends Table[BulkdatagroupsRow](_tableTag, "BulkDataGroups") {
+    def * = (bulkid, dataid) <> (BulkdatagroupsRow.tupled, BulkdatagroupsRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (bulkid.?, preparationid.?).shaped.<>({r=>import r._; _1.map(_=> BulkdatapreparationsRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (bulkid.?, dataid.?).shaped.<>({r=>import r._; _1.map(_=> BulkdatagroupsRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
     
     /** Database column bulkID DBType(INT), PrimaryKey */
     val bulkid: Column[Int] = column[Int]("bulkID", O.PrimaryKey)
-    /** Database column preparationID DBType(BIGINT) */
-    val preparationid: Column[Long] = column[Long]("preparationID")
+    /** Database column dataID DBType(BIGINT) */
+    val dataid: Column[Long] = column[Long]("dataID")
   }
-  /** Collection-like TableQuery object for table Bulkdatapreparations */
-  lazy val Bulkdatapreparations = new TableQuery(tag => new Bulkdatapreparations(tag))
+  /** Collection-like TableQuery object for table Bulkdatagroups */
+  lazy val Bulkdatagroups = new TableQuery(tag => new Bulkdatagroups(tag))
+  
+  /** Entity class storing rows of table Data
+   *  @param dataid Database column dataID DBType(BIGINT), AutoInc, PrimaryKey
+   *  @param datatype Database column dataType DBType(VARCHAR), Length(45,true)
+   *  @param datatopic Database column dataTopic DBType(VARCHAR), Length(45,true)
+   *  @param creationstatus Database column creationStatus DBType(VARCHAR), Length(45,true)
+   *  @param creationerrordetail Database column creationErrorDetail DBType(VARCHAR), Length(10000,true), Default(None)
+   *  @param creatorserver Database column creatorServer DBType(VARCHAR), Length(45,true)
+   *  @param creatorserverstarttime Database column creatorServerStartTime DBType(TIMESTAMP)
+   *  @param creatorserverendtime Database column creatorServerEndTime DBType(TIMESTAMP)
+   *  @param datadependedon Database column dataDependedOn DBType(BIGINT), Default(None) */
+  case class DataRow(dataid: Long, datatype: String, datatopic: String, creationstatus: String, creationerrordetail: Option[String] = None, creatorserver: String, creatorserverstarttime: java.sql.Timestamp, creatorserverendtime: java.sql.Timestamp, datadependedon: Option[Long] = None)
+  /** GetResult implicit for fetching DataRow objects using plain SQL queries */
+  implicit def GetResultDataRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Option[String]], e3: GR[java.sql.Timestamp], e4: GR[Option[Long]]): GR[DataRow] = GR{
+    prs => import prs._
+    DataRow.tupled((<<[Long], <<[String], <<[String], <<[String], <<?[String], <<[String], <<[java.sql.Timestamp], <<[java.sql.Timestamp], <<?[Long]))
+  }
+  /** Table description of table Data. Objects of this class serve as prototypes for rows in queries. */
+  class Data(_tableTag: Tag) extends Table[DataRow](_tableTag, "Data") {
+    def * = (dataid, datatype, datatopic, creationstatus, creationerrordetail, creatorserver, creatorserverstarttime, creatorserverendtime, datadependedon) <> (DataRow.tupled, DataRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (dataid.?, datatype.?, datatopic.?, creationstatus.?, creationerrordetail, creatorserver.?, creatorserverstarttime.?, creatorserverendtime.?, datadependedon).shaped.<>({r=>import r._; _1.map(_=> DataRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7.get, _8.get, _9)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    
+    /** Database column dataID DBType(BIGINT), AutoInc, PrimaryKey */
+    val dataid: Column[Long] = column[Long]("dataID", O.AutoInc, O.PrimaryKey)
+    /** Database column dataType DBType(VARCHAR), Length(45,true) */
+    val datatype: Column[String] = column[String]("dataType", O.Length(45,varying=true))
+    /** Database column dataTopic DBType(VARCHAR), Length(45,true) */
+    val datatopic: Column[String] = column[String]("dataTopic", O.Length(45,varying=true))
+    /** Database column creationStatus DBType(VARCHAR), Length(45,true) */
+    val creationstatus: Column[String] = column[String]("creationStatus", O.Length(45,varying=true))
+    /** Database column creationErrorDetail DBType(VARCHAR), Length(10000,true), Default(None) */
+    val creationerrordetail: Column[Option[String]] = column[Option[String]]("creationErrorDetail", O.Length(10000,varying=true), O.Default(None))
+    /** Database column creatorServer DBType(VARCHAR), Length(45,true) */
+    val creatorserver: Column[String] = column[String]("creatorServer", O.Length(45,varying=true))
+    /** Database column creatorServerStartTime DBType(TIMESTAMP) */
+    val creatorserverstarttime: Column[java.sql.Timestamp] = column[java.sql.Timestamp]("creatorServerStartTime")
+    /** Database column creatorServerEndTime DBType(TIMESTAMP) */
+    val creatorserverendtime: Column[java.sql.Timestamp] = column[java.sql.Timestamp]("creatorServerEndTime")
+    /** Database column dataDependedOn DBType(BIGINT), Default(None) */
+    val datadependedon: Column[Option[Long]] = column[Option[Long]]("dataDependedOn", O.Default(None))
+  }
+  /** Collection-like TableQuery object for table Data */
+  lazy val Data = new TableQuery(tag => new Data(tag))
   
   /** Entity class storing rows of table Datagroupings
    *  @param groupid Database column groupID DBType(INT), PrimaryKey
@@ -117,50 +161,6 @@ trait Tables {
   }
   /** Collection-like TableQuery object for table Datagroupings */
   lazy val Datagroupings = new TableQuery(tag => new Datagroupings(tag))
-  
-  /** Entity class storing rows of table Datapreparations
-   *  @param preparationid Database column preparationID DBType(BIGINT), AutoInc, PrimaryKey
-   *  @param datatype Database column dataType DBType(VARCHAR), Length(45,true)
-   *  @param datatopic Database column dataTopic DBType(VARCHAR), Length(45,true)
-   *  @param terminationstatus Database column terminationStatus DBType(VARCHAR), Length(45,true)
-   *  @param error Database column error DBType(VARCHAR), Length(10000,true), Default(None)
-   *  @param server Database column server DBType(VARCHAR), Length(45,true)
-   *  @param serverstarttime Database column serverStartTime DBType(TIMESTAMP)
-   *  @param serverendtime Database column serverEndTime DBType(TIMESTAMP)
-   *  @param dependedon Database column dependedOn DBType(BIGINT), Default(None) */
-  case class DatapreparationsRow(preparationid: Long, datatype: String, datatopic: String, terminationstatus: String, error: Option[String] = None, server: String, serverstarttime: java.sql.Timestamp, serverendtime: java.sql.Timestamp, dependedon: Option[Long] = None)
-  /** GetResult implicit for fetching DatapreparationsRow objects using plain SQL queries */
-  implicit def GetResultDatapreparationsRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Option[String]], e3: GR[java.sql.Timestamp], e4: GR[Option[Long]]): GR[DatapreparationsRow] = GR{
-    prs => import prs._
-    DatapreparationsRow.tupled((<<[Long], <<[String], <<[String], <<[String], <<?[String], <<[String], <<[java.sql.Timestamp], <<[java.sql.Timestamp], <<?[Long]))
-  }
-  /** Table description of table DataPreparations. Objects of this class serve as prototypes for rows in queries. */
-  class Datapreparations(_tableTag: Tag) extends Table[DatapreparationsRow](_tableTag, "DataPreparations") {
-    def * = (preparationid, datatype, datatopic, terminationstatus, error, server, serverstarttime, serverendtime, dependedon) <> (DatapreparationsRow.tupled, DatapreparationsRow.unapply)
-    /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (preparationid.?, datatype.?, datatopic.?, terminationstatus.?, error, server.?, serverstarttime.?, serverendtime.?, dependedon).shaped.<>({r=>import r._; _1.map(_=> DatapreparationsRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7.get, _8.get, _9)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
-    
-    /** Database column preparationID DBType(BIGINT), AutoInc, PrimaryKey */
-    val preparationid: Column[Long] = column[Long]("preparationID", O.AutoInc, O.PrimaryKey)
-    /** Database column dataType DBType(VARCHAR), Length(45,true) */
-    val datatype: Column[String] = column[String]("dataType", O.Length(45,varying=true))
-    /** Database column dataTopic DBType(VARCHAR), Length(45,true) */
-    val datatopic: Column[String] = column[String]("dataTopic", O.Length(45,varying=true))
-    /** Database column terminationStatus DBType(VARCHAR), Length(45,true) */
-    val terminationstatus: Column[String] = column[String]("terminationStatus", O.Length(45,varying=true))
-    /** Database column error DBType(VARCHAR), Length(10000,true), Default(None) */
-    val error: Column[Option[String]] = column[Option[String]]("error", O.Length(10000,varying=true), O.Default(None))
-    /** Database column server DBType(VARCHAR), Length(45,true) */
-    val server: Column[String] = column[String]("server", O.Length(45,varying=true))
-    /** Database column serverStartTime DBType(TIMESTAMP) */
-    val serverstarttime: Column[java.sql.Timestamp] = column[java.sql.Timestamp]("serverStartTime")
-    /** Database column serverEndTime DBType(TIMESTAMP) */
-    val serverendtime: Column[java.sql.Timestamp] = column[java.sql.Timestamp]("serverEndTime")
-    /** Database column dependedOn DBType(BIGINT), Default(None) */
-    val dependedon: Column[Option[Long]] = column[Option[Long]]("dependedOn", O.Default(None))
-  }
-  /** Collection-like TableQuery object for table Datapreparations */
-  lazy val Datapreparations = new TableQuery(tag => new Datapreparations(tag))
   
   /** Entity class storing rows of table Diffs
    *  @param docname Database column docName DBType(VARCHAR), Length(255,true), Default(None)

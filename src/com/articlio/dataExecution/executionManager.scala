@@ -12,9 +12,33 @@ class DataExecutionManager extends Execute {
   // returns: access details for ready data,
   //          or None if data is not ready
   def getDataAccess(data: Data): Option[Access] = {
-    
+      
     data.ReadyState match {
+      
       case Ready => {  
+        println(s"data for ${data.getClass} is ready")
+        return Some(data.access)
+      }
+      
+      case NotReady => {
+        println(s"data for ${data.getClass} is not yet ready")
+        
+        // no missing dependencies, and own create successful?
+        if (dataDependenciesReady(data)) 
+          if (data.create == Ready) 
+            return Some(data.access)
+              
+        // otherwise..
+        return None 
+      }
+    }
+  }
+  
+  def getDataAccess(data: Data, suppliedRunID: BigInt): Option[Access] = {
+    
+    data.ReadyState(suppliedRunID) match {
+      
+    case Ready => {  
         println(s"data for ${data.getClass} is ready")
         return Some(data.access)
       }

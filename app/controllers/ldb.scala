@@ -21,9 +21,9 @@ object Ldb extends Controller with Tables {
   
   def singlePdfSourced(articleName: String, pdb: 
                        String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", 
-                       runID: Option[BigInt]) = Action { implicit request =>
+                       runID: Option[Long]) = Action { implicit request =>
     val executionManager = new DataExecutionManager
-    executionManager.getDataAccess(Semantic(articleName, pdb, runID)) match {
+    executionManager.getDataAccess(Semantic(articleName, pdb, runID.get)) match {
       case None =>
         Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
       case dataAccessDetail : Some[Access] =>  

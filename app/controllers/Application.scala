@@ -21,7 +21,7 @@ object Application extends Controller with Tables {
  
   def showExtract(articleName: String, 
                   pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", 
-                  runID: Option[BigInt]) = DBAction { implicit request =>
+                  runID: Option[Long]) = DBAction { implicit request =>
 
     import com.articlio.ldb
     import com.articlio.util.runID
@@ -31,7 +31,7 @@ object Application extends Controller with Tables {
     import com.articlio.dataExecution._
     import com.articlio.dataExecution.concrete._
     
-    def foo(articleName: String, runID: String) = {
+    def foo(articleName: String, runID: Long) = {
     
       val executionManager = new DataExecutionManager
       
@@ -40,7 +40,7 @@ object Application extends Controller with Tables {
           Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
         case dataAccessDetail : Some[Access] => { 
           val content = Matches.filter(_.runid === runID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)
-          val runIDs = Matches.map(m => m.runid).list.distinct.sorted(Ordering[String].reverse)
+          val runIDs = Matches.map(m => m.runid).list.distinct.sorted(Ordering[Long].reverse)
           val unlifted = content.asInstanceOf[List[models.Tables.MatchesRow]]
           //println(unlifted.head.runid)
           Ok(views.html.showExtract(runIDs, runID, articleName, unlifted))
@@ -52,16 +52,16 @@ object Application extends Controller with Tables {
       
       case None => {
         // get all run id's where this article had results. TODO: this does not distinguish between no run and a run with no line results!
-        val runIDs = Matches.filter(_.docname === s"${articleName}.xml").map(m => m.runid).list.distinct.sorted(Ordering[String].reverse)
+        val runIDs = Matches.filter(_.docname === s"${articleName}.xml").map(m => m.runid).list.distinct.sorted(Ordering[Long].reverse)
         runID.nonEmpty match {
           
           case true => {
             val latestRunID = runIDs.head
             foo(articleName, latestRunID)
           }
-          case false =>
-            val newRunID = (new runID).id
-            foo(articleName, newRunID)
+          //case false =>
+            //val newRunID = (new runID).id
+            //foo(articleName, newRunID)
         }
         
       }
