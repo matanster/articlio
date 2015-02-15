@@ -23,23 +23,13 @@ trait RecordException {
   }
 }
 
-trait Execute extends RecordException {
-  def execute[ExpectedType](func: => ExpectedType): Option[ExpectedType] = { // this form of prototype takes a function by name
-    try { return Some(func) } 
-      catch { 
-        case anyException : Throwable =>
-          recordException(anyException)
-          return None }
-  } 
-}
-
 abstract class Data extends Access with Execute with RecordException with Connection { 
 
   /*
    *  following function can be avoided, if the execution manager object will assume responsibility 
    *  for safely running all 'create' methods of concrete classes, as makes sense.
    */
-  def createWrapper(dataTopic: String, func: => Option[CreateError]): ReadyState = { // this form of prototype takes a function by name
+  def create: ReadyState = { // this form of prototype takes a function by name
 
     def localNow = new java.sql.Timestamp(java.util.Calendar.getInstance.getTime.getTime) // this follows from http://alvinalexander.com/java/java-timestamp-example-current-time-now
                                                                                           // TODO: need to switch to UTC time for production
@@ -47,9 +37,9 @@ abstract class Data extends Access with Execute with RecordException with Connec
     
     val startTime = localNow
      
-    val dataid = DataRecord.returning(DataRecord.map(_.dataid)) += DataRow(
+    val dataID = DataRecord.returning(DataRecord.map(_.dataid)) += DataRow(
       dataid                 = 0L, // will be auto-generated 
-      datatype               = "semantic", 
+      datatype               = dataType, 
       datatopic              = dataTopic, 
       creationstatus         = "started", 
       creationerrordetail    = None,
@@ -59,7 +49,7 @@ abstract class Data extends Access with Execute with RecordException with Connec
       datadependedon         = None)
 
       
-    def executeCreator(func: => Option[CreateError]): Option[CreateError] = { // this form of prototype takes a function by name
+    def wrapRunCreator(func: => Option[CreateError]): Option[CreateError] = { // this form of prototype takes a function by name
       try { return func } 
         catch { 
           case anyException : Throwable =>
@@ -67,16 +57,16 @@ abstract class Data extends Access with Execute with RecordException with Connec
             return Some(CreateError("exception")) }
     } 
       
-    val creationError = executeCreator(func)
+    val creationError = wrapRunCreator(creator(dataID))
       
-    DataRecord.filter(_.dataid === dataid).update(DataRow( // alternative way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
-      dataid                 = dataid,
-      datatype               = "semantic", 
+    DataRecord.filter(_.dataid === dataID).update(DataRow( // alternative way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
+      dataid                 = dataID,
+      datatype               = dataType, 
       datatopic              = dataTopic, 
       creationstatus         = creationError match {
                                  case None => "success"
                                  case Some(error) => "failed"}, 
-      creationerrordetail    = creationError match { 
+      creationerrordetail    = creationError match { // for now redundant, but if CreationError evolves... need to convert to string like so
                                  case None => None
                                  case Some(error) => Some(error.toString)},
       creatorserver          = ownHostName,
@@ -91,8 +81,21 @@ abstract class Data extends Access with Execute with RecordException with Connec
     }
   } 
   
+  def ReadyState: ReadyState
+  
+  def ReadyState(SpecificRunID: Long): ReadyState
+  
+  def dataType: String
+  
+  def dataTopic: String
+  
+  def creator: Long => Option[CreateError]
+  
+  def access: Access
+  
+  def dependsOn: Seq[Data]
+  
   def resultWrapper(func: => Boolean): ReadyState = { // this form of prototype takes a function by name
-
     execute(func) match {
       case Some(bool) => bool match {
         case true  => Ready
@@ -100,16 +103,7 @@ abstract class Data extends Access with Execute with RecordException with Connec
       } case None  => NotReady
     } 
   } 
-   
-  def ReadyState: ReadyState
   
-  def ReadyState(SpecificRunID: Long): ReadyState
-  
-  def create: ReadyState
-  
-  def access: Access
-  
-  def dependsOn: Seq[Data]
 }
 
 abstract class DBdata(topic: String) extends Data with com.articlio.storage.Connection {
@@ -131,5 +125,16 @@ abstract class DBdata(topic: String) extends Data with com.articlio.storage.Conn
       case true => Ready
       case false => NotReady
     }
+  } 
+}
+
+
+trait Execute extends RecordException {
+  def execute[ExpectedType](func: => ExpectedType): Option[ExpectedType] = { // this form of prototype takes a function by name
+    try { return Some(func) } 
+      catch { 
+        case anyException : Throwable =>
+          recordException(anyException)
+          return None }
   } 
 }
