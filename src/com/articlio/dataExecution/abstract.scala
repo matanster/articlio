@@ -1,10 +1,11 @@
 package com.articlio.dataExecution
 
+import play.api.db.slick._
+import scala.slick.driver.MySQLDriver.simple._
+import scala.slick.jdbc.meta._
 import models.Tables._
 import models.Tables.{Data => DataRecord}
 import com.articlio.storage.Connection
-import scala.slick.driver.MySQLDriver.simple._
-import scala.slick.jdbc.meta._
 
 sealed abstract class ReadyState
 object Ready extends ReadyState 
@@ -24,19 +25,36 @@ trait RecordException {
 }
 
 abstract class Data extends Access with Execute with RecordException with Connection { 
+  
+  def dataType: String
+  
+  def dataTopic: String
+  
+  def creator: (Long, String) => Option[CreateError]
+      
+                                                                                                // TODO: need to switch to UTC time for production
+  def create: ReadyState = { 
 
-  /*
-   *  following function can be avoided, if the execution manager object will assume responsibility 
-   *  for safely running all 'create' methods of concrete classes, as makes sense.
-   */
-  def create: ReadyState = { // this form of prototype takes a function by name
-
-    def localNow = new java.sql.Timestamp(java.util.Calendar.getInstance.getTime.getTime) // this follows from http://alvinalexander.com/java/java-timestamp-example-current-time-now
-                                                                                          // TODO: need to switch to UTC time for production
-    val ownHostName = java.net.InetAddress.getLocalHost.getHostName
+    // gets the current server time  
+    def localNow = new java.sql.Timestamp(java.util.Calendar.getInstance.getTime.getTime) // follows from http://alvinalexander.com/java/java-timestamp-example-current-time-now
     
+    //
+    // tries a function, and collapses its exception into application type 
+    //
+    def safeRunCreator(func: => Option[CreateError]): Option[CreateError] = {             // this is function argument "by name passing" 
+        try { return func } 
+        catch { 
+        case anyException : Throwable =>
+        recordException(anyException)
+        return Some(CreateError("exception")) }
+    } 
+      
+    val ownHostName = java.net.InetAddress.getLocalHost.getHostName
     val startTime = localNow
-     
+
+    //
+    // register a new data run, and get its unique auto-ID from the RDBMS
+    //
     val dataID = DataRecord.returning(DataRecord.map(_.dataid)) += DataRow(
       dataid                 = 0L, // will be auto-generated 
       datatype               = dataType, 
@@ -48,18 +66,11 @@ abstract class Data extends Access with Execute with RecordException with Connec
       creatorserverendtime   = None,
       datadependedon         = None)
 
+    // now try this data's creation function    
+    val creationError = safeRunCreator(creator(dataID, dataTopic))
       
-    def wrapRunCreator(func: => Option[CreateError]): Option[CreateError] = { // this form of prototype takes a function by name
-      try { return func } 
-        catch { 
-          case anyException : Throwable =>
-            recordException(anyException)
-            return Some(CreateError("exception")) }
-    } 
-      
-    val creationError = wrapRunCreator(creator(dataID))
-      
-    DataRecord.filter(_.dataid === dataID).update(DataRow( // alternative way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
+    // now record the outcome - was the data successfully created by this run?
+    DataRecord.filter(_.dataid === dataID).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
       dataid                 = dataID,
       datatype               = dataType, 
       datatopic              = dataTopic, 
@@ -75,21 +86,28 @@ abstract class Data extends Access with Execute with RecordException with Connec
       datadependedon         = None)
     ) 
     
+    //
+    // return whether the data is now available or not
+    //
     creationError match {
       case None  => Ready
       case Some(error) => NotReady 
     }
   } 
   
-  def ReadyState: ReadyState
+  def ReadyState(suppliedRunID: Long): ReadyState = {
+    DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getName).filter(_.datatopic === dataTopic).list.nonEmpty match {
+      case true => Ready
+      case false => NotReady
+    }
+  } 
   
-  def ReadyState(SpecificRunID: Long): ReadyState
-  
-  def dataType: String
-  
-  def dataTopic: String
-  
-  def creator: Long => Option[CreateError]
+  def ReadyState(): ReadyState = {
+    DataRecord.filter(_.datatype === this.getClass.getName).filter(_.datatopic === dataTopic).list.nonEmpty match {
+      case true => Ready
+      case false => NotReady
+    }
+  } 
   
   def access: Access
   
@@ -97,28 +115,14 @@ abstract class Data extends Access with Execute with RecordException with Connec
   
 }
 
-abstract class DBdata(topic: String) extends Data with com.articlio.storage.Connection {
-  
-  import models.Tables.{Data => DataRecord}
-  import play.api.db.slick._
-  import scala.slick.driver.MySQLDriver.simple._
-  import scala.slick.jdbc.meta._
-  
-  def ReadyState(suppliedRunID: Long): ReadyState = {
-    DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getName).filter(_.datatopic === topic).list.nonEmpty match {
-      case true => Ready
-      case false => NotReady
-    }
-  } 
-  
-  def ReadyState(): ReadyState = {
-    DataRecord.filter(_.datatype === this.getClass.getName).filter(_.datatopic === topic).list.nonEmpty match {
-      case true => Ready
-      case false => NotReady
-    }
-  } 
-}
 
+
+
+/*****************************
+ *                              
+ *  potentially dead code              
+ * 
+ */
 
 trait Execute extends RecordException {
   def execute[ExpectedType](func: => ExpectedType): Option[ExpectedType] = { // this form of prototype takes a function by name
@@ -130,7 +134,7 @@ trait Execute extends RecordException {
   } 
 }
 
-trait oldResultWrapper {
+trait oldResultWrapper extends Execute {
   def resultWrapper(func: => Boolean): ReadyState = { // this form of prototype takes a function by name
     execute(func) match {
       case Some(bool) => bool match {

@@ -15,14 +15,15 @@ import models.Tables.{Data => DataRecord}
 
 case class SemanticAccess() extends Access
 
-case class Semantic(articleName: String, pdbFile: String) extends DBdata(articleName) with Connection
+case class Semantic(articleName: String, pdbFile: String) extends Data with Connection
 {
+  val dataType = "semantic"
+  val dataTopic = articleName
+
   val dependsOn = Seq(JATS(articleName), 
                       PDB(pdbFile))
   
-  val creator = ldb(pdbFile).go(_:Long, articleName, new com.articlio.input.JATS(s"${dependsOn.head.access.path}/$articleName.xml"))
-  val dataType = "semantic"
-  val dataTopic = articleName
+  val creator = ldb(pdbFile).go(_ :Long, _ :String, new com.articlio.input.JATS(s"${dependsOn.head.access.path}/$articleName.xml"))
   
   val access = SemanticAccess() // no refined access details for now
 }

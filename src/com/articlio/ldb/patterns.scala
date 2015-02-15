@@ -215,46 +215,6 @@ case class ldb(csvFile: String) extends Connection {
   //val ahoCorasick = new Array[AhoCorasickActor](concurrency)
                                                                        
   val SPACE = " "
-                                   
-  def goWrapper(articleName: String, document: JATS) : Boolean = {
-    
-    def localNow = new java.sql.Timestamp(java.util.Calendar.getInstance.getTime.getTime) // this follows from http://alvinalexander.com/java/java-timestamp-example-current-time-now
-                                                                                      // TODO: need to switch to UTC time for production
-    val ownHostName = java.net.InetAddress.getLocalHost.getHostName
-    
-    val startTime = localNow
-     
-    val dataid = DataRecord.returning(DataRecord.map(_.dataid)) += DataRow(
-      dataid                 = 0L, // will be auto-generated 
-      datatype               = "semantic", 
-      datatopic              = articleName, 
-      creationstatus         = "started", 
-      creationerrordetail    = None,
-      creatorserver          = ownHostName,
-      creatorserverstarttime = Some(startTime),
-      creatorserverendtime   = None,
-      datadependedon         = None)
-
-    
-    val success = go(dataid, articleName, document) match {
-      case None  => "successfully created"
-      case Some(error) => "not successfully created"
-    }
-    
-    DataRecord.filter(_.dataid === dataid).update(DataRow( // alternative way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
-      dataid                 = dataid,
-      datatype               = "semantic", 
-      datatopic              = articleName, 
-      creationstatus         = "started", 
-      creationerrordetail    = None,
-      creatorserver          = ownHostName,
-      creatorserverstarttime = Some(startTime),
-      creatorserverendtime   = Some(localNow),
-      datadependedon         = None)
-    ) 
-        
-    true 
-  }
   
   import com.articlio.dataExecution.CreateError 
   def go (runID: Long, articleName: String, document: JATS) : Option[CreateError] = {
