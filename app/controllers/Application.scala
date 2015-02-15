@@ -35,7 +35,7 @@ object Application extends Controller with Tables {
     
       val executionManager = new DataExecutionManager
       
-      executionManager.getDataAccess(Semantic(articleName, pdb, runID)) match {
+      executionManager.getDataAccess(Semantic(articleName, pdb)) match {
         case None =>
           Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
         case dataAccessDetail : Some[Access] => { 

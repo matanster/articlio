@@ -6,7 +6,6 @@ import com.articlio.util.text._
 import com.articlio.LanguageModel._
 import com.articlio.SelfMonitor
 import com.articlio.semantic.AppActorSystem
-import com.articlio.storage
 //import com.articlio.storage.Match
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -20,7 +19,11 @@ import akka.routing.BalancingPool
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
-import models.Tables
+import models.Tables._
+import models.Tables.{Data => DataRecord}
+import com.articlio.storage.Connection
+import scala.slick.driver.MySQLDriver.simple._
+import scala.slick.jdbc.meta._
 
 abstract class PlugType
 case object    RefAppendable  extends PlugType // self reference is potentially *appendable* to target phrase
@@ -55,7 +58,7 @@ case class ExpandedRule (rule: SimpleRule) extends Rule {
 }
 
 
-case class ldb(csvFile: String) extends Tables {
+case class ldb(csvFile: String) extends Connection {
 
   val globalLogger = new Logger("global-ldb")
   val overallLogger = new Logger("overall")
@@ -214,7 +217,26 @@ case class ldb(csvFile: String) extends Tables {
   val SPACE = " "
                                    
   def goWrapper(articleName: String, JATSdirectoryPath: String) : Boolean = {
+    
+    def localNow = new java.sql.Timestamp(java.util.Calendar.getInstance.getTime.getTime) // this follows from http://alvinalexander.com/java/java-timestamp-example-current-time-now
+                                                                                      // TODO: need to switch to UTC time for production
+    val startTime = localNow
+    
     go("SingleFileRun" + "-" + (new runID).id, new JATS(s"$JATSdirectoryPath/$articleName.xml"))
+    
+    //def += (data: MatchesRow) = Matches += data
+
+    DataRecord += DataRow(
+        0L, 
+        "semantic", 
+        articleName, 
+        "success", 
+        None,
+        java.net.InetAddress.getLocalHost.getHostName,
+        startTime,
+        localNow,
+        None)
+    
     true 
   }
   
@@ -493,7 +515,7 @@ case class ldb(csvFile: String) extends Tables {
       
       new Descriptive(sentenceMatchCount, "Fragments match count per sentence").all
 
-      // AppActorSystem.outDB ! rdbmsData.result
+      AppActorSystem.outDB ! rdbmsData.result
       rdbmsData.result    
     }    
     //return s"Done processing ${document.name}"

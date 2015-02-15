@@ -13,7 +13,7 @@ GET  /                                      controllers.Application.index
 GET  /assets/*file                          controllers.Assets.at(path="/public", file)
 
 # Show article extract
-GET  /showExtract/:articleName              controllers.Application.showExtract(articleName: String, runID: Option[String])
+GET  /showExtract/:articleName              controllers.Application.showExtract(articleName: String, pdb: String, runID: Option[Long])
 
 # Show article extract
 GET  /showOriginal/:article                 controllers.Application.showOriginal(article: String)

@@ -11,11 +11,11 @@ import com.articlio.storage.{Connection}
 import play.api.db.slick._
 import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
-import models.Tables.{Data => PersistedData}
+import models.Tables.{Data => DataRecord}
 
 case class SemanticAccess() extends Access
 
-case class Semantic(articleName: String, pdbFile: String, runID: Long) extends Data with Connection with Tables
+case class Semantic(articleName: String, pdbFile: String) extends Data with Connection with Tables
 {
   val dependsOn = Seq(JATS(articleName), 
                       PDB(pdbFile))
@@ -26,18 +26,17 @@ case class Semantic(articleName: String, pdbFile: String, runID: Long) extends D
   }
   
   def ReadyState(suppliedRunID: Long): ReadyState = {
-    PersistedData.filter(_.dataid === suppliedRunID).filter(_.datatopic === s"${articleName}.xml").list.nonEmpty match {
+    DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getName).filter(_.datatopic === s"${articleName}.xml").list.nonEmpty match {
       case true => Ready
       case false => NotReady
     }
-    
-    /*
-    println(s"result matches count for $runID: ${Matches.filter(_.runid === runID).filter(_.docname === s"${articleName}.xml").list.size}")
-    Matches.filter(_.runid === runID).filter(_.docname === s"${articleName}.xml").list.nonEmpty match {
+  } 
+  
+  def ReadyState(): ReadyState = {
+    DataRecord.filter(_.datatype === this.getClass.getName).filter(_.datatopic === s"${articleName}.xml").list.nonEmpty match {
       case true => Ready
       case false => NotReady
     }
-    */
   } 
   
   val access = SemanticAccess() // no refined access details for now

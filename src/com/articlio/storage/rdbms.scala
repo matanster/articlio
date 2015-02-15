@@ -55,7 +55,8 @@ trait Connection {
   implicit val session: Session = db.createSession
 }
 
-class OutDB extends Actor with Connection with models.Tables {
+import models.Tables._
+class OutDB extends Actor with Connection {
 
   // Table write functions
   private def write (data: Seq[MatchesRow]) = {

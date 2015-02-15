@@ -27,7 +27,7 @@ trait Execute extends RecordException {
   } 
 }
 
-abstract class Data(suppliedRunID: Option[Integer] = None) extends Access with Execute with RecordException { // TODO: replace prototype types with database derived columns from Slick
+abstract class Data extends Access with Execute with RecordException { // TODO: replace prototype types with database derived columns from Slick
   
   /*
    *  following function can be avoided, if the execution manager object will assume responsibility 
@@ -44,6 +44,8 @@ abstract class Data(suppliedRunID: Option[Integer] = None) extends Access with E
   } 
    
   def ReadyState: ReadyState
+  
+  def ReadyState(SpecificRunID: Long): ReadyState
   
   def create: ReadyState
   
