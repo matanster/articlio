@@ -95,15 +95,6 @@ abstract class Data extends Access with Execute with RecordException with Connec
   
   def dependsOn: Seq[Data]
   
-  def resultWrapper(func: => Boolean): ReadyState = { // this form of prototype takes a function by name
-    execute(func) match {
-      case Some(bool) => bool match {
-        case true  => Ready
-        case false => NotReady
-      } case None  => NotReady
-    } 
-  } 
-  
 }
 
 abstract class DBdata(topic: String) extends Data with com.articlio.storage.Connection {
@@ -136,5 +127,16 @@ trait Execute extends RecordException {
         case anyException : Throwable =>
           recordException(anyException)
           return None }
+  } 
+}
+
+trait oldResultWrapper {
+  def resultWrapper(func: => Boolean): ReadyState = { // this form of prototype takes a function by name
+    execute(func) match {
+      case Some(bool) => bool match {
+        case true  => Ready
+        case false => NotReady
+      } case None  => NotReady
+    } 
   } 
 }
