@@ -216,57 +216,67 @@ case class ldb(csvFile: String) extends Connection {
                                                                        
   val SPACE = " "
                                    
-  def goWrapper(articleName: String, JATSdirectoryPath: String) : Boolean = {
+  def goWrapper(articleName: String, document: JATS) : Boolean = {
     
     def localNow = new java.sql.Timestamp(java.util.Calendar.getInstance.getTime.getTime) // this follows from http://alvinalexander.com/java/java-timestamp-example-current-time-now
                                                                                       // TODO: need to switch to UTC time for production
+    val ownHostName = java.net.InetAddress.getLocalHost.getHostName
+    
     val startTime = localNow
-    
-    go("SingleFileRun" + "-" + (new runID).id, new JATS(s"$JATSdirectoryPath/$articleName.xml"))
-    
-    //def += (data: MatchesRow) = Matches += data
+     
+    val dataid = DataRecord.returning(DataRecord.map(_.dataid)) += DataRow(
+      dataid                 = 0L, // will be auto-generated 
+      datatype               = "semantic", 
+      datatopic              = articleName, 
+      creationstatus         = "started", 
+      creationerrordetail    = None,
+      creatorserver          = ownHostName,
+      creatorserverstarttime = Some(startTime),
+      creatorserverendtime   = None,
+      datadependedon         = None)
 
-    DataRecord += DataRow(
-        0L, 
-        "semantic", 
-        articleName, 
-        "success", 
-        None,
-        java.net.InetAddress.getLocalHost.getHostName,
-        startTime,
-        localNow,
-        None)
     
+    val success = go(dataid, articleName, document) match {
+      case None  => "successfully created"
+      case Some(error) => "not successfully created"
+    }
+    
+    DataRecord.filter(_.dataid === dataid).update(DataRow( // alternative way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
+      dataid                 = dataid,
+      datatype               = "semantic", 
+      datatopic              = articleName, 
+      creationstatus         = "started", 
+      creationerrordetail    = None,
+      creatorserver          = ownHostName,
+      creatorserverstarttime = Some(startTime),
+      creatorserverendtime   = Some(localNow),
+      datadependedon         = None)
+    ) 
+        
     true 
   }
   
-  def go (runID: String, document: JATS) : Boolean = {
+  import com.articlio.dataExecution.CreateError 
+  def go (runID: Long, articleName: String, document: JATS) : Option[CreateError] = {
 
     val logger = new Logger(document.name)
     
     //
     // get data
     //
-    //val sections : Seq[JATSsection] = new JATS("elife-articles(XML)/elife00425cleaned-but-not-styled.xml").sections // elife04395, elife-articles(XML)/elife00425styled.xml
-    //val document = new JATS("/home/matan/ingi/repos/fileIterator/data/toJATS/imagenet", "pdf-converted") // elife04395, elife-articles(XML)/elife00425styled.xml
-    //val document = new JATS("/home/matan/ingi/repos/fileIterator/data/prep/elife03399.xml")
     val sections : Seq[JATSsection] = document.sections // elife04395, elife-articles(XML)/elife00425styled.xml
     //if (sections.isEmpty) return s"${document.name} appears to have no sections and was not processed"  
-    if (sections.isEmpty) return true // Seq.empty[Matches]  
+    if (sections.isEmpty) return Some(CreateError("no sections detected in JATS input - cannot extract")) // Seq.empty[Matches]  
     
-    //
-    // separate into util file
-    //
-
-    val specialCaseWords = Seq(" vs.", " al.", " cf.", " st." ," Fig.", " FIG.", "pp.")
-
-    implicit class MyStringOps(val s: String) {
+    implicit class MyStringOps(val s: String) { // TODO: separate into util package object or something 
       def endsWithAny(any: Seq[String]) : Boolean = {
         for (word <- any)
           if (s.endsWith(SPACE + word)) return true
         return false
       }
     }
+    
+    val specialCaseWords = Seq(" vs.", " al.", " cf.", " st." ," Fig.", " FIG.", "pp.")
     
     def sentenceSplitRecursive (text: String) : Seq[String] = {
 
@@ -520,14 +530,11 @@ case class ldb(csvFile: String) extends Connection {
     }    
     //return s"Done processing ${document.name}"
     
-    //
-    // process sentence by sentence
-    //
-
     //AppActorSystem.timelog ! "matching"
     //AppActorSystem.timelog ! "matching"
     processSentences(sentences)
-    true    
+    
+    None // if we got here - return no error    
   }                                                                             
                                                                              
 }

@@ -22,7 +22,7 @@ case class Semantic(articleName: String, pdbFile: String) extends DBdata(article
   
   def create : ReadyState = {
     val pdb = ldb(pdbFile)
-    resultWrapper(pdb.goWrapper(articleName, dependsOn.head.access.path))
+    resultWrapper(pdb.goWrapper(articleName, new com.articlio.input.JATS(s"${dependsOn.head.access.path}/$articleName.xml")))
   }
   
   val access = SemanticAccess() // no refined access details for now
