@@ -11,13 +11,13 @@ import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 import scala.slick.util.CloseableIterator
 import com.articlio.semantic.AppActorSystem
-import models.Tables
+import models.Tables._
 
 /*
  *  TODO: parameterize and connect from http routes..
  */
 
-object Indels extends Connection with Tables {
+object Indels extends Connection {
 
   val changeAnalyticsLogger= new com.articlio.util.Logger("global-change-analytics")
   

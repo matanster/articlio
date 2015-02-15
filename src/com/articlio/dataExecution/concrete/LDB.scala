@@ -16,6 +16,8 @@ case class PDB(csvFileName: String) extends Data
       case false => NotReady
     }
   } 
+
+  def ReadyState(suppliedRunID: Long) = ReadyState
   
   def create : ReadyState = Ready // there's no real creation for an ldb (for now)
 

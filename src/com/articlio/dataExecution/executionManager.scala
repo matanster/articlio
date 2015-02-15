@@ -34,7 +34,7 @@ class DataExecutionManager extends Execute {
     }
   }
   
-  def getDataAccess(data: Data, suppliedRunID: Option[Long] = None): Option[Access] = {
+  def getDataAccess(data: Data, suppliedRunID: Long): Option[Access] = {
     
     data.ReadyState(suppliedRunID) match {
       

@@ -1,6 +1,6 @@
 package controllers
 
-import models._
+import models.Tables._
 import play.api._
 import play.api.mvc._
 import play.api.db.slick._
@@ -10,7 +10,7 @@ import play.api.http.MimeTypes
 import com.articlio.dataExecution._
 import com.articlio.dataExecution.concrete._
     
-object Ldb extends Controller with Tables {
+object Ldb extends Controller {
 
   import com.articlio.ldb
   import com.articlio.util.runID
@@ -19,11 +19,10 @@ object Ldb extends Controller with Tables {
   
   val pdb = ldb.ldb("Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
   
-  def singlePdfSourced(articleName: String, pdb: 
-                       String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", 
-                       runID: Option[Long]) = Action { implicit request =>
+  def singlePdfSourced(articleName: String, 
+                       pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv") = Action { implicit request =>
     val executionManager = new DataExecutionManager
-    executionManager.getDataAccess(Semantic(articleName, pdb, runID.get)) match {
+    executionManager.getDataAccess(Semantic(articleName, pdb)) match {
       case None =>
         Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
       case dataAccessDetail : Some[Access] =>  
@@ -31,9 +30,12 @@ object Ldb extends Controller with Tables {
     }
   }
 
-  def singleeLifeSourced(articleName: String) = Action { implicit request =>
-    pdb.go("SingleFileRun" + "-" + (new runID).id, new JATS(s"${config.eLife}/articleName"))
-    Ok("Done processing file")
+  def singleeLifeSourced(articleName: String,
+                         pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv") = Action { implicit request =>
+    // TODO: fix or merge
+    //pdb.go("SingleFileRun" + "-" + (new runID).id, new JATS(s"${config.eLife}/articleName"))
+    //Ok("Done processing file")
+    Ok("Not re-implemented")
   }
 
   import com.articlio.semantic.Bulk

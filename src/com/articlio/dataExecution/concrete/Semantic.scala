@@ -15,7 +15,7 @@ import models.Tables.{Data => DataRecord}
 
 case class SemanticAccess() extends Access
 
-case class Semantic(articleName: String, pdbFile: String) extends Data with Connection with Tables
+case class Semantic(articleName: String, pdbFile: String) extends DBdata(articleName) with Connection
 {
   val dependsOn = Seq(JATS(articleName), 
                       PDB(pdbFile))
@@ -24,20 +24,6 @@ case class Semantic(articleName: String, pdbFile: String) extends Data with Conn
     val pdb = ldb(pdbFile)
     resultWrapper(pdb.goWrapper(articleName, dependsOn.head.access.path))
   }
-  
-  def ReadyState(suppliedRunID: Long): ReadyState = {
-    DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getName).filter(_.datatopic === s"${articleName}.xml").list.nonEmpty match {
-      case true => Ready
-      case false => NotReady
-    }
-  } 
-  
-  def ReadyState(): ReadyState = {
-    DataRecord.filter(_.datatype === this.getClass.getName).filter(_.datatopic === s"${articleName}.xml").list.nonEmpty match {
-      case true => Ready
-      case false => NotReady
-    }
-  } 
   
   val access = SemanticAccess() // no refined access details for now
 }

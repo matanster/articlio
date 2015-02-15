@@ -1,6 +1,6 @@
 package controllers
 
-import models._
+import models.Tables._
 import play.api._
 import play.api.mvc._
 import play.api.db.slick._
@@ -9,7 +9,7 @@ import scala.slick.jdbc.meta._
 import play.api.http.MimeTypes
 //import play.api.libs.json._
 
-object Application extends Controller with Tables {
+object Application extends Controller {
 
   def playground = Action { implicit request =>
     Ok(s"nothing here...")  
@@ -43,7 +43,7 @@ object Application extends Controller with Tables {
           val runIDs = Matches.map(m => m.runid).list.distinct.sorted(Ordering[Long].reverse)
           val unlifted = content.asInstanceOf[List[models.Tables.MatchesRow]]
           //println(unlifted.head.runid)
-          Ok(views.html.showExtract(runIDs, runID, articleName, unlifted))
+          Ok(views.html.showExtract(runIDs, runID, pdb, articleName, unlifted))
         }
       }
     }
@@ -59,6 +59,8 @@ object Application extends Controller with Tables {
             val latestRunID = runIDs.head
             foo(articleName, latestRunID)
           }
+          
+          case false => Ok("not yet implemented")
           //case false =>
             //val newRunID = (new runID).id
             //foo(articleName, newRunID)

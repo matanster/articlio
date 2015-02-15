@@ -2,60 +2,23 @@ package com.articlio.storage
 import akka.actor.Actor
 
 //import language.experimental.macros
+import models.Tables._
 import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
-//import scala.slick.lifted._ // more clumsy to debug/use than "direct/simple"
-//import scala.slick.direct._ // http://slick.typesafe.com/doc/2.1.0/direct-embedding.html
-
-// direct SQL access imports
-//import scala.slick.driver.JdbcDriver.backend.Database
-//import Database.dynamicSession
-//import scala.slick.jdbc.{GetResult, StaticQuery}
-
-/*
- *
- * Note: to reuse these definitions for database access on the REPL, use e.g. 
- * 
- * import...
- * object a extends Match with Connection { println(matches.map(m => m.runID).list.distinct.sorted(Ordering[String].reverse).mkString("\n")) }; a;
- * 
- */
-
-/* trait Match {
-  type Match = (String, String, String, String, String, String, Boolean, String)
-
-  // slick class binding definition
-  class Matches(tag: Tag) extends Table[Match](tag, "Matches") {
-    def docName = column[String]("docName")
-    def runID = column[String]("runID")
-    def sentence = column[String]("sentence", O.Length(20000,varying=true) /*, O.DBType("binary") */)
-    def matchPattern = column[String]("matchPattern")
-    def locationActual = column[String]("locationActual")
-    def locationTest = column[String]("locationTest")    
-    def isFinalMatch = column[Boolean]("fullMatch")
-    def matchIndication = column[String]("matchIndication")
-    def * = (runID, docName, sentence, matchPattern, locationTest, locationActual, isFinalMatch, matchIndication)
-  }
-  
-  // the table handle
-  val matches = TableQuery[Matches]
-}
-*/
 
 trait Connection {
   // connection parameters
-  val host     = "localhost"
-  val port     = "3306"
-  val database = "articlio"
-  val user     = "articlio"
+  private val host     = "localhost"
+  private val port     = "3306"
+  private val database = "articlio"
+  private val user     = "articlio"
 
   // acquire single database connection used as implicit throughout this object
   println("starting output DB connection...")
-  val db = Database.forURL(s"jdbc:mysql://$host:$port/$database", user, driver = "com.mysql.jdbc.Driver")
+  private val db = Database.forURL(s"jdbc:mysql://$host:$port/$database", user, driver = "com.mysql.jdbc.Driver")
   implicit val session: Session = db.createSession
 }
 
-import models.Tables._
 class OutDB extends Actor with Connection {
 
   // Table write functions
@@ -119,7 +82,7 @@ trait googleSpreadsheetCreator {
   }
 }
 
-object createCSV extends Connection with models.Tables with googleSpreadsheetCreator {
+object createCSV extends Connection with googleSpreadsheetCreator {
   import com.github.tototoshi.csv._ // only good for "small" csv files; https://github.com/tototoshi/scala-csv/issues/11
   def go(runID: Long = Matches.map(m => m.runid).list.distinct.sorted(Ordering[Long].reverse).head) = {
     val outFile = new java.io.File("out.csv")
@@ -135,8 +98,7 @@ object createCSV extends Connection with models.Tables with googleSpreadsheetCre
   }
 }
 
-import models.Tables
-object createAnalyticSummary extends Connection with models.Tables with googleSpreadsheetCreator {
+object createAnalyticSummary extends Connection with googleSpreadsheetCreator {
   import com.github.tototoshi.csv._ // only good for "small" csv files; https://github.com/tototoshi/scala-csv/issues/11
   def go(runID: Long = Matches.map(m => m.runid).list.distinct.sorted(Ordering[Long].reverse).head) = {
     val outFile = new java.io.File("outAnalytic.csv")

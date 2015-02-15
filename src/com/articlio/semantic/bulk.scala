@@ -4,23 +4,43 @@ import com.articlio.util.runID
 import com.articlio.input.JATS
 import com.articlio.ldb
 import com.articlio.config
+import com.articlio.dataExecution._
+import com.articlio.dataExecution.concrete.Semantic
 
 class Bulk(runID: String) { 
   
   //ldb.ldb.init
   def processAll(runID: String, sourceDirName: String, treatAs: Option[String] = None) {
+    
     val files = new File(sourceDirName).listFiles.filter(file => (file.isFile)) // && file.getName.endsWith(".xml")))
+    val executionManager = new DataExecutionManager
+    
+    def makeOrVerify(articelName: String, pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"): Boolean = {
+        executionManager.getDataAccess(Semantic(articelName, pdb)) match {
+        case None =>
+          //println("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
+          false
+        case dataAccessDetail : Some[Access] =>  
+          //println("Done processing file")
+          true
+        }
+    }
+    
     
     //AppActorSystem.outDB ! "startToBuffer"
     files.par.map(file => {
       val fileName = file.getName  
       println("about to process file " + fileName)
       treatAs match {
-        case Some(s) => AppActorSystem.outDB ! ldb.ldb.go(runID, new JATS(s"$sourceDirName/$fileName", s))
-        case None => AppActorSystem.outDB ! ldb.ldb.go(runID, new JATS(s"$sourceDirName/$fileName"))
+        case Some(s) => 
+          //AppActorSystem.outDB ! ldb.ldb.go(runID, new JATS(s"$sourceDirName/$fileName", s))
+          makeOrVerify(fileName) // TODO: run for elife vs. pdf sourced
+        case None => 
+          //AppActorSystem.outDB ! ldb.ldb.go(runID, new JATS(s"$sourceDirName/$fileName"))
+          makeOrVerify(fileName) // TODO: run for elife vs. pdf sourced
       }
     })
-    AppActorSystem.outDB ! "flushToDB"
+    //AppActorSystem.outDB ! "flushToDB"
   }
 
   def allPDF = processAll(runID, config.pdf, Some("pdf-converted"))

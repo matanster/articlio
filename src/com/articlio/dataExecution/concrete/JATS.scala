@@ -15,7 +15,9 @@ case class JATS(articleName: String) extends Data
       case true => Ready
       case false => NotReady
     }
-  } 
+  }
+  
+  def ReadyState(suppliedRunID: Long) = ReadyState
   
   def create : ReadyState = {
     resultWrapper(new JATScreateSingle(s"$articleName").go)

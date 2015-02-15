@@ -54,3 +54,24 @@ abstract class Data extends Access with Execute with RecordException { // TODO: 
   def dependsOn: Seq[Data]
 }
 
+abstract class DBdata(topic: String) extends Data with com.articlio.storage.Connection {
+  
+  import models.Tables.{Data => DataRecord}
+  import play.api.db.slick._
+  import scala.slick.driver.MySQLDriver.simple._
+  import scala.slick.jdbc.meta._
+  
+  def ReadyState(suppliedRunID: Long): ReadyState = {
+    DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getName).filter(_.datatopic === topic).list.nonEmpty match {
+      case true => Ready
+      case false => NotReady
+    }
+  } 
+  
+  def ReadyState(): ReadyState = {
+    DataRecord.filter(_.datatype === this.getClass.getName).filter(_.datatopic === topic).list.nonEmpty match {
+      case true => Ready
+      case false => NotReady
+    }
+  } 
+}
