@@ -21,8 +21,8 @@ object Indels extends Connection {
 
   val changeAnalyticsLogger= new com.articlio.util.Logger("global-change-analytics")
   
-  val newResults = Matches.filter(_.runid === 111L).sortBy(_.sentence).iterator
-  val oldResults = Matches.filter(_.runid === 222L).iterator
+  val newResults = Matches.filter(_.dataid === 111L).sortBy(_.sentence).iterator
+  val oldResults = Matches.filter(_.dataid === 222L).iterator
   
   val dropped = Seq.newBuilder[MatchesRow]
   val added = Seq.newBuilder[MatchesRow]

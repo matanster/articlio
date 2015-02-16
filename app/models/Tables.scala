@@ -265,7 +265,7 @@ trait Tables {
   lazy val Headers = new TableQuery(tag => new Headers(tag))
   
   /** Entity class storing rows of table Matches
-   *  @param runid Database column runID DBType(BIGINT)
+   *  @param dataid Database column dataID DBType(BIGINT)
    *  @param docname Database column docName DBType(VARCHAR), Length(254,true)
    *  @param sentence Database column sentence DBType(VARCHAR), Length(20000,true)
    *  @param matchpattern Database column matchPattern DBType(VARCHAR), Length(254,true)
@@ -273,7 +273,7 @@ trait Tables {
    *  @param locationactual Database column locationActual DBType(VARCHAR), Length(254,true)
    *  @param fullmatch Database column fullMatch DBType(BIT)
    *  @param matchindication Database column matchIndication DBType(VARCHAR), Length(254,true) */
-  case class MatchesRow(runid: Long, docname: String, sentence: String, matchpattern: String, locationtest: String, locationactual: String, fullmatch: Boolean, matchindication: String)
+  case class MatchesRow(dataid: Long, docname: String, sentence: String, matchpattern: String, locationtest: String, locationactual: String, fullmatch: Boolean, matchindication: String)
   /** GetResult implicit for fetching MatchesRow objects using plain SQL queries */
   implicit def GetResultMatchesRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Boolean]): GR[MatchesRow] = GR{
     prs => import prs._
@@ -281,12 +281,12 @@ trait Tables {
   }
   /** Table description of table Matches. Objects of this class serve as prototypes for rows in queries. */
   class Matches(_tableTag: Tag) extends Table[MatchesRow](_tableTag, "Matches") {
-    def * = (runid, docname, sentence, matchpattern, locationtest, locationactual, fullmatch, matchindication) <> (MatchesRow.tupled, MatchesRow.unapply)
+    def * = (dataid, docname, sentence, matchpattern, locationtest, locationactual, fullmatch, matchindication) <> (MatchesRow.tupled, MatchesRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (runid.?, docname.?, sentence.?, matchpattern.?, locationtest.?, locationactual.?, fullmatch.?, matchindication.?).shaped.<>({r=>import r._; _1.map(_=> MatchesRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (dataid.?, docname.?, sentence.?, matchpattern.?, locationtest.?, locationactual.?, fullmatch.?, matchindication.?).shaped.<>({r=>import r._; _1.map(_=> MatchesRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get, _8.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
     
-    /** Database column runID DBType(BIGINT) */
-    val runid: Column[Long] = column[Long]("runID")
+    /** Database column dataID DBType(BIGINT) */
+    val dataid: Column[Long] = column[Long]("dataID")
     /** Database column docName DBType(VARCHAR), Length(254,true) */
     val docname: Column[String] = column[String]("docName", O.Length(254,varying=true))
     /** Database column sentence DBType(VARCHAR), Length(20000,true) */

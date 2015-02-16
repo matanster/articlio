@@ -7,7 +7,7 @@ object Tables extends {
 
 /** Slick data model trait for extension, choice of backend or usage in the cake pattern. (Make sure to initialize this late.) */
 trait Tables {
-  val profile: scala.slick.driver.MySQLDriver
+  val profile: scala.slick.driver.JdbcProfile
   import profile.simple._
   import scala.slick.model.ForeignKeyAction
   // NOTE: GetResult mappers for plain SQL are only generated for tables where Slick knows how to map the types of all columns.
@@ -99,20 +99,20 @@ trait Tables {
    *  @param creationstatus Database column creationStatus DBType(VARCHAR), Length(45,true)
    *  @param creationerrordetail Database column creationErrorDetail DBType(VARCHAR), Length(10000,true), Default(None)
    *  @param creatorserver Database column creatorServer DBType(VARCHAR), Length(45,true)
-   *  @param creatorserverstarttime Database column creatorServerStartTime DBType(TIMESTAMP)
-   *  @param creatorserverendtime Database column creatorServerEndTime DBType(TIMESTAMP)
+   *  @param creatorserverstarttime Database column creatorserverstarttime DBType(TIMESTAMP), Default(None)
+   *  @param creatorserverendtime Database column creatorserverendtime DBType(TIMESTAMP), Default(None)
    *  @param datadependedon Database column dataDependedOn DBType(BIGINT), Default(None) */
-  case class DataRow(dataid: Long, datatype: String, datatopic: String, creationstatus: String, creationerrordetail: Option[String] = None, creatorserver: String, creatorserverstarttime: java.sql.Timestamp, creatorserverendtime: java.sql.Timestamp, datadependedon: Option[Long] = None)
+  case class DataRow(dataid: Long, datatype: String, datatopic: String, creationstatus: String, creationerrordetail: Option[String] = None, creatorserver: String, creatorserverstarttime: Option[java.sql.Timestamp] = None, creatorserverendtime: Option[java.sql.Timestamp] = None, datadependedon: Option[Long] = None)
   /** GetResult implicit for fetching DataRow objects using plain SQL queries */
-  implicit def GetResultDataRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Option[String]], e3: GR[java.sql.Timestamp], e4: GR[Option[Long]]): GR[DataRow] = GR{
+  implicit def GetResultDataRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Option[String]], e3: GR[Option[java.sql.Timestamp]], e4: GR[Option[Long]]): GR[DataRow] = GR{
     prs => import prs._
-    DataRow.tupled((<<[Long], <<[String], <<[String], <<[String], <<?[String], <<[String], <<[java.sql.Timestamp], <<[java.sql.Timestamp], <<?[Long]))
+    DataRow.tupled((<<[Long], <<[String], <<[String], <<[String], <<?[String], <<[String], <<?[java.sql.Timestamp], <<?[java.sql.Timestamp], <<?[Long]))
   }
   /** Table description of table Data. Objects of this class serve as prototypes for rows in queries. */
   class Data(_tableTag: Tag) extends Table[DataRow](_tableTag, "Data") {
     def * = (dataid, datatype, datatopic, creationstatus, creationerrordetail, creatorserver, creatorserverstarttime, creatorserverendtime, datadependedon) <> (DataRow.tupled, DataRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (dataid.?, datatype.?, datatopic.?, creationstatus.?, creationerrordetail, creatorserver.?, creatorserverstarttime.?, creatorserverendtime.?, datadependedon).shaped.<>({r=>import r._; _1.map(_=> DataRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7.get, _8.get, _9)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (dataid.?, datatype.?, datatopic.?, creationstatus.?, creationerrordetail, creatorserver.?, creatorserverstarttime, creatorserverendtime, datadependedon).shaped.<>({r=>import r._; _1.map(_=> DataRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7, _8, _9)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
     
     /** Database column dataID DBType(BIGINT), AutoInc, PrimaryKey */
     val dataid: Column[Long] = column[Long]("dataID", O.AutoInc, O.PrimaryKey)
@@ -126,10 +126,10 @@ trait Tables {
     val creationerrordetail: Column[Option[String]] = column[Option[String]]("creationErrorDetail", O.Length(10000,varying=true), O.Default(None))
     /** Database column creatorServer DBType(VARCHAR), Length(45,true) */
     val creatorserver: Column[String] = column[String]("creatorServer", O.Length(45,varying=true))
-    /** Database column creatorServerStartTime DBType(TIMESTAMP) */
-    val creatorserverstarttime: Column[java.sql.Timestamp] = column[java.sql.Timestamp]("creatorServerStartTime")
-    /** Database column creatorServerEndTime DBType(TIMESTAMP) */
-    val creatorserverendtime: Column[java.sql.Timestamp] = column[java.sql.Timestamp]("creatorServerEndTime")
+    /** Database column creatorserverstarttime DBType(TIMESTAMP), Default(None) */
+    val creatorserverstarttime: Column[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("creatorserverstarttime", O.Default(None))
+    /** Database column creatorserverendtime DBType(TIMESTAMP), Default(None) */
+    val creatorserverendtime: Column[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("creatorserverendtime", O.Default(None))
     /** Database column dataDependedOn DBType(BIGINT), Default(None) */
     val datadependedon: Column[Option[Long]] = column[Option[Long]]("dataDependedOn", O.Default(None))
   }

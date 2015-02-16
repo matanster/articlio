@@ -304,7 +304,7 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
         }
           
       	rdbmsData ++= 
-          tentativeMatches.filter(_.selfishRef).map(m => (runID,
+          tentativeMatches.filter(_.selfishRef).map(m => MatchesRow(runID,
                             document.name, 
                             m.locatedText.text, 
                   				  m.pattern,
@@ -314,7 +314,7 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
                   				  },
                   				  m.locatedText.section,
                   				  m.matchesLocation,
-                  				  m.indication).asInstanceOf[MatchesRow])
+                  				  m.indication))
         //println(rdbmsData)
 	           
         //val LocationFiltered = possiblePatternMatches.result.filter(patternMatched => patternMatched.locationProperty.isDefined)

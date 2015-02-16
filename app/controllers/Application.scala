@@ -21,7 +21,7 @@ object Application extends Controller {
  
   def showExtract(articleName: String, 
                   pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", 
-                  runID: Option[Long]) = DBAction { implicit request =>
+                  dataID: Option[Long]) = DBAction { implicit request =>
 
     import com.articlio.ldb
     import com.articlio.util.runID
@@ -31,7 +31,7 @@ object Application extends Controller {
     import com.articlio.dataExecution._
     import com.articlio.dataExecution.concrete._
     
-    def foo(articleName: String, runID: Long) = {
+    def foo(articleName: String, dataID: Long) = {
     
       val executionManager = new DataExecutionManager
       
@@ -39,25 +39,24 @@ object Application extends Controller {
         case None =>
           Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
         case dataAccessDetail : Some[Access] => { 
-          val content = Matches.filter(_.runid === runID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)
-          val runIDs = Matches.map(m => m.runid).list.distinct.sorted(Ordering[Long].reverse)
+          val content = Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)
+          val dataIDs = Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
           val unlifted = content.asInstanceOf[List[models.Tables.MatchesRow]]
-          //println(unlifted.head.runid)
-          Ok(views.html.showExtract(runIDs, runID, pdb, articleName, unlifted))
+          Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, unlifted))
         }
       }
     }
     
-    runID match {
+    dataID match {
       
       case None => {
         // get all run id's where this article had results. TODO: this does not distinguish between no run and a run with no line results!
-        val runIDs = Matches.filter(_.docname === s"${articleName}.xml").map(m => m.runid).list.distinct.sorted(Ordering[Long].reverse)
-        runID.nonEmpty match {
+        val dataIDs = Matches.filter(_.docname === s"${articleName}.xml").map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
+        dataID.nonEmpty match {
           
           case true => {
-            val latestRunID = runIDs.head
-            foo(articleName, latestRunID)
+            val latestDataID = dataIDs.head
+            foo(articleName, latestDataID)
           }
           
           case false => Ok("not yet implemented")
@@ -68,7 +67,7 @@ object Application extends Controller {
         
       }
       
-      case Some(runID) => foo(articleName, runID)
+      case Some(dataID) => foo(articleName, dataID)
     }
   }
  

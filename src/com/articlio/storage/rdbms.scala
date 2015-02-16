@@ -84,15 +84,15 @@ trait googleSpreadsheetCreator {
 
 object createCSV extends Connection with googleSpreadsheetCreator {
   import com.github.tototoshi.csv._ // only good for "small" csv files; https://github.com/tototoshi/scala-csv/issues/11
-  def go(runID: Long = Matches.map(m => m.runid).list.distinct.sorted(Ordering[Long].reverse).head) = {
+  def go(dataID: Long = Matches.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse).head) = {
     val outFile = new java.io.File("out.csv")
     val writer = CSVWriter.open(outFile)
 
-    val filteredData = Matches.filter(m => m.runid === runID).list.map(m => 
+    val filteredData = Matches.filter(m => m.dataid === dataID).list.map(m => 
     List(m.docname, 
-        withHyperlink("showOriginal/" + m.runid.toString.dropRight(4),"view original"),          
-        withHyperlink("showExtractFoundation/" + m.runid.toString.dropRight(4) + s"?runID=${m.runid}","view result"),
-        m.runid, m.sentence, m.matchpattern, m.locationactual, m.locationtest, m.fullmatch, m.matchindication))
+        withHyperlink("showOriginal/" + m.dataid.toString.dropRight(4),"view original"),          
+        withHyperlink("showExtractFoundation/" + m.dataid.toString.dropRight(4) + s"?dataID=${m.dataid}","view result"),
+        m.dataid, m.sentence, m.matchpattern, m.locationactual, m.locationtest, m.fullmatch, m.matchindication))
         val data = List("Run ID", "", "", "Article", "Sentence", "Pattern", "Location Test", "Location Actual", "Final Match?", "Match Indication") :: filteredData 
         writer.writeAll(data)
   }
@@ -100,13 +100,13 @@ object createCSV extends Connection with googleSpreadsheetCreator {
 
 object createAnalyticSummary extends Connection with googleSpreadsheetCreator {
   import com.github.tototoshi.csv._ // only good for "small" csv files; https://github.com/tototoshi/scala-csv/issues/11
-  def go(runID: Long = Matches.map(m => m.runid).list.distinct.sorted(Ordering[Long].reverse).head) = {
+  def go(dataID: Long = Matches.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse).head) = {
     val outFile = new java.io.File("outAnalytic.csv")
     val writer = CSVWriter.open(outFile)
     
-    val matchIndications : Seq[String] = Matches.filter(m => m.runid === runID).map(m => m.matchindication).list.distinct 
-    val grouped = Matches.filter(m => m.runid === runID && m.fullmatch).run
-                          .groupBy(f => f.runid)
+    val matchIndications : Seq[String] = Matches.filter(m => m.dataid === dataID).map(m => m.matchindication).list.distinct 
+    val grouped = Matches.filter(m => m.dataid === dataID && m.fullmatch).run
+                          .groupBy(f => f.dataid)
     
     def hasLimitationSection(docName: String) =
       Headers.filter(_.docname === docName).filter(h => h.header === "limitation").exists.run match {
