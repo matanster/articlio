@@ -44,7 +44,7 @@ trait JATScreate {
   
   def copyXSL(to: String) = copy("xsl/*", to) // the xsl and css were taken from https://github.com/ncbi/JATSPreviewStylesheets
       
-      def nullInitializer (s: String) = {}
+  def nullInitializer (s: String) = {}
   
 }
 
@@ -60,12 +60,14 @@ class JATSpipeline extends JATScreate {
 }
 
 // TODO: re-factor to use one function that runs a modifier function and writes its output to file
-class JATScreateSingle(articleName: String) extends JATScreate {
-  def go: Boolean = {
+class JATScreateSingle extends JATScreate {
+  import com.articlio.dataExecution.CreateError
+  
+  def go(runID: Long, articleName: String) : Option[CreateError] = {
     prettify(config.JATSinput, config.JATSformatted, articleName)
     copyXSL(config.JATSstyled)
     applyXSL(config.JATSformatted, config.JATSstyled, articleName)
     applyClean(config.JATSinput, config.JATSout, articleName)
-    true
+    None // report no error
   } 
 }
