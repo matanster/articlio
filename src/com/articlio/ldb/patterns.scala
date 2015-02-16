@@ -6,7 +6,6 @@ import com.articlio.util.text._
 import com.articlio.LanguageModel._
 import com.articlio.SelfMonitor
 import com.articlio.semantic.AppActorSystem
-//import com.articlio.storage.Match
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.Await
@@ -217,8 +216,10 @@ case class ldb(csvFile: String) extends Connection {
   val SPACE = " "
   
   import com.articlio.dataExecution.CreateError 
-  def go (runID: Long, articleName: String, document: JATS) : Option[CreateError] = {
+  def go (JATSaccess: com.articlio.dataExecution.concrete.JATSaccess)(runID: Long, articleName: String) : Option[CreateError] = {
 
+    val document = new JATS(s"${JATSaccess.dirPath}/$articleName.xml")
+    
     val logger = new Logger(document.name)
     
     //

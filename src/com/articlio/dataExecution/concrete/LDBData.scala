@@ -4,7 +4,7 @@ import util._
 import com.articlio.config
 import com.articlio.pipe.pipelines.JATScreateSingle
 
-case class LDBaccess(path: String) extends Access
+case class LDBaccess(dirPath: String) extends Access
 
 case class LDBData(csvFileName: String) extends Data
 {
@@ -27,7 +27,7 @@ case class LDBData(csvFileName: String) extends Data
 
   override def ReadyState(suppliedRunID: Long) = ReadyState
   
-  val access = JATSaccess(config.JATSout)
+  val access = LDBaccess(config.JATSout)
 }
 
 

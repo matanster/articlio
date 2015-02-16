@@ -4,7 +4,7 @@ import util._
 import com.articlio.config
 import com.articlio.pipe.pipelines.JATScreateSingle
 
-case class JATSaccess(path: String) extends Access
+case class JATSaccess(dirPath: String) extends Access
 
 case class JATSData(articleName: String) extends Data
 {
@@ -17,3 +17,4 @@ case class JATSData(articleName: String) extends Data
 
   val access = JATSaccess(config.JATSout) // filePathExists(s"${config.eLife}/$articleName.xml") match {
 }
+
