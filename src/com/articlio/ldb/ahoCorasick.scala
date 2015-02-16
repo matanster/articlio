@@ -2,13 +2,15 @@ package com.articlio.ldb
 import org.ahocorasick.trie._
 import com.articlio.util._
 import com.articlio.util.text._
-import scala.collection.JavaConverters._    // convert Java colllections to Scala ones
+import scala.collection.JavaConverters._
 import com.articlio.semantic.AppActorSystem
+import akka.actor.Actor
+import akka.event.Logging
 
 //
-// initalizes an aho-corasick tree for searching all pattern fragments implied in the linguistic database
+// Aho-Corasick trie (for searching all pattern fragments implied in given linguistic database)
 //
-class AhoCorasick {
+class AhoCorasickTrie {
 
   val trie = new Trie
 
@@ -22,7 +24,7 @@ class AhoCorasick {
   //
   // invoke aho-corasick to find all fragments in given sentence
   //
-  def go(sentence : String, logger: Logger) : List[Map[String, String]] = 
+  def findAll(sentence : String, logger: Logger) : List[Map[String, String]] = 
   {
     //println(deSentenceCase(sentence))
     val emitsJ = trie.parseText(deSentenceCase(sentence))
@@ -36,3 +38,25 @@ class AhoCorasick {
     else return (List.empty[Map[String, String]])
   }
 }
+
+//
+// Actor wrapper
+//
+class AhoCorasickActor(ldb: LDB) extends Actor {
+  val log = Logging(context.system, this)
+  
+  val ahoCorasick = new AhoCorasickTrie
+  ahoCorasick.init(ldb.allFragmentsDistinct)
+  
+  def receive = { 
+    case ProcessSentenceMessage(s, l) =>
+      //log.info(s"received message with sentence: $s")
+      sender ! ahoCorasick.findAll(s, l)
+    case _ => throw new Exception("unexpected actor message type received")
+  }
+}
+
+//
+// Actor's message type
+//
+case class ProcessSentenceMessage(sentence : String, logger: Logger)

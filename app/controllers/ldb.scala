@@ -17,7 +17,7 @@ object Ldb extends Controller {
   import com.articlio.input.JATS
   import com.articlio.config
   
-  val pdb = ldb.ldb("Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
+  val pdb = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"
   
   def singlePdfSourced(articleName: String, 
                        pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv") = Action { implicit request =>

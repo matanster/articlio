@@ -47,7 +47,7 @@ object CSV {
   // Extract raw values from the database CSV
   // Slow (https://github.com/tototoshi/scala-csv/issues/11) but global initialization is currently insignificant
   //
-  def getCSV(csvFile: String): Seq[RawCSVInput] = {
+  def loadPatternsFromCSV(csvFile: String): Seq[RawCSVInput] = {
 
     AppActorSystem.timelog ! "reading CSV"
 
@@ -122,7 +122,7 @@ object CSV {
     AppActorSystem.timelog ! "manipulating CSV input"
 
     val rules = scala.collection.mutable.Seq.newBuilder[RuleInput]
-    val rawInput = getCSV(csvFile)
+    val rawInput = loadPatternsFromCSV(csvFile)
 
     rawInput map { rawInputRule =>
 

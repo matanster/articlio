@@ -3,7 +3,7 @@ import com.articlio.dataExecution._
 import util._
 import com.articlio.config
 import com.articlio.pipe.pipelines.JATScreateSingle
-import com.articlio.ldb.ldb
+import com.articlio.ldb.ldbEngine
 import com.articlio.util.runID
 import com.articlio.dataExecution._
 import models.Tables
@@ -24,7 +24,7 @@ case class SemanticData(articleName: String, ldbFile: String) extends Data with 
   val LDB  = LDBData(ldbFile)
   val dependsOn = Seq(JATS,LDB)
   
-  val creator = ldb(ldbFile).go(JATS.access)_ // currying to let other caller fill in the other parameters
-  
-  val access = SemanticAccess()               // no refined access details for now
+  val creator = ldbEngine(ldbFile).process(JATS.access)_ // underscore makes it a curried function
+   
+  val access = SemanticAccess()                          // no refined access details for now
 }

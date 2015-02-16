@@ -24,199 +24,29 @@ import com.articlio.storage.Connection
 import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 
-abstract class PlugType
-case object    RefAppendable  extends PlugType // self reference is potentially *appendable* to target phrase
-case object    RefPrependable extends PlugType // self reference is potentially *prependable* to target phrase
-
-abstract class PotentiallyPluggable (val plugType: PlugType)
-//case class AA extends PotentiallyPluggable(RefPrependable)
-case object    VerbFragment extends PotentiallyPluggable(RefPrependable)
-case object    NounFragment extends PotentiallyPluggable(RefPrependable)
-case object    InByOfFragment   extends PotentiallyPluggable(RefAppendable)
-
 //
-// class hierarchy for describing rules as derived by the LDB object
+// Initializes engine for input ldb, and expose method to run for a given document
+// old tentative TODO: use newBuilder and .result rather than hold mutable and immutable collections - for correct coding style without loss of performance!
 //
-
-abstract class Rule
-case class SimpleRule (pattern: String, 
-                       fragments: List[String], 
-                       indication: String, 
-                       locationProperty: Option[Seq[Property]], 
-                       ReferenceProperty: Option[Seq[Property]]) 
-
-case class ExpandedRule (rule: SimpleRule) extends Rule {
-  def getFragmentType : PotentiallyPluggable = {
-                          if (rule.pattern.containsSlice("{asr-V}")) return VerbFragment 
-                          if (rule.pattern.containsSlice("{asr-N}")) return NounFragment
-                          return InByOfFragment
-  }
-
-  val fragmentType = getFragmentType
-  override def toString = s"$rule, $fragmentType"
-}
-
-
-case class ldb(csvFile: String) extends Connection {
+case class ldbEngine(inputCSVfile: String) extends Connection {
 
   val globalLogger = new Logger("global-ldb")
   val overallLogger = new Logger("overall")
-  
-  //
-  // Builds and exposes the data structures necessary for working the rules database
-  // Refactor opportunity: use newBuilder and .result rather than hold mutable and immutable collections - for correct coding style without loss of performance!
-  //
-  class LDB(inputRules: Seq[RuleInput]) {
-  
-    globalLogger.write(inputRules.mkString("\n"), "db-rules1.1")    
-    
-    //
-    // expand base rules into more rules - quite not triggered from the database data right now -
-    // wrong approach probably
-    //
-    def expand(rules: Seq[SimpleRule]) : Seq[ExpandedRule] = {
-
-      AppActorSystem.timelog ! "exapanding patterns containing article-self-references into all their combinations"  
-
-      val ASRRules : Seq[ExpandedRule] = rules.filter(rule => rule.pattern.containsSlice("{asr")) map ExpandedRule
-      println(ASRRules)
-
-      for (rule <- ASRRules) { 
-        rule.fragmentType match {
-            case VerbFragment => for (ref <- SelfishReferences.all if (ref.annotatedL1.isnt(Personal))) 
-                                   println()
-                                   //println(ref.annotatedL1.sequence + rule.rule.pattern)
-            case NounFragment => for (ref <- SelfishReferences.all if (ref.annotatedL1.is(PossesivePronoun)))  // must have props PossesivePronoun or possibly nounphrase + 's
-                                   println()
-                                   //println(ref.annotatedL1.sequence + rule.rule.pattern)
-            case InByOfFragment => for (ref <- SelfishReferences.all if (ref.annotatedL1.isAnyOf(Set(Personal, Possesive))))
-                                   println(ref.annotatedL1.sequence + rule.rule.pattern)
-                                 
-          }
-        }
-
-      //
-
-      //val expansion : Seq[String] = ASRRules.flatMap (rule => ArticleSelfReference.refsText.map
-      //                                      (refText => rule.pattern.patch(rule.pattern.indexOfSlice("{asr}"), refText, "{asr}".length)))
-      
-      //println(ASRRules.mkString("\n"))
-      //println(expansion.mkString("\n"))
-      println(rules.length)
-      println(ASRRules.length)
-      //println(expansion.length)
-
-      AppActorSystem.timelog ! "exapanding patterns containing article-self-references into all their combinations"  
-      return ASRRules
-    }
-
-    // build the data structures
-    private val wildcards = List("..", "…")      // wildcard symbols allowed to the human who codes the CSV database
-    private val wildchars = List('.', '…', ' ')  // characters indicating whether we are inside a wildcard sequence.. hence - "wildchars"
-
-    // breaks down a wildcard-containing pattern into a list of its fragments 
-    def breakDown(pattern: String): List[String] = {
-      val indexes = wildcards map pattern.indexOf filter { i: Int => i > -1 } // discard non-founds
-      if (indexes.isEmpty) {
-        return(List(pattern))
-      }
-      else {
-        val pos = indexes.min
-        val (leftSidePlus1, rest) = pattern.splitAt(pos); val leftSide = leftSidePlus1.dropRight(1) // split and drop space
-        val rightSide = rest.dropWhile((char) => wildchars.exists((wildchar) => char == wildchar))
-        return List(leftSide) ::: breakDown(rightSide)
-      }
-    }
-
-    AppActorSystem.timelog ! "patterns representation building"
-
-    //inputRules map (r => println(r.properties.get.filter(property => property.isInstanceOf[LocationProperty])))
-    
-    val rules: Seq[SimpleRule] = inputRules map (inputRule => 
-      new SimpleRule(inputRule.pattern, 
-                     breakDown(deSentenceCase(inputRule.pattern)), 
-                     inputRule.indication, 
-                     // inputRule.properties.collect { case locationProp : LocationProperty => locationProp }))
-                     if (inputRule.properties.isDefined) 
-                       inputRule.properties.get.filter(property => property.isInstanceOf[LocationProperty]) match {
-                         case s: Seq[Property] => if (s.length>0) Some(inputRule.properties.get.filter(property => property.isInstanceOf[LocationProperty])) else None
-                         case _ => None
-                       } else None,
-                     if (inputRule.properties.isDefined) 
-                       inputRule.properties.get.filter(property => property.isInstanceOf[ReferenceProperty]) match {
-                         case s: Seq[Property] => if (s.length>0) Some(inputRule.properties.get.filter(property => property.isInstanceOf[ReferenceProperty])) else None
-                         case _ => None
-                       } else None))  
-                       
-    globalLogger.write(rules.mkString("\n"), "db-rules2")                                                      
-    
-    // patterns to indications map - 
-    // each pattern correlates to only one indictaion 
-    val patterns2indications : Map[String, String] = rules.map(rule => (rule.pattern -> rule.indication)).toMap
-
-    // patterns to fragments map - 
-    // fragments collections are scala Lists as order and appearing-more-than-once matter
-    val patterns2fragments : Map[String, List[String]] = rules.map(rule => (rule.pattern, rule.fragments)).toMap
-
-    // fragments to patterns map 
-    // (constructed through a mutable builder - to avoid the memory hogging of the alternative pure functional implementation)
-    // the pattern collections here are ultimately scala Sets because order and appearing-more-than once are not necessary
-    private val builder = new collection.mutable.HashMap[String, collection.mutable.Set[String]] 
-                          with collection.mutable.MultiMap[String, String]                                  // this is a multimap builder, the way scala needs it
-    rules.foreach(rule => rule.fragments.foreach(fragment => builder addBinding (fragment, rule.pattern)))  // build it
-    val fragments2patterns : Map[String, Set[String]] = builder.map(kv => kv._1 -> kv._2.toSet).toMap       // extract to immutable
-
-    //
-    // map back from patterns to rules (needed as aho-corasick returns strings not rules that included them)
-    //
-    val patterns2rules : Map[String, SimpleRule] = rules.map(rule => rule.pattern -> rule).toMap
-
-    // bag of all fragments - 
-    // uses a Set to avoid duplicate strings
-    val allFragmentsDistinct : Set[String] = rules.map(rule => rule.fragments).flatten.toSet
-
-    AppActorSystem.timelog ! "patterns representation building"
-    // TODO: uncomment SelfMonitor.logUsage("after patterns representation building is")
-    globalLogger.write(allFragmentsDistinct.mkString("\n"), "db-distinct-fragments")
-    globalLogger.write(patterns2fragments.mkString("\n"), "db-rule-fragments")
-
-    expand(rules) // should do nothing for now
-
-  }
-
+  val SPACE = " "
   //
   // match rules per sentence    
   //
-  val inputRules = CSV.deriveFromCSV(csvFile)
-  val db = new LDB(inputRules)
-    
-  case class Go(sentence : String, logger: Logger)
-  
-  class AhoCorasickActor extends Actor {
-    val log = Logging(context.system, this)
-    
-    val ahoCorasick = new AhoCorasick
-    ahoCorasick.init(db.allFragmentsDistinct)
-    
-    def receive = { 
-      case Go(s, l) =>
-        //log.info(s"received message with sentence: $s")
-        sender ! ahoCorasick.go(s, l)
-      case _ => throw new Exception("unexpected actor message type received")
-    }
-  }
+  val inputRules = CSV.deriveFromCSV(inputCSVfile)
+  val ldb = new LDB(inputRules, globalLogger)
 
-  val concurrency = 4
-  
-  val ahoCorasick = AppActorSystem.system.actorOf(Props[AhoCorasickActor].withRouter(BalancingPool(nrOfInstances = concurrency)), 
-                                             name = "aho-corasick-pool-service") 
-     
   //val ahoCorasick = new Array[AhoCorasickActor](concurrency)
-                                                                       
-  val SPACE = " "
-  
+  val concurrency = 4
+  val ahoCorasick = AppActorSystem.system.actorOf(Props[AhoCorasickActor]
+                                         .withRouter(BalancingPool(nrOfInstances = concurrency)), 
+                                          name = "aho-corasick-pool-service") 
+     
   import com.articlio.dataExecution.CreateError 
-  def go (JATSaccess: com.articlio.dataExecution.concrete.JATSaccess)(runID: Long, articleName: String) : Option[CreateError] = {
+  def process(JATSaccess: com.articlio.dataExecution.concrete.JATSaccess)(runID: Long, articleName: String) : Option[CreateError] = {
 
     val document = new JATS(s"${JATSaccess.dirPath}/$articleName.xml")
     
@@ -332,7 +162,7 @@ case class ldb(csvFile: String) extends Connection {
       
       val results = for (sentenceIdx <- 0 to sentences.length-1) yield {
         val sentence = sentences(sentenceIdx)
-        val matchedFragmentsFuture = ask(ahoCorasick, Go(sentence.text, logger)).mapTo[List[Map[String, String]]]
+        val matchedFragmentsFuture = ask(ahoCorasick, ProcessSentenceMessage(sentence.text, logger)).mapTo[List[Map[String, String]]]
         val matchedFragments = Await.result(matchedFragmentsFuture, timeout.duration)
         sentenceMatchCount += matchedFragments.length
 
@@ -357,7 +187,7 @@ case class ldb(csvFile: String) extends Connection {
         val possiblePatternMatches = Set.newBuilder[String] // a Set to avoid duplicates
 
         matchedFragments.foreach(matched => { 
-          val fragmentPatterns = db.fragments2patterns.get(matched("match").toString).get
+          val fragmentPatterns = ldb.fragments2patterns.get(matched("match").toString).get
           possiblePatternMatches ++= fragmentPatterns
         })
 
@@ -376,11 +206,11 @@ case class ldb(csvFile: String) extends Connection {
         }
         
         val possibleMatches = for (pat <- possiblePatternMatches.result 
-                                if (isInOrder (db.patterns2fragments.get(pat).get, -1))) 
+                                if (isInOrder (ldb.patterns2fragments.get(pat).get, -1))) 
                                   yield ( new { var pattern: String = pat;
                                                 var locatedText: LocatedText = extraction(sentence);
-                                                var indication: String = db.patterns2indications.get(pat).get;
-                                                var simpleRule: SimpleRule =db.patterns2rules(pat)})
+                                                var indication: String = ldb.patterns2indications.get(pat).get;
+                                                var simpleRule: SimpleRule =ldb.patterns2rules(pat)})
 
         possibleMatches.foreach(p =>
           logger.write(Seq(s"sentence '${p.locatedText.text}'",
@@ -497,5 +327,4 @@ case class ldb(csvFile: String) extends Connection {
     
     None // if we got here - return no error    
   }                                                                             
-                                                                             
 }
