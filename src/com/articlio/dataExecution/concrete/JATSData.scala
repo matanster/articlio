@@ -6,7 +6,7 @@ import com.articlio.pipe.pipelines.JATScreateSingle
 
 case class JATSaccess(path: String) extends Access
 
-case class JATS(articleName: String) extends Data
+case class JATSData(articleName: String) extends Data
 {
   val dataType = "JATS"
   val dataTopic = articleName
