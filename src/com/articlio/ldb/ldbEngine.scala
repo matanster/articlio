@@ -23,6 +23,7 @@ import models.Tables.{Data => DataRecord}
 import com.articlio.storage.Connection
 import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
+import com.articlio.dataExecution.CreateError 
 
 //
 // Initializes engine for input ldb, and expose method to run for a given document
@@ -32,20 +33,24 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
 
   val globalLogger = new Logger("global-ldb")
   val overallLogger = new Logger("overall")
-  val SPACE = " "
+
   //
-  // match rules per sentence    
+  // Initialize ldb    
   //
   val inputRules = CSV.deriveFromCSV(inputCSVfile)
   val ldb = new LDB(inputRules, globalLogger)
 
-  //val ahoCorasick = new Array[AhoCorasickActor](concurrency)
+  //
+  // Start actors ensemble
+  //
   val concurrency = 4
   val ahoCorasick = AppActorSystem.system.actorOf(Props[AhoCorasickActor]
                                          .withRouter(BalancingPool(nrOfInstances = concurrency)), 
                                           name = "aho-corasick-pool-service") 
-     
-  import com.articlio.dataExecution.CreateError 
+                                          //val ahoCorasick = new Array[AhoCorasickActor](concurrency)
+  //
+  // Public interface to process a document 
+  //                                        
   def process(JATSaccess: com.articlio.dataExecution.concrete.JATSaccess)(runID: Long, articleName: String) : Option[CreateError] = {
 
     val document = new JATS(s"${JATSaccess.dirPath}/$articleName.xml")
@@ -205,12 +210,14 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
             return sentence
         }
         
-        val possibleMatches = for (pat <- possiblePatternMatches.result 
+        case class PossibleMatch(pattern : String, locatedText: LocatedText, indication: String, simpleRule: SimpleRule)
+        val        possibleMatches = for (pat <- possiblePatternMatches.result 
                                 if (isInOrder (ldb.patterns2fragments.get(pat).get, -1))) 
-                                  yield ( new { var pattern: String = pat;
-                                                var locatedText: LocatedText = extraction(sentence);
-                                                var indication: String = ldb.patterns2indications.get(pat).get;
-                                                var simpleRule: SimpleRule =ldb.patterns2rules(pat)})
+                                  yield ( new PossibleMatch(
+                                                pattern = pat,
+                                                locatedText = extraction(sentence),
+                                                indication = ldb.patterns2indications.get(pat).get,
+                                                simpleRule =ldb.patterns2rules(pat)))
 
         possibleMatches.foreach(p =>
           logger.write(Seq(s"sentence '${p.locatedText.text}'",
@@ -224,13 +231,13 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
         // checks whether a potential match satisfies its location criteria if any
         // 
         
-        def locationTest(p: (String, LocatedText, String, SimpleRule)) : Boolean = {
+        def locationTest(p: PossibleMatch) : Boolean = {
             var isFinalMatch = false
-                if (!p._4.locationProperty.isDefined) {
+                if (!p.simpleRule.locationProperty.isDefined) {
                   isFinalMatch = true
                 }
-                else if (p._4.locationProperty.get.head.asInstanceOf[LocationProperty].parameters.exists(parameter =>   // 'using .head' assumes at most one LocationProperty per rule
-                sectionTypeScheme.translation.contains(parameter.toLowerCase) && sectionTypeScheme.translation(parameter.toLowerCase) == p._2.section.toLowerCase())) {
+                else if (p.simpleRule.locationProperty.get.head.asInstanceOf[LocationProperty].parameters.exists(parameter =>   // 'using .head' assumes at most one LocationProperty per rule
+                sectionTypeScheme.translation.contains(parameter.toLowerCase) && sectionTypeScheme.translation(parameter.toLowerCase) == p.locatedText.section.toLowerCase())) {
                   //println("location criteria matched!")
                   isFinalMatch = true
                 }
@@ -240,12 +247,12 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
                       {
                         println
                         println("location criteria not matched for:")
-                        println(p._2.text)
+                        println(p.locatedText.text)
                         println("should be in either:")
-                        p._4.locationProperty.get.head.asInstanceOf[LocationProperty].parameters.foreach(parameter =>   // 'using .head' assumes at most one LocationProperty per rule
+                        p.simpleRule.locationProperty.get.head.asInstanceOf[LocationProperty].parameters.foreach(parameter =>   // 'using .head' assumes at most one LocationProperty per rule
                         if (sectionTypeScheme.translation.contains(parameter.toLowerCase)) println(sectionTypeScheme.translation(parameter.toLowerCase)))
                         println("but found in:")
-                        println(p._2.section)
+                        println(p.locatedText.section)
                       }
                 }
             return isFinalMatch
@@ -261,13 +268,13 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
           SelfishReferences.allTexts.exists(s => normalized.indexOf(s) >= 0) 
         }
         
-        def selfishRefTest(p: (String, LocatedText, String, SimpleRule)) : Boolean = {
+        def selfishRefTest(p: PossibleMatch) : Boolean = {
           var isFinalMatch = false
         	
-          if (!p._4.ReferenceProperty.isDefined) isFinalMatch = true         
-        	else isFinalMatch = containsSelfRef(p._4.pattern) match {
+          if (!p.simpleRule.ReferenceProperty.isDefined) isFinalMatch = true         
+        	else isFinalMatch = containsSelfRef(p.simpleRule.pattern) match {
         	  case true => true // if rule's pattern already contains a selfish reference itself, this is a match
-        	  case false => containsSelfRef(p._2.text) 
+        	  case false => containsSelfRef(p.locatedText.text) 
         	}
           
         	return isFinalMatch
@@ -278,8 +285,8 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
                                          val locatedText = p.locatedText;
                                          val indication = p.indication;
                                          val simpleRule = p.simpleRule;
-                                         val matchesLocation = locationTest(p.pattern , p.locatedText, p.indication, p.simpleRule);
-                                         val selfishRef = selfishRefTest(p.pattern, p.locatedText, p.indication, p.simpleRule) }).toSeq
+                                         val matchesLocation = locationTest(p);
+                                         val selfishRef = selfishRefTest(p) }).toSeq
      	
         tentativeMatches.foreach(m => if (!m.selfishRef) println(s"sentence {${m.locatedText.text}} matching pattern {${m.simpleRule.pattern}} does not contain selfish reference and therefore not matched."))
 
