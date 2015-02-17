@@ -16,7 +16,7 @@ class Bulk(runID: String) {
     val executionManager = new DataExecutionManager
     
     def makeOrVerify(articelName: String, pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"): Boolean = {
-        executionManager.getDataAccess(SemanticData(articelName, pdb)) match {
+        executionManager.getDataAccess(new SemanticData(articelName, pdb)()) match {
         case None =>
           //println("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
           false

@@ -15,16 +15,17 @@ import models.Tables.{Data => DataRecord}
 
 case class SemanticAccess() extends Access
 
-case class SemanticData(articleName: String, ldbFile: String) extends Data with Connection
-{
+class SemanticData(articleName: String,ldbFile: String)
+                       (JATS: JATSData = JATSData(articleName),
+                        LDB: LDBData = LDBData(ldbFile)) 
+                        extends Data with Connection {
+
   val dataType = "semantic"
   val dataTopic = articleName
-
-  val JATS = JATSData(articleName)
-  val LDB  = LDBData(ldbFile)
+  
   val dependsOn = Seq(JATS,LDB)
   
   val creator = ldbEngine(ldbFile).process(JATS.access)_ // underscore makes it a curried function
-   
+  
   val access = SemanticAccess()                          // no refined access details for now
 }

@@ -34,7 +34,7 @@ object Application extends Controller {
       
       // no specific run id requested
       case None => 
-        executionManager.getDataAccess(SemanticData(articleName, pdb)) match {
+        executionManager.getDataAccess(new SemanticData(articleName, pdb)()) match {
           case None => 
             Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
           case Some(access) => {
@@ -46,7 +46,7 @@ object Application extends Controller {
       
       // a specific run id requested
       case Some(dataID) =>
-        executionManager.getDataAccess(SemanticData(articleName, pdb), dataID) match {
+        executionManager.getDataAccess(new SemanticData(articleName, pdb)(), dataID) match {
           case None => 
             Ok("There is no result data for the requested data ID")
           case Some(access) => {
