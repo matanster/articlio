@@ -1,9 +1,9 @@
 package controllers
 
-import models.Tables._
 import play.api._
 import play.api.mvc._
 import play.api.db.slick._
+import models.Tables._
 import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 import play.api.http.MimeTypes
@@ -11,63 +11,48 @@ import play.api.http.MimeTypes
 
 object Application extends Controller {
 
-  def playground = Action { implicit request =>
-    Ok(s"nothing here...")  
-  }
-  
-  def index = Action { implicit request =>
-    Ok(s"app is up, got request [$request]")
-  }
- 
   def showExtract(articleName: String, 
                   pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", 
                   dataID: Option[Long]) = DBAction { implicit request =>
 
-    import com.articlio.ldb
-    import com.articlio.util.runID
-    import com.articlio.input.JATS
-    import com.articlio.config
-    
     import com.articlio.dataExecution._
     import com.articlio.dataExecution.concrete._
     
-    def foo(articleName: String, dataID: Long) = {
-    
-      val executionManager = new DataExecutionManager
-      
-      executionManager.getDataAccess(SemanticData(articleName, pdb)) match {
-        case None =>
-          Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
-        case dataAccessDetail : Some[Access] => { 
-          val content = Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)
-          val dataIDs = Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
-          val unlifted = content.asInstanceOf[List[models.Tables.MatchesRow]]
-          Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, unlifted))
-        }
-      }
+    def show(dataID: Long) = {
+      val content = Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)
+      val dataIDs = Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
+      val unlifted = content.asInstanceOf[List[models.Tables.MatchesRow]]
+      Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, unlifted))
     }
     
+    val executionManager = new DataExecutionManager
+
+    //
+    // split on whether a specific data ID was requested or not 
+    //
     dataID match {
       
-      case None => {
-        // get all run id's where this article had results. TODO: this does not distinguish between no run and a run with no line results!
-        val dataIDs = Matches.filter(_.docname === s"${articleName}.xml").map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
-        dataID.nonEmpty match {
-          
-          case true => {
-            val latestDataID = dataIDs.head
-            foo(articleName, latestDataID)
+      // no specific run id requested
+      case None => 
+        executionManager.getDataAccess(SemanticData(articleName, pdb)) match {
+          case None => 
+            Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
+          case Some(access) => {
+            val lastDataID = Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse).head
+            show(lastDataID)
           }
-          
-          case false => Ok("not yet implemented")
-          //case false =>
-            //val newRunID = (new runID).id
-            //foo(articleName, newRunID)
         }
-        
-      }
       
-      case Some(dataID) => foo(articleName, dataID)
+      
+      // a specific run id requested
+      case Some(dataID) =>
+        executionManager.getDataAccess(SemanticData(articleName, pdb), dataID) match {
+          case None => 
+            Ok("There is no result data for the requested data ID")
+          case Some(access) => {
+            show(dataID)
+          } 
+        }
     }
   }
  
@@ -83,14 +68,13 @@ object Application extends Controller {
                                                            // e.g. by "python -m SimpleHTTPServer"
   }
             
-  def adminPage = Action { implicit request =>
-    Ok(views.html.adminPage())
-  }
+  def adminPage = Action { implicit request => Ok(views.html.adminPage()) }
   
-  // def getRunIDs() = DBAction { implicit request =>
-  //val runIDs = run
-  //}
-
+  def playground = Action { implicit request => Ok(s"nothing here...") }
+  
+  def index = Action { implicit request => Ok(s"app is up, got request [$request]") }
+  
+  
   import play.api.mvc._
   import play.api.Play.current
   import akka.actor._
