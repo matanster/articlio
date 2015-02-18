@@ -25,8 +25,6 @@ case class LDBData(csvFileName: String) extends Data
     }
   } 
 
-  override def ReadyState(suppliedRunID: Long) = ReadyState
-  
   val access = LDBaccess(config.JATSout)
 }
 

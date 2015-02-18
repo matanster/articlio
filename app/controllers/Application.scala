@@ -20,7 +20,7 @@ object Application extends Controller {
     
     def show(dataID: Long) = {
       val content = Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)
-      val dataIDs = Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
+      val dataIDs = models.Tables.Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
       val unlifted = content.asInstanceOf[List[models.Tables.MatchesRow]]
       Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, unlifted))
     }
@@ -38,7 +38,7 @@ object Application extends Controller {
           case None => 
             Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
           case Some(access) => {
-            val lastDataID = Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse).head
+            val lastDataID = models.Tables.Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse).head
             show(lastDataID)
           }
         }
@@ -46,7 +46,7 @@ object Application extends Controller {
       
       // a specific run id requested
       case Some(dataID) =>
-        executionManager.getDataAccess(new SemanticData(articleName, pdb)(), dataID) match {
+        executionManager.getDataAccess(new SemanticData(articleName, pdb)()) match {
           case None => 
             Ok("There is no result data for the requested data ID")
           case Some(access) => {

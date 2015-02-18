@@ -24,19 +24,19 @@ trait RecordException {
   }
 }
 
-abstract class Data extends Access with Execute with RecordException with Connection { 
+abstract class Data(val dataIDrequested: Option[Long] = None) extends Access with Execute with RecordException with Connection { 
   
   def dataType: String
   
   def dataTopic: String
   
   def creator: (Long, String) => Option[CreateError]
-      
-                                                                                                // TODO: need to switch to UTC time for production
+  
   def create: ReadyState = { 
 
     // gets the current server time  
     def localNow = new java.sql.Timestamp(java.util.Calendar.getInstance.getTime.getTime) // follows from http://alvinalexander.com/java/java-timestamp-example-current-time-now
+                                                                                          // TODO: need to switch to UTC time for production
     
     //
     // tries a function, and collapses its exception into application type 
@@ -95,14 +95,21 @@ abstract class Data extends Access with Execute with RecordException with Connec
     }
   } 
   
-  def ReadyState(suppliedRunID: Long): ReadyState = {
+  def ReadyState: ReadyState = {
+    dataIDrequested match {
+      case Some(dataIDrequested) => ReadyStateSpecific(dataIDrequested)
+      case None                  => ReadyStateAny
+    }
+  }
+  
+  def ReadyStateSpecific(suppliedRunID: Long): ReadyState = {
     DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getName).filter(_.datatopic === dataTopic).list.nonEmpty match {
       case true => Ready
       case false => NotReady
     }
   } 
   
-  def ReadyState(): ReadyState = {
+  def ReadyStateAny(): ReadyState = {
     DataRecord.filter(_.datatype === this.getClass.getName).filter(_.datatopic === dataTopic).list.nonEmpty match {
       case true => Ready
       case false => NotReady
