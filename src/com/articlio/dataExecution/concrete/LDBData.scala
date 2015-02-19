@@ -20,7 +20,7 @@ case class LDBData(csvFileName: String) extends Data
   // for now, availability of an ldb is not managed through the data status database. so just check if it's there or not, for now.
   override def ReadyState: ReadyState = {
     filePathExists(s"${config.ldb}/$csvFileName") match {
-      case true => Ready
+      case true => Ready(0L) // for now. see comment above.
       case false => NotReady
     }
   } 

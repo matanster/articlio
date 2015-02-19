@@ -134,24 +134,24 @@ trait Tables {
   lazy val Data = new TableQuery(tag => new Data(tag))
   
   /** Entity class storing rows of table Datadependencies
-   *  @param dataid Database column dataID DBType(INT), PrimaryKey
-   *  @param depdataid Database column depDataID DBType(VARCHAR), Length(45,true), Default(None) */
-  case class DatadependenciesRow(dataid: Int, depdataid: Option[String] = None)
+   *  @param dataid Database column dataID DBType(BIGINT), PrimaryKey
+   *  @param depdataid Database column depDataID DBType(BIGINT) */
+  case class DatadependenciesRow(dataid: Long, depdataid: Long)
   /** GetResult implicit for fetching DatadependenciesRow objects using plain SQL queries */
-  implicit def GetResultDatadependenciesRow(implicit e0: GR[Int], e1: GR[Option[String]]): GR[DatadependenciesRow] = GR{
+  implicit def GetResultDatadependenciesRow(implicit e0: GR[Long]): GR[DatadependenciesRow] = GR{
     prs => import prs._
-    DatadependenciesRow.tupled((<<[Int], <<?[String]))
+    DatadependenciesRow.tupled((<<[Long], <<[Long]))
   }
   /** Table description of table DataDependencies. Objects of this class serve as prototypes for rows in queries. */
   class Datadependencies(_tableTag: Tag) extends Table[DatadependenciesRow](_tableTag, "DataDependencies") {
     def * = (dataid, depdataid) <> (DatadependenciesRow.tupled, DatadependenciesRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (dataid.?, depdataid).shaped.<>({r=>import r._; _1.map(_=> DatadependenciesRow.tupled((_1.get, _2)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (dataid.?, depdataid.?).shaped.<>({r=>import r._; _1.map(_=> DatadependenciesRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
     
-    /** Database column dataID DBType(INT), PrimaryKey */
-    val dataid: Column[Int] = column[Int]("dataID", O.PrimaryKey)
-    /** Database column depDataID DBType(VARCHAR), Length(45,true), Default(None) */
-    val depdataid: Column[Option[String]] = column[Option[String]]("depDataID", O.Length(45,varying=true), O.Default(None))
+    /** Database column dataID DBType(BIGINT), PrimaryKey */
+    val dataid: Column[Long] = column[Long]("dataID", O.PrimaryKey)
+    /** Database column depDataID DBType(BIGINT) */
+    val depdataid: Column[Long] = column[Long]("depDataID")
   }
   /** Collection-like TableQuery object for table Datadependencies */
   lazy val Datadependencies = new TableQuery(tag => new Datadependencies(tag))

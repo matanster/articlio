@@ -35,9 +35,9 @@ object Application extends Controller {
       // no specific run id requested
       case None => 
         executionManager.getDataAccess(new SemanticData(articleName, pdb)()) match {
-          case None => 
+          case error: AccessError => 
             Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
-          case Some(access) => {
+          case access: Access => {
             val lastDataID = models.Tables.Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse).head
             show(lastDataID)
           }
@@ -47,9 +47,10 @@ object Application extends Controller {
       // a specific run id requested
       case Some(dataID) =>
         executionManager.getDataAccess(new SemanticData(articleName, pdb)()) match {
-          case None => 
+          case error: DataIDNotFound => 
             Ok("There is no result data for the requested data ID")
-          case Some(access) => {
+          case accesss: Access => {
+            Ok("There is no result data for the requested data ID")
             show(dataID)
           } 
         }

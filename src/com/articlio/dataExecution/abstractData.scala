@@ -8,12 +8,15 @@ import models.Tables.{Data => DataRecord}
 import com.articlio.storage.Connection
 
 sealed abstract class ReadyState
-object Ready extends ReadyState 
+case class Ready(dataID: Long) extends ReadyState 
 object NotReady extends ReadyState
 
-case class CreateError(error: String) 
-
-abstract class Access 
+abstract class AccessOrError {}
+abstract class AccessError    extends AccessOrError
+case     class CreateError    (errorDetail: String) extends AccessError 
+case     class DepsError      (errorDetail: String) extends AccessError
+case     class DataIDNotFound (errorDetail: String) extends AccessError
+class          Access         extends AccessOrError
 
 trait RecordException {
   def recordException(exception: Throwable) {
@@ -82,7 +85,7 @@ abstract class Data(val dataIDrequested: Option[Long] = None) extends Access wit
     // return whether the data is now available or not
     //
     creationError match {
-      case None  => Ready
+      case None  => Ready(dataID)
       case Some(error) => NotReady 
     }
   } 
@@ -96,14 +99,15 @@ abstract class Data(val dataIDrequested: Option[Long] = None) extends Access wit
   
   def ReadyStateSpecific(suppliedRunID: Long): ReadyState = {
     DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getName).filter(_.datatopic === dataTopic).list.nonEmpty match {
-      case true => Ready
+      case true => Ready(suppliedRunID)
       case false => NotReady
     }
   } 
   
   def ReadyStateAny(): ReadyState = {
+    // TODO: collapse to just one call to the database
     DataRecord.filter(_.datatype === this.getClass.getName).filter(_.datatopic === dataTopic).list.nonEmpty match {
-      case true => Ready
+      case true => Ready(DataRecord.filter(_.datatype === this.getClass.getName).filter(_.datatopic === dataTopic).list.head.dataid) 
       case false => NotReady
     }
   } 
@@ -115,6 +119,8 @@ abstract class Data(val dataIDrequested: Option[Long] = None) extends Access wit
   def creator: (Long, String) => Option[CreateError]
     
   def access: Access
+  
+  //var dataID: Long = 0L // auto-assigned by the db
   
   def dependsOn: Seq[Data]
   
@@ -143,7 +149,7 @@ trait oldResultWrapper extends Execute {
   def resultWrapper(func: => Boolean): ReadyState = { // this form of prototype takes a function by name
     execute(func) match {
       case Some(bool) => bool match {
-        case true  => Ready
+        case true  => Ready(0L)
         case false => NotReady
       } case None  => NotReady
     } 
