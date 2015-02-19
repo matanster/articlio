@@ -26,12 +26,6 @@ trait RecordException {
 
 abstract class Data(val dataIDrequested: Option[Long] = None) extends Access with Execute with RecordException with Connection { 
   
-  def dataType: String
-  
-  def dataTopic: String
-  
-  def creator: (Long, String) => Option[CreateError]
-  
   def create: ReadyState = { 
 
     // gets the current server time  
@@ -92,7 +86,7 @@ abstract class Data(val dataIDrequested: Option[Long] = None) extends Access wit
       case Some(error) => NotReady 
     }
   } 
-  
+
   def ReadyState: ReadyState = {
     dataIDrequested match {
       case Some(dataIDrequested) => ReadyStateSpecific(dataIDrequested)
@@ -113,7 +107,13 @@ abstract class Data(val dataIDrequested: Option[Long] = None) extends Access wit
       case false => NotReady
     }
   } 
+
+  def dataType: String
   
+  def dataTopic: String
+  
+  def creator: (Long, String) => Option[CreateError]
+    
   def access: Access
   
   def dependsOn: Seq[Data]

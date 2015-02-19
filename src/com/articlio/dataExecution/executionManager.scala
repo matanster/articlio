@@ -64,9 +64,9 @@ class DataExecutionManager extends Execute {
   // returns whether all dependency data are ready or not
   private def dataDependenciesReady(dataWrapper: Data) : Option[CreateError] = {
     val depsGet = dataWrapper.dependsOn.map(dep => getDataAccess(dep))
-    !depsGet.exists(d => d == None)
+    depsGet.exists(d => d == None) match {
+      case false => None
+      case true  => Some(CreateError("Some data dependencies were not ready")) // TODO: propagate which ones with their texts
+    }
   }
-  
-  
-
 }
