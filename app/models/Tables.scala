@@ -14,7 +14,7 @@ trait Tables {
   import scala.slick.jdbc.{GetResult => GR}
   
   /** DDL for all tables. Call .create to execute. */
-  lazy val ddl = Abstract.ddl ++ Autoproperties.ddl ++ Bulkdatagroups.ddl ++ Data.ddl ++ Datagroupings.ddl ++ Diffs.ddl ++ Grading.ddl ++ Headers.ddl ++ Matches.ddl ++ Pdffonts.ddl ++ Pdfmeta.ddl ++ Pdftohtml.ddl ++ Runids.ddl ++ Runs.ddl ++ Runstodelete.ddl ++ Sentences.ddl ++ Title.ddl
+  lazy val ddl = Abstract.ddl ++ Autoproperties.ddl ++ Bulkdatagroups.ddl ++ Data.ddl ++ Datadependencies.ddl ++ Datagroupings.ddl ++ Diffs.ddl ++ Grading.ddl ++ Headers.ddl ++ Matches.ddl ++ Pdffonts.ddl ++ Pdfmeta.ddl ++ Pdftohtml.ddl ++ Runids.ddl ++ Runs.ddl ++ Runstodelete.ddl ++ Sentences.ddl ++ Title.ddl
   
   /** Entity class storing rows of table Abstract
    *  @param `abstract` Database column abstract DBType(VARCHAR), Length(20000,true), Default(None)
@@ -100,19 +100,18 @@ trait Tables {
    *  @param creationerrordetail Database column creationErrorDetail DBType(VARCHAR), Length(10000,true), Default(None)
    *  @param creatorserver Database column creatorServer DBType(VARCHAR), Length(45,true)
    *  @param creatorserverstarttime Database column creatorserverstarttime DBType(TIMESTAMP), Default(None)
-   *  @param creatorserverendtime Database column creatorserverendtime DBType(TIMESTAMP), Default(None)
-   *  @param datadependedon Database column dataDependedOn DBType(BIGINT), Default(None) */
-  case class DataRow(dataid: Long, datatype: String, datatopic: String, creationstatus: String, creationerrordetail: Option[String] = None, creatorserver: String, creatorserverstarttime: Option[java.sql.Timestamp] = None, creatorserverendtime: Option[java.sql.Timestamp] = None, datadependedon: Option[Long] = None)
+   *  @param creatorserverendtime Database column creatorserverendtime DBType(TIMESTAMP), Default(None) */
+  case class DataRow(dataid: Long, datatype: String, datatopic: String, creationstatus: String, creationerrordetail: Option[String] = None, creatorserver: String, creatorserverstarttime: Option[java.sql.Timestamp] = None, creatorserverendtime: Option[java.sql.Timestamp] = None)
   /** GetResult implicit for fetching DataRow objects using plain SQL queries */
-  implicit def GetResultDataRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Option[String]], e3: GR[Option[java.sql.Timestamp]], e4: GR[Option[Long]]): GR[DataRow] = GR{
+  implicit def GetResultDataRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Option[String]], e3: GR[Option[java.sql.Timestamp]]): GR[DataRow] = GR{
     prs => import prs._
-    DataRow.tupled((<<[Long], <<[String], <<[String], <<[String], <<?[String], <<[String], <<?[java.sql.Timestamp], <<?[java.sql.Timestamp], <<?[Long]))
+    DataRow.tupled((<<[Long], <<[String], <<[String], <<[String], <<?[String], <<[String], <<?[java.sql.Timestamp], <<?[java.sql.Timestamp]))
   }
   /** Table description of table Data. Objects of this class serve as prototypes for rows in queries. */
   class Data(_tableTag: Tag) extends Table[DataRow](_tableTag, "Data") {
-    def * = (dataid, datatype, datatopic, creationstatus, creationerrordetail, creatorserver, creatorserverstarttime, creatorserverendtime, datadependedon) <> (DataRow.tupled, DataRow.unapply)
+    def * = (dataid, datatype, datatopic, creationstatus, creationerrordetail, creatorserver, creatorserverstarttime, creatorserverendtime) <> (DataRow.tupled, DataRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (dataid.?, datatype.?, datatopic.?, creationstatus.?, creationerrordetail, creatorserver.?, creatorserverstarttime, creatorserverendtime, datadependedon).shaped.<>({r=>import r._; _1.map(_=> DataRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7, _8, _9)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (dataid.?, datatype.?, datatopic.?, creationstatus.?, creationerrordetail, creatorserver.?, creatorserverstarttime, creatorserverendtime).shaped.<>({r=>import r._; _1.map(_=> DataRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7, _8)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
     
     /** Database column dataID DBType(BIGINT), AutoInc, PrimaryKey */
     val dataid: Column[Long] = column[Long]("dataID", O.AutoInc, O.PrimaryKey)
@@ -130,11 +129,32 @@ trait Tables {
     val creatorserverstarttime: Column[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("creatorserverstarttime", O.Default(None))
     /** Database column creatorserverendtime DBType(TIMESTAMP), Default(None) */
     val creatorserverendtime: Column[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("creatorserverendtime", O.Default(None))
-    /** Database column dataDependedOn DBType(BIGINT), Default(None) */
-    val datadependedon: Column[Option[Long]] = column[Option[Long]]("dataDependedOn", O.Default(None))
   }
   /** Collection-like TableQuery object for table Data */
   lazy val Data = new TableQuery(tag => new Data(tag))
+  
+  /** Entity class storing rows of table Datadependencies
+   *  @param dataid Database column dataID DBType(INT), PrimaryKey
+   *  @param depdataid Database column depDataID DBType(VARCHAR), Length(45,true), Default(None) */
+  case class DatadependenciesRow(dataid: Int, depdataid: Option[String] = None)
+  /** GetResult implicit for fetching DatadependenciesRow objects using plain SQL queries */
+  implicit def GetResultDatadependenciesRow(implicit e0: GR[Int], e1: GR[Option[String]]): GR[DatadependenciesRow] = GR{
+    prs => import prs._
+    DatadependenciesRow.tupled((<<[Int], <<?[String]))
+  }
+  /** Table description of table DataDependencies. Objects of this class serve as prototypes for rows in queries. */
+  class Datadependencies(_tableTag: Tag) extends Table[DatadependenciesRow](_tableTag, "DataDependencies") {
+    def * = (dataid, depdataid) <> (DatadependenciesRow.tupled, DatadependenciesRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (dataid.?, depdataid).shaped.<>({r=>import r._; _1.map(_=> DatadependenciesRow.tupled((_1.get, _2)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    
+    /** Database column dataID DBType(INT), PrimaryKey */
+    val dataid: Column[Int] = column[Int]("dataID", O.PrimaryKey)
+    /** Database column depDataID DBType(VARCHAR), Length(45,true), Default(None) */
+    val depdataid: Column[Option[String]] = column[Option[String]]("depDataID", O.Length(45,varying=true), O.Default(None))
+  }
+  /** Collection-like TableQuery object for table Datadependencies */
+  lazy val Datadependencies = new TableQuery(tag => new Datadependencies(tag))
   
   /** Entity class storing rows of table Datagroupings
    *  @param groupid Database column groupID DBType(INT), PrimaryKey

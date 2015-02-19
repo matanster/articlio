@@ -17,7 +17,7 @@ class DataExecutionManager extends Execute {
   
   // returns: access details for ready data,
   //          or None if data is not ready
-  def getDataAccessAnyID(data: Data): Option[Access] = {
+  private def getDataAccessAnyID(data: Data): Option[Access] = {
     
     data.ReadyState match {
       
@@ -30,23 +30,26 @@ class DataExecutionManager extends Execute {
         println(s"data for ${data.getClass} is not yet ready")
         
         // no missing dependencies, and own create successful?
-        if (dataDependenciesReady(data)) 
-          if (data.create == Ready) 
-            return Some(data.access)
-              
-        // otherwise..
-        return None 
+        dataDependenciesReady(data) match {
+          case None =>
+            if (data.create == Ready) 
+              Some(data.access)
+            else 
+              None
+        
+          case Some(error) => None          
+        }
       }
     }
   }
 
   // returns: access details for ready data,
   //          or None if data is not ready
-  def getDataAccessSpecificID(data: Data, suppliedRunID: Long): Option[Access] = {
+  private def getDataAccessSpecificID(data: Data, suppliedRunID: Long): Option[Access] = {
     
     data.ReadyState match {
       
-    case Ready => {  
+      case Ready => {  
         println(s"data for ${data.getClass} with ID ${suppliedRunID} is ready")
         return Some(data.access)
       }
@@ -59,9 +62,11 @@ class DataExecutionManager extends Execute {
   }
   
   // returns whether all dependency data are ready or not
-  def dataDependenciesReady(dataWrapper: Data) : Boolean = {
+  private def dataDependenciesReady(dataWrapper: Data) : Option[CreateError] = {
     val depsGet = dataWrapper.dependsOn.map(dep => getDataAccess(dep))
     !depsGet.exists(d => d == None)
   }
+  
+  
 
 }

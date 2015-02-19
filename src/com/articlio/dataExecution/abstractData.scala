@@ -63,8 +63,7 @@ abstract class Data(val dataIDrequested: Option[Long] = None) extends Access wit
       creationerrordetail    = None,
       creatorserver          = ownHostName,
       creatorserverstarttime = Some(startTime),
-      creatorserverendtime   = None,
-      datadependedon         = None)
+      creatorserverendtime   = None)
 
     // now try this data's creation function    
     val creationError = safeRunCreator(creator(dataID, dataTopic))
@@ -82,8 +81,7 @@ abstract class Data(val dataIDrequested: Option[Long] = None) extends Access wit
                                  case Some(error) => Some(error.toString)},
       creatorserver          = ownHostName,
       creatorserverstarttime = Some(startTime),
-      creatorserverendtime   = Some(localNow),
-      datadependedon         = None)
+      creatorserverendtime   = Some(localNow))
     ) 
     
     //
