@@ -16,7 +16,7 @@ abstract class AccessError    extends AccessOrError
 case     class CreateError    (errorDetail: String) extends AccessError 
 case     class DepsError      (errorDetail: String) extends AccessError
 case     class DataIDNotFound (errorDetail: String) extends AccessError
-class          Access         extends AccessOrError
+class    Access extends AccessOrError
 
 trait RecordException {
   def recordException(exception: Throwable) {
@@ -27,7 +27,7 @@ trait RecordException {
   }
 }
 
-abstract class Data(val dataIDrequested: Option[Long] = None) extends Access with Execute with RecordException with Connection { 
+abstract class Data(val requestedDataID: Option[Long] = None) extends RecordException with Connection { 
   
   def create: ReadyState = { 
 
@@ -45,6 +45,14 @@ abstract class Data(val dataIDrequested: Option[Long] = None) extends Access wit
         recordException(anyException)
         return Some(CreateError("exception")) }
     } 
+    
+    def registerDependencies(data: Data) : Unit = {
+      data.dependsOn.map(dependedOnData => { 
+        Datadependencies += DatadependenciesRow(data.dataID.get, dependedOnData.dataID.get)
+        registerDependencies(dependedOnData)
+      })
+    }
+
       
     val ownHostName = java.net.InetAddress.getLocalHost.getHostName
     val startTime = localNow
@@ -52,7 +60,7 @@ abstract class Data(val dataIDrequested: Option[Long] = None) extends Access wit
     //
     // register a new data run, and get its unique auto-ID from the RDBMS
     //
-    val dataID = DataRecord.returning(DataRecord.map(_.dataid)) += DataRow(
+    dataID = Some(DataRecord.returning(DataRecord.map(_.dataid)) += DataRow(
       dataid                 = 0L, // will be auto-generated 
       datatype               = dataType, 
       datatopic              = dataTopic, 
@@ -60,14 +68,14 @@ abstract class Data(val dataIDrequested: Option[Long] = None) extends Access wit
       creationerrordetail    = None,
       creatorserver          = ownHostName,
       creatorserverstarttime = Some(startTime),
-      creatorserverendtime   = None)
+      creatorserverendtime   = None))
 
     // now try this data's creation function    
-    val creationError = safeRunCreator(creator(dataID, dataTopic))
+    val creationError = safeRunCreator(creator(dataID.get, dataTopic))
       
     // now record the outcome - was the data successfully created by this run?
-    DataRecord.filter(_.dataid === dataID).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
-      dataid                 = dataID,
+    DataRecord.filter(_.dataid === dataID.get).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
+      dataid                 = dataID.get,
       datatype               = dataType, 
       datatopic              = dataTopic, 
       creationstatus         = creationError match {
@@ -82,16 +90,19 @@ abstract class Data(val dataIDrequested: Option[Long] = None) extends Access wit
     ) 
     
     //
-    // return whether the data is now available or not
+    // register dependencies if successful creation, and return
     //
     creationError match {
-      case None  => Ready(dataID)
+      case None  => {
+        registerDependencies(this)
+        Ready(dataID.get)
+      }
       case Some(error) => NotReady 
     }
   } 
 
   def ReadyState: ReadyState = {
-    dataIDrequested match {
+    requestedDataID match {
       case Some(dataIDrequested) => ReadyStateSpecific(dataIDrequested)
       case None                  => ReadyStateAny
     }
@@ -120,21 +131,16 @@ abstract class Data(val dataIDrequested: Option[Long] = None) extends Access wit
     
   def access: Access
   
-  //var dataID: Long = 0L // auto-assigned by the db
-  
   def dependsOn: Seq[Data]
+  
+  var dataID: Option[Long] = None // for caching database auto-assigned ID  
   
 }
 
 
 
 
-/*****************************
- *                              
- *  potentially dead code              
- * 
- */
-
+@deprecated("to be removed","bla")
 trait Execute extends RecordException {
   def execute[ExpectedType](func: => ExpectedType): Option[ExpectedType] = { // this form of prototype takes a function by name
     try { return Some(func) } 
@@ -145,6 +151,7 @@ trait Execute extends RecordException {
   } 
 }
 
+@deprecated("to be removed","bla")
 trait oldResultWrapper extends Execute {
   def resultWrapper(func: => Boolean): ReadyState = { // this form of prototype takes a function by name
     execute(func) match {
