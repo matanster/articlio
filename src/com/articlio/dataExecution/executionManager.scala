@@ -11,10 +11,15 @@ import com.articlio.storage.Connection
 //
 class DataExecutionManager extends Connection {
 
-  def getFinalDataAccess(data: Data): AccessOrError = {
+  def getSingleDataAccess(data: Data): AccessOrError = {
     val access = getDataAccess(data: Data)
     access
   } 
+
+  //def getBulkDataAccess(data: Seq[Data]) = {
+  //  data.
+  //  val access = getDataAccess(data: Data)
+  //} 
     
   //
   // chooses between two forms of processing this function

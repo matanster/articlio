@@ -22,7 +22,7 @@ object Ldb extends Controller {
   def singlePdfSourced(articleName: String, 
                        pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv") = Action { implicit request =>
     val executionManager = new DataExecutionManager
-    executionManager.getFinalDataAccess(new SemanticData(articleName, pdb)()) match {
+    executionManager.getSingleDataAccess(new SemanticData(articleName, pdb)()) match {
       case error: AccessError  =>
         Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
       case dataAccessDetail : Access =>  
