@@ -60,7 +60,7 @@ class JATSpipeline extends JATScreate {
 }
 
 // TODO: re-factor to use one function that runs a modifier function and writes its output to file
-class JATScreateSingle extends JATScreate {
+class makeBrowserReady extends JATScreate {
   import com.articlio.dataExecution.CreateError
   
   def go(runID: Long, articleName: String) : Option[CreateError] = {

@@ -7,7 +7,7 @@ case class rawPDFaccess(dirPath: String) extends Access
 
 case class rawPDFData(fileName: String) extends Data
 {
-  val dataType = "rawPDF"
+  val dataType = "RawPDF"
   
   val dataTopic = fileName // for now
   

@@ -51,9 +51,9 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
   //
   // Public interface to process a document 
   //                                        
-  def process(JATSaccess: com.articlio.dataExecution.concrete.JATSaccess)(runID: Long, articleName: String) : Option[CreateError] = {
+  def process(cleanJATSaccess: com.articlio.dataExecution.concrete.JATSaccess)(runID: Long, articleName: String) : Option[CreateError] = {
 
-    val document = new JATS(s"${JATSaccess.dirPath}/$articleName.xml")
+    val document = new JATS(s"${cleanJATSaccess.dirPath}/$articleName.xml")
     
     val logger = new Logger(document.name)
     

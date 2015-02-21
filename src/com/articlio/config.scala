@@ -11,19 +11,19 @@ object config {
   val config = ConfigFactory.parseFile(new File("../config/config.json"))
 
   val ldb = config.getString("locations.ldb")
-  val output = config.getString("locations.semantic-output")
-  val eLife = config.getString("locations.ready-for-semantic.from-eLife")
-  val pdf = config.getString("locations.ready-for-semantic.from-pdf")
+  val output = config.getString("locations.semantic-logging")
+  val eLife = config.getString("locations.JATS")
+  val pdf = config.getString("locations.JATS")
 
-  val pdfAsJATS = config.getString("locations.pdf-extraction.asJATS")
-  val copyTo = config.getString("locations.ready-for-semantic.from-pdf")
-  val asText = config.getString("locations.pdf-extraction.asText")
-  val asEscapedText = config.getString("locations.pdf-extraction.asEscapedText")
+  val pdfAsJATS = config.getString("locations.pdf-source-extraction.JATS")
+  val copyTo = config.getString("locations.JATS")  
+  val asText = config.getString("locations.pdf-source-extraction.Text")
+  val asEscapedText = config.getString("locations.pdf-source-extraction.EscapedText")
   
   val JATSinput = config.getString("locations.JATS-input.input")
   val JATSformatted = config.getString("locations.JATS-input.formatted")
   val JATSstyled = config.getString("locations.JATS-input.styled")
-  val JATSout = config.getString("locations.ready-for-semantic.from-eLife")
+  val JATSout = config.getString("locations.JATS")
   
   val pdfSourceDir = config.getString("locations.pdf-input")
 }
