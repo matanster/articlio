@@ -2,7 +2,7 @@ package com.articlio.dataExecution.concrete
 import com.articlio.dataExecution._
 import util._
 import com.articlio.config
-import com.articlio.pipe.pipelines.makeBrowserReady
+import com.articlio.pipe.pipelines.ReadyJATS
 
 case class JATSaccess(dirPath: String) extends Access
 case class JATSData(articleName: String) extends Data
@@ -11,29 +11,27 @@ case class JATSData(articleName: String) extends Data
   
   val dataTopic = articleName
   
-  val dependsOn = Seq(SourceJATS(articleName))
+  val dependsOn = Seq() // this data type has an "any of" relationship between its dependencies, 
+                        // which is managed here internally by it rather than by the execution manager.
+                        // a bit of a "design smell", may be refactored.
+  //
+  // generate clean JATS, from either pdf source, or eLife JATS source, whichever exists for the requested article name.
+  //
+  val PDFDep       = RawPDF(articleName)
+  val eLifeJATSDep = RaweLifeJATS(articleName)
   
-  val creator = (new makeBrowserReady).go(_ :Long, _ :String)
-
-  val access = JATSaccess(config.config.getString("locations.JATS")) // filePathExists(s"${config.eLife}/$articleName.xml") match {
-}
-
-//
-// get either pdf sourced, or JATS sourced, input, whichever exists for the requested article name.
-// this aspect would be refactored, when 
-//
-case class SourceJATSaccess(dirPath: String) extends Access
-case class SourceJATS(articleName: String) extends Data
-{
-  val dataType = "SourceJATS"
+  def create()(dataID: Long, articleName:String) : Option[CreateError] = {
+    import controllers.PdfConvert
+      val executionManager = new DataExecutionManager // TODO: no real reason to spawn a new execution manager just for this 
+      executionManager.getSingleDataAccess(eLifeJATSDep) match {
+      case access: Access => ReadyJATS.fix()_; None
+      case error:  AccessError => 
+        executionManager.getSingleDataAccess(PDFDep) match {
+          case access: Access => PdfConvert.convertSingle(s"${config.config.getString("locations.pdf-input")}/$articleName"); None
+          case error:  AccessError => Some(CreateError(s"disjunctive dependency for creating JATS for $articleName has not been met.")) 
+        }  
+    }
+  }; val creator = create()_
   
-  val dataTopic = articleName
-  
-  val dependsOn = Seq()
-  
-  def creator(dataID: Long, articleName:String) : Option[CreateError] = {
-             
-  }
-
-  val access = SourceJATSaccess("TBD") // filePathExists(s"${config.eLife}/$articleName.xml") match {
+  val access = JATSaccess(config.config.getString("locations.JATS")) // floggingfasdflePathExists(s"${config.eLife}/$articleName.xml") match {
 }

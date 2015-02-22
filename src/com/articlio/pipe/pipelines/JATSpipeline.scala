@@ -7,6 +7,7 @@ import sys.process._
 import com.articlio.pipe.BulkPipeline
 import com.articlio.pipe.Step
 import scala.io.Source
+import com.articlio.dataExecution.CreateError
 
 trait JATScreate {
   
@@ -59,15 +60,18 @@ class JATSpipeline extends JATScreate {
   println("pipeline invoked for originally JATS input")
 }
 
-// TODO: re-factor to use one function that runs a modifier function and writes its output to file
-class makeBrowserReady extends JATScreate {
-  import com.articlio.dataExecution.CreateError
+object ReadyJATS extends JATScreate {
   
-  def go(runID: Long, articleName: String) : Option[CreateError] = {
+  copyXSL(config.JATSstyled) // enough to perform once
+  
+  def browserify(runID: Long, articleName: String) : Option[CreateError] = {
     prettify(config.JATSinput, config.JATSformatted, articleName)
-    copyXSL(config.JATSstyled)
     applyXSL(config.JATSformatted, config.JATSstyled, articleName)
-    applyClean(config.JATSinput, config.JATSout, articleName)
     None // report no error
   } 
+  
+  def fix()(runID: Long, articleName: String) : Option[CreateError] = {
+    applyClean(config.JATSinput, config.JATSout, articleName)
+    None // report no error
+  }  
 }

@@ -103,3 +103,8 @@ class DataExecutionManager extends Connection {
     }
   }
 }
+
+//
+// executes data preparation by dependencies
+//
+class DatadExecutionManager extends DataExecutionManager

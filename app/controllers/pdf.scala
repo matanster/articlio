@@ -18,7 +18,7 @@ import scala.concurrent.Future
 
 import com.articlio.config
 
-object pdf extends Controller {
+object PdfConvert extends Controller {
   
   def convertAll = Action.async { 
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -27,10 +27,9 @@ object pdf extends Controller {
     }   
   }
   
-  def convertSingle(location: String) = Action.async { 
+  def convertSingle(fullPath: String) = Action.async { 
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    println(config.pdfSourceDir + location)
-    WS.url("http://localhost:3000/handleInputFile").withQueryString("localLocation" -> (config.pdfSourceDir + location)).get().map { response => 
+    WS.url("http://localhost:3000/handleInputFile").withQueryString("localLocation" -> fullPath).get().map { response => 
       Ok(response.body)
     }   
   }

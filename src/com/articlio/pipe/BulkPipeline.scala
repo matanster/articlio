@@ -20,6 +20,11 @@ import sys.process._ // for being able to issue OS commands
 
 package object util {  
 
+  def copyFile(fileText: String, outDir: String, fileName: String) {
+    Files.write(Paths.get(outDir + "/" + fileName), fileText.getBytes(StandardCharsets.UTF_8))
+  }
+
+  
   def writeOutputFile(fileText: String, outDir: String, fileName: String) {
     Files.write(Paths.get(outDir + "/" + fileName), fileText.getBytes(StandardCharsets.UTF_8))
   }
