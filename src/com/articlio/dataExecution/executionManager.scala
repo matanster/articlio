@@ -59,7 +59,7 @@ class DataExecutionManager extends Connection {
     data.ReadyState match {
       
       case Ready(dataID) => {  
-        println(s"data for ${data.getClass} is ready")
+        println(s"data for ${data.getClass} is ready (data id: $dataID)")
         return data.access
       }
       
@@ -74,7 +74,7 @@ class DataExecutionManager extends Connection {
           case true =>
             data.create match { 
               case Ready(createdDataID) => {
-                println(s"data for ${data.getClass} now ready")
+                println(s"data for ${data.getClass} now ready (data id: $createdDataID)")
                 data.access
               }
               case NotReady => CreateError("failed creating data")
@@ -91,20 +91,15 @@ class DataExecutionManager extends Connection {
     data.ReadyState match {
       
       case Ready(dataID) => {  
-        println(s"data for ${data.getClass} with ID ${suppliedRunID} is ready")
+        println(s"data for ${data.getClass} with id ${suppliedRunID} is ready")
         return data.access
       }
       
       case NotReady => {
-        val error = s"there is no data with ID ${suppliedRunID} for ${data.getClass}"
+        val error = s"there is no data with id ${suppliedRunID} for ${data.getClass}"
         println(error)
         return DataIDNotFound(error)  
       }
     }
   }
 }
-
-//
-// executes data preparation by dependencies
-//
-class DatadExecutionManager extends DataExecutionManager
