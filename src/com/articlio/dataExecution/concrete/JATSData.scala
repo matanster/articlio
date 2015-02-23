@@ -39,20 +39,20 @@ case class JATSData(articleName: String) extends Data
     import controllers.PdfConvert
       val executionManager = new DataExecutionManager // TODO: no real reason to spawn a new execution manager just for this 
       executionManager.getSingleDataAccess(eLifeJATSDep) match {
-      case access: Access => {
-        ReadyJATS.fix()_
-        registerDependency(this, eLifeJATSDep)
-        None
-      }
-      case error:  AccessError => 
-        executionManager.getSingleDataAccess(PDFDep) match {
-          case access: Access => {
-            PdfConvert.convertSingle(s"${config.config.getString("locations.pdf-input")}/$articleName")
-            registerDependency(this, eLifeJATSDep)
-            None
-          }
-          case error:  AccessError => Some(CreateError(s"disjunctive dependency for creating JATS for $articleName has not been met.")) 
-        }  
+        case access: Access => {
+          ReadyJATS.fix()_
+          registerDependency(this, eLifeJATSDep)
+          None
+        }
+        case error:  AccessError => 
+          executionManager.getSingleDataAccess(PDFDep) match {
+            case access: Access => {
+              PdfConvert.convertSingle(s"${config.config.getString("locations.pdf-input")}/$articleName")
+              registerDependency(this, eLifeJATSDep)
+              None
+            }
+            case error:  AccessError => Some(CreateError(s"disjunctive dependency for creating JATS for $articleName has not been met.")) 
+          }  
     }
   }; val creator = create()_
   

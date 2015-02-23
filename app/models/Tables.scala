@@ -70,13 +70,13 @@ trait Tables {
   lazy val Autoproperties = new TableQuery(tag => new Autoproperties(tag))
   
   /** Entity class storing rows of table Bulkdatagroups
-   *  @param bulkid Database column bulkID DBType(INT), PrimaryKey
+   *  @param bulkid Database column bulkID DBType(BIGINT), PrimaryKey
    *  @param dataid Database column dataID DBType(BIGINT) */
-  case class BulkdatagroupsRow(bulkid: Int, dataid: Long)
+  case class BulkdatagroupsRow(bulkid: Long, dataid: Long)
   /** GetResult implicit for fetching BulkdatagroupsRow objects using plain SQL queries */
-  implicit def GetResultBulkdatagroupsRow(implicit e0: GR[Int], e1: GR[Long]): GR[BulkdatagroupsRow] = GR{
+  implicit def GetResultBulkdatagroupsRow(implicit e0: GR[Long]): GR[BulkdatagroupsRow] = GR{
     prs => import prs._
-    BulkdatagroupsRow.tupled((<<[Int], <<[Long]))
+    BulkdatagroupsRow.tupled((<<[Long], <<[Long]))
   }
   /** Table description of table BulkDataGroups. Objects of this class serve as prototypes for rows in queries. */
   class Bulkdatagroups(_tableTag: Tag) extends Table[BulkdatagroupsRow](_tableTag, "BulkDataGroups") {
@@ -84,8 +84,8 @@ trait Tables {
     /** Maps whole row to an option. Useful for outer joins. */
     def ? = (bulkid.?, dataid.?).shaped.<>({r=>import r._; _1.map(_=> BulkdatagroupsRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
     
-    /** Database column bulkID DBType(INT), PrimaryKey */
-    val bulkid: Column[Int] = column[Int]("bulkID", O.PrimaryKey)
+    /** Database column bulkID DBType(BIGINT), PrimaryKey */
+    val bulkid: Column[Long] = column[Long]("bulkID", O.PrimaryKey)
     /** Database column dataID DBType(BIGINT) */
     val dataid: Column[Long] = column[Long]("dataID")
   }
@@ -100,18 +100,19 @@ trait Tables {
    *  @param creationerrordetail Database column creationErrorDetail DBType(VARCHAR), Length(10000,true), Default(None)
    *  @param creatorserver Database column creatorServer DBType(VARCHAR), Length(45,true)
    *  @param creatorserverstarttime Database column creatorserverstarttime DBType(TIMESTAMP), Default(None)
-   *  @param creatorserverendtime Database column creatorserverendtime DBType(TIMESTAMP), Default(None) */
-  case class DataRow(dataid: Long, datatype: String, datatopic: String, creationstatus: String, creationerrordetail: Option[String] = None, creatorserver: String, creatorserverstarttime: Option[java.sql.Timestamp] = None, creatorserverendtime: Option[java.sql.Timestamp] = None)
+   *  @param creatorserverendtime Database column creatorserverendtime DBType(TIMESTAMP), Default(None)
+   *  @param softwareversion Database column softwareVersion DBType(INT) */
+  case class DataRow(dataid: Long, datatype: String, datatopic: String, creationstatus: String, creationerrordetail: Option[String] = None, creatorserver: String, creatorserverstarttime: Option[java.sql.Timestamp] = None, creatorserverendtime: Option[java.sql.Timestamp] = None, softwareversion: Int)
   /** GetResult implicit for fetching DataRow objects using plain SQL queries */
-  implicit def GetResultDataRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Option[String]], e3: GR[Option[java.sql.Timestamp]]): GR[DataRow] = GR{
+  implicit def GetResultDataRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Option[String]], e3: GR[Option[java.sql.Timestamp]], e4: GR[Int]): GR[DataRow] = GR{
     prs => import prs._
-    DataRow.tupled((<<[Long], <<[String], <<[String], <<[String], <<?[String], <<[String], <<?[java.sql.Timestamp], <<?[java.sql.Timestamp]))
+    DataRow.tupled((<<[Long], <<[String], <<[String], <<[String], <<?[String], <<[String], <<?[java.sql.Timestamp], <<?[java.sql.Timestamp], <<[Int]))
   }
   /** Table description of table Data. Objects of this class serve as prototypes for rows in queries. */
   class Data(_tableTag: Tag) extends Table[DataRow](_tableTag, "Data") {
-    def * = (dataid, datatype, datatopic, creationstatus, creationerrordetail, creatorserver, creatorserverstarttime, creatorserverendtime) <> (DataRow.tupled, DataRow.unapply)
+    def * = (dataid, datatype, datatopic, creationstatus, creationerrordetail, creatorserver, creatorserverstarttime, creatorserverendtime, softwareversion) <> (DataRow.tupled, DataRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (dataid.?, datatype.?, datatopic.?, creationstatus.?, creationerrordetail, creatorserver.?, creatorserverstarttime, creatorserverendtime).shaped.<>({r=>import r._; _1.map(_=> DataRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7, _8)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (dataid.?, datatype.?, datatopic.?, creationstatus.?, creationerrordetail, creatorserver.?, creatorserverstarttime, creatorserverendtime, softwareversion.?).shaped.<>({r=>import r._; _1.map(_=> DataRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get, _7, _8, _9.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
     
     /** Database column dataID DBType(BIGINT), AutoInc, PrimaryKey */
     val dataid: Column[Long] = column[Long]("dataID", O.AutoInc, O.PrimaryKey)
@@ -129,6 +130,8 @@ trait Tables {
     val creatorserverstarttime: Column[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("creatorserverstarttime", O.Default(None))
     /** Database column creatorserverendtime DBType(TIMESTAMP), Default(None) */
     val creatorserverendtime: Column[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("creatorserverendtime", O.Default(None))
+    /** Database column softwareVersion DBType(INT) */
+    val softwareversion: Column[Int] = column[Int]("softwareVersion")
   }
   /** Collection-like TableQuery object for table Data */
   lazy val Data = new TableQuery(tag => new Data(tag))

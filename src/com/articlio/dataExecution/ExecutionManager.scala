@@ -11,6 +11,13 @@ import com.articlio.storage.Connection
 //
 class DataExecutionManager extends Connection {
 
+  def unconditionalCreate(data: Data): AccessOrError = {
+    data.create match {
+      case Ready(runID) => data.access  
+      case NotReady => new CreateError("failed unconditionally creating data")
+    }
+  }
+  
   def getSingleDataAccess(data: Data): AccessOrError = {
     val access = getDataAccess(data: Data)
     access

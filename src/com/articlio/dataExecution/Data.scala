@@ -68,7 +68,8 @@ abstract class Data(val requestedDataID: Option[Long] = None) extends RecordExce
       creationerrordetail    = None,
       creatorserver          = ownHostName,
       creatorserverstarttime = Some(startTime),
-      creatorserverendtime   = None))
+      creatorserverendtime   = None,
+      softwareversion = com.articlio.Version.id))
 
     // now try this data's creation function    
     val creationError = safeRunCreator(creator(dataID.get, dataTopic))
@@ -86,7 +87,8 @@ abstract class Data(val requestedDataID: Option[Long] = None) extends RecordExce
                                  case Some(error) => Some(error.toString)},
       creatorserver          = ownHostName,
       creatorserverstarttime = Some(startTime),
-      creatorserverendtime   = Some(localNow))
+      creatorserverendtime   = Some(localNow),
+      softwareversion = com.articlio.Version.id)
     ) 
     
     //

@@ -38,21 +38,21 @@ object Ldb extends Controller {
     Ok("Not re-implemented")
   }
 
-  import com.articlio.semantic.Bulk
+  import com.articlio.semantic.BulkFromDirectory
   def all = Action { implicit request =>
-    val bulk = new Bulk((new runID).id)
+    val bulk = new BulkFromDirectory((new runID).id)
     bulk.all
     Ok("Done processing all files... but you probably timed out by now")
   }
 
   def allPdf = Action { implicit request =>
-    val bulk = new Bulk((new runID).id)
+    val bulk = new BulkFromDirectory((new runID).id)
     bulk.allPDF
     Ok("Done processing all files... but you probably timed out by now")
   }
 
   def alleLife = Action { implicit request =>
-    val bulk = new Bulk((new runID).id)
+    val bulk = new BulkFromDirectory((new runID).id)
     bulk.alleLife
     Ok("Done processing all files... but you probably timed out by now")
   }
