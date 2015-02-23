@@ -27,7 +27,7 @@ trait RecordException {
   }
 }
 
-abstract class Data(val requestedDataID: Option[Long] = None) extends RecordException with Connection { 
+abstract class DataObject(val requestedDataID: Option[Long] = None) extends RecordException with Connection { 
   
   def create: ReadyState = { 
 
@@ -46,7 +46,7 @@ abstract class Data(val requestedDataID: Option[Long] = None) extends RecordExce
         return Some(CreateError("exception")) }
     } 
     
-    def registerDependencies(data: Data) : Unit = {
+    def registerDependencies(data: DataObject): Unit = {
       data.dependsOn.map(dependedOnData => { 
         Datadependencies += DatadependenciesRow(data.dataID.get, dependedOnData.dataID.get)
         registerDependencies(dependedOnData)
@@ -133,7 +133,7 @@ abstract class Data(val requestedDataID: Option[Long] = None) extends RecordExce
     
   def access: Access
   
-  def dependsOn: Seq[Data]
+  def dependsOn: Seq[DataObject]
   
   var dataID: Option[Long] = None // for caching database auto-assigned ID  
   

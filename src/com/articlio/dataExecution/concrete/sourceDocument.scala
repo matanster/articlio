@@ -4,7 +4,7 @@ import util._
 import com.articlio.config
 
 @deprecated("redundant", "redundant")
-case class sourceDocument(fileName: String) extends Data
+case class sourceDocument(fileName: String) extends DataObject
 {
   import scala.slick.driver.MySQLDriver.simple._
   import scala.slick.jdbc.meta._
@@ -41,7 +41,7 @@ case class sourceDocument(fileName: String) extends Data
 
 
 case class RawPDFaccess(dirPath: String) extends Access
-case class RawPDF(fileName: String) extends Data
+case class RawPDF(fileName: String) extends DataObject
 {
   val dataType = "RawPDF"
   
@@ -63,7 +63,7 @@ case class RawPDF(fileName: String) extends Data
 }
 
 case class RaweLifeJATSAccess(dirPath: String) extends Access
-case class RaweLifeJATS(fileName: String) extends Data
+case class RaweLifeJATS(fileName: String) extends DataObject
 {
   val dataType = "RaweLifeJATS"
   

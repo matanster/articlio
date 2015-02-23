@@ -11,27 +11,22 @@ import com.articlio.storage.Connection
 //
 class DataExecutionManager extends Connection {
 
-  def unconditionalCreate(data: Data): AccessOrError = {
+  def unconditionalCreate(data: DataObject): AccessOrError = {
     data.create match {
       case Ready(runID) => data.access  
       case NotReady => new CreateError("failed unconditionally creating data")
     }
   }
   
-  def getSingleDataAccess(data: Data): AccessOrError = {
-    val access = getDataAccess(data: Data)
-    access
+  def getSingleDataAccess(data: DataObject): AccessOrError = {
+    val accessOrError = getDataAccess(data: DataObject)
+    accessOrError
   } 
 
-  //def getBulkDataAccess(data: Seq[Data]) = {
-  //  data.
-  //  val access = getDataAccess(data: Data)
-  //} 
-    
   //
   // chooses between two forms of processing this function
   //
-  private def getDataAccess(data: Data): AccessOrError = {
+  private def getDataAccess(data: DataObject): AccessOrError = {
     data.requestedDataID match {
       case None                => getDataAccessAnyID(data)
       case Some(suppliedRunID) => getDataAccessSpecificID(data, suppliedRunID) 
@@ -40,12 +35,12 @@ class DataExecutionManager extends Connection {
   
   // checks whether data already exists. if data doesn't exist yet, attempts to create it.
   // returns: access details for ready data, or None cannot be readied
-  private def getDataAccessAnyID(data: Data): AccessOrError = {
+  private def getDataAccessAnyID(data: DataObject): AccessOrError = {
     
     case class AccessTree(accessOrError: AccessOrError, children: Option[Seq[AccessTree]] = None)  
     
     // build dependencies tree, holding either access or error for each dependency
-    def getDeps(data: Data) : AccessTree = {
+    def getDeps(data: DataObject) : AccessTree = {
       data.dependsOn.nonEmpty match {
         case true  => AccessTree(getDataAccess(data), Some(data.dependsOn.map(dep => getDeps(dep))))
         case false => AccessTree(getDataAccess(data), None)
@@ -93,7 +88,7 @@ class DataExecutionManager extends Connection {
   
   // checks whether data with specific ID already exists, but doesn't attempt to create it.
   // returns: access details for ready data, or None if data is not ready
-  private def getDataAccessSpecificID(data: Data, suppliedRunID: Long): AccessOrError = {
+  private def getDataAccessSpecificID(data: DataObject, suppliedRunID: Long): AccessOrError = {
     
     data.ReadyState match {
       

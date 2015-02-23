@@ -11,8 +11,8 @@ import play.api.http.MimeTypes
 
 object Application extends Controller {
 
-  def showExtract(articleName: String, 
-                  pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", 
+  def showExtract(articleName: String,
+                  pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv",
                   dataID: Option[Long]) = DBAction { implicit request =>
 
     import com.articlio.dataExecution._
@@ -22,7 +22,7 @@ object Application extends Controller {
       val content = Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)
       val dataIDs = models.Tables.Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
       val unlifted = content.asInstanceOf[List[models.Tables.MatchesRow]]
-      Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, unlifted))
+      Ok(views.html.showExtract(dataIDs, dataID, "some pdb", articleName, unlifted))
     }
     
     val executionManager = new DataExecutionManager
@@ -34,7 +34,7 @@ object Application extends Controller {
       
       // no specific run id requested
       case None => 
-        executionManager.getSingleDataAccess(new SemanticData(articleName, pdb)()) match {
+        executionManager.getSingleDataAccess(new SemanticData(articleName)()) match {
           case error: AccessError => 
             Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
           case access: Access => {
@@ -46,7 +46,7 @@ object Application extends Controller {
       
       // a specific run id requested
       case Some(dataID) =>
-        executionManager.getSingleDataAccess(new SemanticData(articleName, pdb)()) match {
+        executionManager.getSingleDataAccess(new SemanticData(articleName)()) match {
           case error: DataIDNotFound => 
             Ok("There is no result data for the requested data ID")
           case accesss: Access => {

@@ -11,7 +11,7 @@ import com.articlio.pipe.pipelines.ReadyJATS
  */
 
 case class JATSaccess(dirPath: String) extends Access
-case class JATSData(articleName: String) extends Data
+case class JATSData(articleName: String) extends DataObject
 {
   val dataType = "JATS"
   
@@ -26,7 +26,7 @@ case class JATSData(articleName: String) extends Data
   val PDFDep       = RawPDF(articleName)
   val eLifeJATSDep = RaweLifeJATS(articleName)
   
-  def registerDependency(data: Data, dependedOnData: Data) : Unit = {
+  def registerDependency(data: DataObject, dependedOnData: DataObject) : Unit = {
     import scala.slick.driver.MySQLDriver.simple._
     import scala.slick.jdbc.meta._
     import models.Tables._
