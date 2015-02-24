@@ -24,9 +24,7 @@ object BulkSemanticRecreate extends Connection {
       data <- Data if data.dataid === bulkGroup.dataid 
     } yield data.datatopic).list
     
-    def a(a: String) {}
-    
-    val ldbData = LDBData(ldb)
+    val ldbData = LDBData(ldb) 
     
     val data = articleNames.map(articleName => new SemanticData(articleName.toString)(LDB = ldbData))
     val executionManager = new BulkExecutionManager(data, Seq(ldbData))

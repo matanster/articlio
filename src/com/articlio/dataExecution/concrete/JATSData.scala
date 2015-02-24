@@ -35,7 +35,7 @@ case class JATSData(articleName: String) extends DataObject
     Datadependencies += DatadependenciesRow(data.dataID.get, dependedOnData.dataID.get)
   }
   
-  def create()(dataID: Long, articleName:String) : Option[CreateError] = {
+  def create()(dataID: Long, dataTopic: String, articleName:String) : Option[CreateError] = {
     import controllers.PdfConvert
       val executionManager = new DataExecutionManager // TODO: no real reason to spawn a new execution manager just for this 
       executionManager.getSingleDataAccess(eLifeJATSDep) match {

@@ -72,7 +72,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
       softwareversion = com.articlio.Version.id))
 
     // now try this data's creation function    
-    val creationError = safeRunCreator(creator(dataID.get, dataTopic))
+    val creationError = safeRunCreator(creator(dataID.get, dataType, dataTopic))
       
     // now record the outcome - was the data successfully created by this run?
     DataRecord.filter(_.dataid === dataID.get).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
@@ -129,7 +129,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   
   def dataTopic: String
   
-  def creator: (Long, String) => Option[CreateError]
+  def creator: (Long, String, String) => Option[CreateError]
     
   def access: Access
   

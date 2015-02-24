@@ -15,7 +15,7 @@ case class LDBData(csvFileName: String) extends DataObject
   val dependsOn = Seq()
   
   // for now, no real creation for an ldb, this is just a stub.
-  def create()(runID: Long, ldb: String) : Option[CreateError] = Some(CreateError("for now, linguistic database must be present on disk, cannot be created from scratch by the software.")) 
+  def create()(runID: Long, dataType: String, articleName: String) : Option[CreateError] = Some(CreateError("for now, linguistic database must be present on disk, cannot be created from scratch by the software.")) 
   val creator = create()_
   
   // for now, availability of an ldb is not managed through the data status database. so just check if it's there or not, for now.

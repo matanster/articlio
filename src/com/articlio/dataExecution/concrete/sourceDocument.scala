@@ -29,7 +29,7 @@ case class sourceDocument(fileName: String) extends DataObject
   } 
 
   // this is just a stub. no real creation for a source pdf file (for now, maybe later, try to fetch it from distributed storage?)
-  def create()(dataID: Long, articleName:String) : Option[CreateError] = { 
+  def create()(dataID: Long, dataType: String, articleName:String) : Option[CreateError] = { 
     filePathExists(fullPath) match {
       case true  => None 
       case false => Some(CreateError("source pdf file $fileName was not found.")) 
@@ -52,7 +52,7 @@ case class RawPDF(fileName: String) extends DataObject
   val fullPath = s"${config.config.getString("locations.pdf-input")}/$fileName"
   
   // this is just a stub. no real creation for a source pdf file (for now, maybe later, try to fetch it from distributed storage?)
-  def create()(dataID: Long, fileName: String) : Option[CreateError] = {
+  def create()(dataID: Long, dataType:String, fileName: String) : Option[CreateError] = {
     filePathExists(fullPath) match {
       case true  => None 
       case false => Some(CreateError("source pdf file $fileName was not found.")) 
@@ -74,7 +74,7 @@ case class RaweLifeJATS(fileName: String) extends DataObject
   val fullPath = s"${config.config.getString("locations.JATS-input.input")}/$fileName"
   
   // this is just a stub. no real creation for a source pdf file (for now, maybe later, try to fetch it from distributed storage?)
-  def create()(runID: Long, fileName: String) : Option[CreateError] = {
+  def create()(runID: Long, dataType: String, fileName: String) : Option[CreateError] = {
     filePathExists(fullPath) match {
       case true  => None 
       case false => Some(CreateError("source eLife JATS file $fileName was not found.")) 

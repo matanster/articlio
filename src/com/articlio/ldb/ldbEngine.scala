@@ -51,11 +51,11 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
   //
   // Public interface to process a document 
   //                                        
-  def process(cleanJATSaccess: com.articlio.dataExecution.concrete.JATSaccess)(runID: Long, articleName: String) : Option[CreateError] = {
+  def process(cleanJATSaccess: com.articlio.dataExecution.concrete.JATSaccess)(dataID: Long, dataType: String, articleName: String) : Option[CreateError] = {
 
     val document = new JATS(s"${cleanJATSaccess.dirPath}/$articleName.xml")
     
-    val logger = new Logger(document.name)
+    val logger = new DataLogger(dataType, document.name, dataID)
     
     //
     // get data
@@ -304,7 +304,7 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
         }
           
       	rdbmsData ++= 
-          tentativeMatches.filter(_.selfishRef).map(m => MatchesRow(runID,
+          tentativeMatches.filter(_.selfishRef).map(m => MatchesRow(dataID,
                             document.name, 
                             m.locatedText.text, 
                   				  m.pattern,
