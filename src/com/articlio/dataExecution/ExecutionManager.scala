@@ -13,8 +13,29 @@ import com.articlio.logger._
 class DataExecutionManager extends Connection {
 
   val logger = new SimplestLogger("DataExecutionManager")
+
+  //
+  // tree structure for holding the status of a data dependency tree.
+  // this structure is "needed" since we don't memoize/cache the dependencies status, 
+  // so it is used to freeze the status as creation unfolds, for accurate 
+  // error reporting.
+  //
+  case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Seq[ExecutedData] = Seq()) {
+
+    // recursively serialize the error/Ok status of the entire tree. might be a bit ugly for now
+    private def doSerialize(ExecutionTree: ExecutedData): String = {
+      s"${data.dataType} ${data.dataTopic}: ${ExecutionTree.accessOrError match {
+          case accessError: AccessError => s"an ${accessError.getClass} error was encountered: ${accessError.errorDetail}"
+          case access: Access => "creation was Ok."
+        }} \n ${ExecutionTree.children.isEmpty match {
+          case true  => 
+          case false => s"Its dependencies were: ${ExecutionTree.children.map(child => s"dependency ${doSerialize(child)}\n")}"
+          }}"
+    }
+    def serialize = s"Creating ${doSerialize(this)}"
+  }
   
-  def unconditionalCreate(data: DataObject): AccessOrError = {
+  def unconditionalCreate(data: DataObject): AccessOrError = { // TODO: this is a bug - it won't check dependencies. refactor...
     data.create match {
       case Ready(runID) => data.access  
       case NotReady => new CreateError("failed unconditionally creating data ${data.toString}")
@@ -22,92 +43,53 @@ class DataExecutionManager extends Connection {
   }
   
   def getSingleDataAccess(data: DataObject): AccessOrError = {
-    val accessOrError = getDataAccess(data: DataObject)
-    accessOrError
+    val executedTree = getDataAccess(data: DataObject)
+    logger.write(executedTree.serialize) // log the entire execution tree 
+    executedTree.accessOrError
   } 
 
   //
   // chooses between two forms of processing this function
   //
-  private def getDataAccess(data: DataObject): AccessOrError = {
+  private def getDataAccess(data: DataObject): ExecutedData = {
     data.requestedDataID match {
       case None                => getDataAccessAnyID(data)
-      case Some(suppliedRunID) => getDataAccessSpecificID(data, suppliedRunID) 
+      case Some(suppliedRunID) => ExecutedData(data, getDataAccessSpecificID(data, suppliedRunID)) 
     }      
   }
   
   // checks whether data already exists. if data doesn't exist yet, attempts to create it.
   // returns: access details for ready data, or None cannot be readied
-  private def getDataAccessAnyID(data: DataObject): AccessOrError = {
-    
-    //
-    // tree structure for holding the status of a data dependency tree.
-    // this structure is "needed" since we don't memoize/cache the dependencies status, 
-    // so it is used to freeze the status as creation unfolds, for accurate 
-    // error reporting.
-    //
-    case class AccessTree(data: DataObject, accessOrError: AccessOrError, children: Option[Seq[AccessTree]] = None) {
-
-      // recursively serialize the error/Ok status of the entire tree. might be a bit ugly for now
-      private def doSerialize(accessTree: AccessTree) : String = {
-        s"${data.dataType} ${data.dataTopic}: ${accessTree.accessOrError match {
-            case accessError: AccessError => s"an ${accessError.getClass} error was encountered: ${accessError.errorDetail}"
-            case access: Access => "creation was Ok."
-          }} \n ${accessTree.children.isEmpty match {
-            case true  => 
-            case false => s"Its dependencies were: ${accessTree.children.get.map(child => s"dependency ${doSerialize(child)}\n")}"
-            }}"
-      }
-      def serialize = s"Creating ${doSerialize(this)}"
-    }
-    
-    // build dependencies tree, holding either access or error for each dependency
-    def getDeps(data: DataObject) : AccessTree = {
-      data.dependsOn.nonEmpty match {
-        case true  => AccessTree(data, getDataAccess(data), Some(data.dependsOn.map(dep => getDeps(dep))))
-        case false => AccessTree(data, getDataAccess(data), None)
-      }
-    }
-    
-    // is entire dependencies tree ready?
-    def readyDependencies(accessTree: AccessTree) : Boolean = {
-      accessTree.children.isEmpty match {
-        case true  => true // no dependencies means all dependencies are ready by void
-        case false => accessTree.accessOrError match {
-          case access: Access      => !accessTree.children.get.map(dep => readyDependencies(dep)).exists(_ == false)
-          case error:  AccessError => false
-        } 
-      }
-    }
+  private def getDataAccessAnyID(data: DataObject): ExecutedData = {
     
     data.ReadyState match {
       
       case Ready(dataID) => {  
         logger.write(s"data for ${data.getClass} is ready (data id: $dataID)")
-        return data.access
+        return ExecutedData(data, data.access)
       }
       
       case NotReady => {
         logger.write(s"data for ${data.getClass} is not yet ready... attempting to create it...", Some(ConsoleMirror))
         val dataLogger = new DataLogger(data.dataType, data.dataTopic)
-        // no missing dependencies, and own create successful?
-        val dependenciesStatus = getDeps(data)
-        
-        readyDependencies(dependenciesStatus) match {
+
+        // recurse for own dependencies
+        val immediateDendencies = data.dependsOn.map(dep => getDataAccess(dep)) 
+
+        // is entire dependencies tree ready?
+        immediateDendencies.forall(dep => dep.accessOrError.isInstanceOf[Access]) match {
           case false => {
-            //logger.write(s"some dependencies for ${data.getClass} were not met\n" + "")
-            logger.write(dependenciesStatus.serialize)
-            DepsError("some dependencies for ${data.getClass} were not met") // TODO: log exact details of dependencies tree        
+            logger.write(s"some dependencies for ${data.getClass} were not met\n" + "")
+            ExecutedData(data, DepsError("some dependencies for ${data.getClass} were not met"), immediateDendencies) // TODO: log exact details of dependencies tree        
           }
           case true =>
             data.create match { 
               case Ready(createdDataID) => {
                 logger.write(s"data for ${data.getClass} now ready (data id: $createdDataID)")
-                data.access
+                ExecutedData(data, data.access, immediateDendencies)
               }
               case NotReady => {
-                logger.write(dependenciesStatus.serialize)
-                CreateError("failed creating data")
+                ExecutedData(data, CreateError("failed creating data"), immediateDendencies)
               }
             }
         }
