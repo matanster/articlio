@@ -6,6 +6,7 @@ import scala.collection.JavaConverters._
 import com.articlio.semantic.AppActorSystem
 import akka.actor.Actor
 import akka.event.Logging
+import com.articlio.logger._
 
 //
 // Aho-Corasick trie (for searching all pattern fragments implied in given linguistic database)
@@ -24,7 +25,7 @@ class AhoCorasickTrie {
   //
   // invoke aho-corasick to find all fragments in given sentence
   //
-  def findAll(sentence : String, logger: Logger) : List[Map[String, String]] = 
+  def findAll(sentence : String, logger: LdbEngineDocumentLogger) : List[Map[String, String]] = 
   {
     //println(deSentenceCase(sentence))
     val emitsJ = trie.parseText(deSentenceCase(sentence))
@@ -59,4 +60,4 @@ class AhoCorasickActor(ldb: LDB) extends Actor {
 //
 // Actor's message type
 //
-case class ProcessSentenceMessage(sentence : String, logger: Logger)
+case class ProcessSentenceMessage(sentence : String, logger: LdbEngineDocumentLogger)

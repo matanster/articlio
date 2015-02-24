@@ -1,6 +1,7 @@
 package com.articlio.util
 import akka.actor.Actor
 import com.articlio.semantic.AppActorSystem
+import com.articlio.logger._
 
 
 //
@@ -8,7 +9,7 @@ import com.articlio.semantic.AppActorSystem
 //
 class Timelog extends Actor {
 
-  val logger = new Logger("global-timers")
+  val logger = new SimplestLogger("global-timers")
   val timers = scala.collection.mutable.Map.empty[String, Long] // use new instead of empty then with scala.collection.concurrent.Map[String, Long] doesn't work
 
   //
@@ -18,8 +19,7 @@ class Timelog extends Actor {
     if (timers contains timerName) {
       val output = s"$timerName took ${(System.nanoTime() - timers(timerName)) / 1000 / 1000} milliseconds"
       timers -= timerName
-      logger.write(output, "timers")
-      Console.log(output, "timers")
+      logger.write(output, Some(ConsoleMirror))
     }
     else timers(timerName) = System.nanoTime()
   }
@@ -31,8 +31,7 @@ class Timelog extends Actor {
     val start = System.nanoTime()
     val result = func // invoke the wrapped function
     val output = s"function took ${(System.nanoTime() - start) / 1000 / 1000} milliseconds"
-    logger.write(output, "timers")
-    Console.log(output, "timers")
+    logger.write(output, Some(ConsoleMirror))
     return(result)
   }
   

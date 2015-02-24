@@ -3,19 +3,12 @@ import com.articlio.config
 import com.articlio.util._
 import com.articlio.util.text._
 import com.articlio.semantic.AppActorSystem
-//import com.articlio.util.{wordFollowing}
-
 import scala.io.Source
-//import java.net.URLEncoder
-//import spray.json._
-//import DefaultJsonProtocol._
 import org.ahocorasick.trie._
-//import scala.collection.JavaConversions._ // work with Java collections as if they were Scala
-import scala.collection.JavaConverters._ // convert Java colllections to Scala ones
-import com.github.tototoshi.csv._ // only good for "small" csv files; https://github.com/tototoshi/scala-csv/issues/11
-//import scala.collection.mutable.MutableList
-//import org.apache.commons.math3           // for using descriptive statistics over collections
+import scala.collection.JavaConverters._
+import com.github.tototoshi.csv._
 import com.github.verbalexpressions.VerbalExpression._
+import com.articlio.logger._
 
 //
 // structure for input CSV representation
@@ -154,7 +147,7 @@ object CSV {
     }
 
     AppActorSystem.timelog ! "manipulating CSV input"
-    val logger = new Logger("global-ldb-csv")
+    val logger = new SimpleLogger("input-ldb")
     logger.write(rules.result.mkString("\n"), "db-rules")
     return rules.result
   }

@@ -12,6 +12,7 @@ import scala.slick.jdbc.meta._
 import scala.slick.util.CloseableIterator
 import com.articlio.semantic.AppActorSystem
 import models.Tables._
+import com.articlio.logger.SimpleLogger
 
 /*
  *  TODO: parameterize and connect from http routes..
@@ -19,7 +20,7 @@ import models.Tables._
 
 object Indels extends Connection {
 
-  val changeAnalyticsLogger= new com.articlio.util.Logger("global-change-analytics")
+  val changeAnalyticsLogger= new SimpleLogger("global-change-analytics")
   
   val newResults = Matches.filter(_.dataid === 111L).sortBy(_.sentence).iterator
   val oldResults = Matches.filter(_.dataid === 222L).iterator

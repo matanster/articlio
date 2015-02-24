@@ -1,6 +1,6 @@
 package com.articlio.ldb
 
-import com.articlio.util.Logger
+import com.articlio.logger._
 import com.articlio.util.text._
 import com.articlio.semantic.AppActorSystem
 import com.articlio.LanguageModel._
@@ -9,9 +9,9 @@ import com.articlio.LanguageModel._
 // Initialize ldb from more raw rules, and expose it.
 // TODO: return what needs to be exposed rather than expose so many members?...
 //
-class LDB(inputRules: Seq[RuleInput], globalLogger: Logger) {
+class LDB(inputRules: Seq[RuleInput], logger: SimpleLogger) {
   
-  globalLogger.write(inputRules.mkString("\n"), "db-rules1.1")    
+  logger.write(inputRules.mkString("\n"), "db-rules1.1")    
   
   //
   // expand base rules into more rules - quite not triggered from the database data right now -
@@ -91,7 +91,7 @@ class LDB(inputRules: Seq[RuleInput], globalLogger: Logger) {
         case _ => None
       } else None))  
       
-      globalLogger.write(rules.mkString("\n"), "db-rules2")                                                      
+      logger.write(rules.mkString("\n"), "db-rules2")                                                      
       
       // patterns to indications map - 
       // each pattern correlates to only one indictaion 
@@ -120,8 +120,8 @@ class LDB(inputRules: Seq[RuleInput], globalLogger: Logger) {
               
               AppActorSystem.timelog ! "patterns representation building"
               // TODO: uncomment SelfMonitor.logUsage("after patterns representation building is")
-              globalLogger.write(allFragmentsDistinct.mkString("\n"), "db-distinct-fragments")
-              globalLogger.write(patterns2fragments.mkString("\n"), "db-rule-fragments")
+              logger.write(allFragmentsDistinct.mkString("\n"), "db-distinct-fragments")
+              logger.write(patterns2fragments.mkString("\n"), "db-rule-fragments")
               
               expand(rules) // should do nothing for now
               

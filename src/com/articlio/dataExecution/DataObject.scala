@@ -6,13 +6,14 @@ import scala.slick.jdbc.meta._
 import models.Tables._
 import models.Tables.{Data => DataRecord}
 import com.articlio.storage.Connection
+import com.articlio.util.Time._
 
 sealed abstract class ReadyState
 case class Ready(dataID: Long) extends ReadyState 
 object NotReady extends ReadyState
 
 abstract class AccessOrError {}
-abstract class AccessError    extends AccessOrError
+abstract class AccessError extends AccessOrError { val errorDetail: String }
 case     class CreateError    (errorDetail: String) extends AccessError 
 case     class DepsError      (errorDetail: String) extends AccessError
 case     class DataIDNotFound (errorDetail: String) extends AccessError
@@ -31,10 +32,6 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   
   def create: ReadyState = { 
 
-    // gets the current server time  
-    def localNow = new java.sql.Timestamp(java.util.Calendar.getInstance.getTime.getTime) // follows from http://alvinalexander.com/java/java-timestamp-example-current-time-now
-                                                                                          // TODO: need to switch to UTC time for production
-    
     //
     // tries a function, and collapses its exception into application type 
     //

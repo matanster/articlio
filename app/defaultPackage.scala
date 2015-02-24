@@ -11,10 +11,11 @@ import scala.concurrent.Await
 import com.articlio.SelfMonitor
 import akka.actor.ActorSystem
 import com.articlio.semantic.AppActorSystem
+import com.articlio.logger._
 
 object Global extends GlobalSettings {
 
-  Logger.info("Global object started")
+  play.api.Logger.info("Global object started")
   println("Global object started")
   
   //SelfMonitor
@@ -22,13 +23,14 @@ object Global extends GlobalSettings {
   //AppActorSystem.outDB ! "createIfNeeded"
   
   override def onStart(app: Application) {
-      println("Global object starting non-Play stuff...")
-      Logger.info("Global object starting non-Play stuff...")
+    println("Global object starting non-Play stuff...")
+    play.api.Logger.info("Global object starting non-Play stuff...")
+    val logger = com.articlio.logger.LogManager
   }  
 
   override def onStop(app: Application) {
     println("Global object stopping non-Play stuff...")
-    Logger.info("Global object stopping non-Play stuff...")    
+    play.api.Logger.info("Global object stopping non-Play stuff...")    
     //SelfMonitor.shutdown
   }  
   

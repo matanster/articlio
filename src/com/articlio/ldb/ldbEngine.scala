@@ -24,6 +24,7 @@ import com.articlio.storage.Connection
 import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 import com.articlio.dataExecution.CreateError 
+import com.articlio.logger._
 
 //
 // Initializes engine for input ldb, and expose method to run for a given document
@@ -31,14 +32,14 @@ import com.articlio.dataExecution.CreateError
 //
 case class ldbEngine(inputCSVfile: String) extends Connection {
 
-  val globalLogger = new Logger("global-ldb")
-  val overallLogger = new Logger("overall")
+  val logger = new SimpleLogger("ldb-engine")
+  //val overallLogger = new Logger("overall")
 
   //
   // Initialize ldb    
   //
   val inputRules = CSV.deriveFromCSV(inputCSVfile)
-  val ldb = new LDB(inputRules, globalLogger)
+  val ldb = new LDB(inputRules, logger)
 
   //
   // Start actors ensemble
@@ -55,7 +56,7 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
 
     val document = new JATS(s"${cleanJATSaccess.dirPath}/$articleName.xml")
     
-    val logger = new DataLogger(dataType, document.name, dataID)
+    val logger = new LdbEngineDocumentLogger(document.name)
     
     //
     // get data
@@ -203,7 +204,7 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
         def extraction(sentence: LocatedText) : LocatedText = {
           if (sentence.text.endsWithAny(Seq(":", "the following.", "as follows."))) {
             val resultSpan = sentence.text + " " + sentences(sentenceIdx+1).text // TODO: assure not out of bounds
-            overallLogger.write(document.name + ": "  + resultSpan + "\n", "overall-salient-matches")
+            logger.write(document.name + ": "  + resultSpan + "\n", "overall-salient-matches")
             return LocatedText(resultSpan, sentence.section)
           }
           else 
