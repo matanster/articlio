@@ -7,6 +7,7 @@ import com.articlio.config
 import com.articlio.dataExecution._
 import com.articlio.dataExecution.concrete._
 
+@deprecated("should be deprecated soon, in favor of proper import laden flow starting from using SourceDocuments.scala's importer", "")
 class BulkFromDirectory(runID: String) { 
 
   def allPDF = processAll(runID, config.pdf, Some("pdf-converted"))

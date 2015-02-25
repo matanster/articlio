@@ -39,9 +39,15 @@ case class sourceDocument(fileName: String) extends DataObject
   val access = RawPDFaccess(fullPath)
 }
 
+/* 
+ *  These data classes effectively just "import" a file from a file system type -
+ *  they register it in the Data DB, and thus make it available for processing. 
+ */
+ 
+abstract class Raw extends DataObject
 
 case class RawPDFaccess(dirPath: String) extends Access
-case class RawPDF(fileName: String) extends DataObject
+case class RawPDF(fileName: String) extends Raw
 {
   val dataType = "RawPDF"
   
@@ -63,7 +69,7 @@ case class RawPDF(fileName: String) extends DataObject
 }
 
 case class RaweLifeJATSAccess(dirPath: String) extends Access
-case class RaweLifeJATS(fileName: String) extends DataObject
+case class RaweLifeJATS(fileName: String) extends Raw
 {
   val dataType = "RaweLifeJATS"
   
@@ -82,4 +88,23 @@ case class RaweLifeJATS(fileName: String) extends DataObject
   }; val creator = create()_ // curried, alternatively could be a partial application (if creator collapses to single param list: create(_ :Long, _ :String))
 
   val access = RaweLifeJATSAccess(fullPath)
+}
+
+object Importers {
+
+  // guessfully type raw input
+  def rawGuessImport(path: String): Option[Raw] = {
+    val fileName = path.split("/").last // not for Windows...
+    fileName match {
+      case s: String if s.endsWith(".pdf") => Some(RawPDF(path))
+      case s: String if s.endsWith(".xml") => Some(RaweLifeJATS(path))
+      case _                               => println(s"Could not guess raw file type for file $path"); None 
+    }
+  }
+  
+  def bulkImport(path: String) {
+    val files = new java.io.File(path).listFiles.filter(file => (file.isFile)).map(_.getName) 
+    val executionManager = new DataExecutionManager
+    files.map(rawGuessImport).flatten.map(executionManager.getSingleDataAccess) // nothing to do with the return value here 
+  }
 }

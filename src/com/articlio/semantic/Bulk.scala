@@ -55,7 +55,5 @@ class BulkExecutionManager(dataSeq: Seq[DataObject], sharedDeps: Seq[DataObject]
   }
 }
 
-
-    
 //   val dataIDs = Bulkdatagroups.filter(_.bulkid === bulkID).list.map(_.dataid)
 //   val articleNames = dataIDs.map(dataID => DataRecord.filter(_.dataid === dataID).map(_.datatopic))
