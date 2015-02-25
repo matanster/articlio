@@ -36,10 +36,8 @@ class DataExecutionManager extends Connection {
   }
   
   def unconditionalCreate(data: DataObject): AccessOrError = { // TODO: this is a bug - it won't check dependencies. refactor...
-    data.create match {
-      case Ready(runID) => data.access  
-      case NotReady => new CreateError("failed unconditionally creating data ${data.toString}")
-    }
+    logger.write(s"attempting to create data for ${data.getClass} regardless of whether such data is already available...", Some(ConsoleMirror))
+    attemptCreate(data).accessOrError 
   }
   
   def getSingleDataAccess(data: DataObject): AccessOrError = {
@@ -58,6 +56,29 @@ class DataExecutionManager extends Connection {
     }      
   }
   
+  private def attemptCreate(data: DataObject): ExecutedData = {
+    // recurse for own dependencies
+      val immediateDendencies = data.dependsOn.map(dep => getDataAccess(dep)) 
+
+      // is entire dependencies tree ready?
+      immediateDendencies.forall(dep => dep.accessOrError.isInstanceOf[Access]) match {
+        case false => {
+          logger.write(s"some dependencies for ${data.getClass} were not met\n" + "")
+          ExecutedData(data, DepsError("some dependencies for ${data.getClass} were not met"), immediateDendencies) // TODO: log exact details of dependencies tree        
+        }
+        case true =>
+          data.create match { 
+            case Ready(createdDataID) => {
+              logger.write(s"data for ${data.getClass} now ready (data id: $createdDataID)")
+              ExecutedData(data, data.access, immediateDendencies)
+            }
+            case NotReady => {
+              ExecutedData(data, CreateError("failed creating data"), immediateDendencies)
+            }
+          }
+      }  
+  }
+  
   // checks whether data already exists. if data doesn't exist yet, attempts to create it.
   // returns: access details for ready data, or None cannot be readied
   private def getDataAccessAnyID(data: DataObject): ExecutedData = {
@@ -71,28 +92,7 @@ class DataExecutionManager extends Connection {
       
       case NotReady => {
         logger.write(s"data for ${data.getClass} is not yet ready... attempting to create it...", Some(ConsoleMirror))
-        val dataLogger = new DataLogger(data.dataType, data.dataTopic)
-
-        // recurse for own dependencies
-        val immediateDendencies = data.dependsOn.map(dep => getDataAccess(dep)) 
-
-        // is entire dependencies tree ready?
-        immediateDendencies.forall(dep => dep.accessOrError.isInstanceOf[Access]) match {
-          case false => {
-            logger.write(s"some dependencies for ${data.getClass} were not met\n" + "")
-            ExecutedData(data, DepsError("some dependencies for ${data.getClass} were not met"), immediateDendencies) // TODO: log exact details of dependencies tree        
-          }
-          case true =>
-            data.create match { 
-              case Ready(createdDataID) => {
-                logger.write(s"data for ${data.getClass} now ready (data id: $createdDataID)")
-                ExecutedData(data, data.access, immediateDendencies)
-              }
-              case NotReady => {
-                ExecutedData(data, CreateError("failed creating data"), immediateDendencies)
-              }
-            }
-        }
+        attemptCreate(data)
       }
     }
   }
