@@ -80,12 +80,12 @@ case class RaweLifeJATS(fileName: String) extends Raw
   val fullPath = s"${config.config.getString("locations.JATS-input.input")}/$fileName"
   
   // this is just a stub. no real creation for a source pdf file (for now, maybe later, try to fetch it from distributed storage?)
-  def create()(runID: Long, dataType: String, fileName: String) : Option[CreateError] = {
+  def importer()(runID: Long, dataType: String, fileName: String) : Option[CreateError] = {
     filePathExists(fullPath) match {
       case true  => None 
       case false => Some(CreateError("source eLife JATS file $fileName was not found.")) 
     }
-  }; val creator = create()_ // curried, alternatively could be a partial application (if creator collapses to single param list: create(_ :Long, _ :String))
+  }; val creator = importer()_ // curried, alternatively could be a partial application (if creator collapses to single param list: create(_ :Long, _ :String))
 
   val access = RaweLifeJATSAccess(fullPath)
 }
