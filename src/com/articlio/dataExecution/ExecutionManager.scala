@@ -7,9 +7,11 @@ import scala.slick.jdbc.meta._
 import com.articlio.storage.Connection
 import com.articlio.logger._
 
-//
-// executes data preparation by dependencies
-//
+/*
+ * Execute data preparation by dependencies. 
+ * 
+ */
+
 class DataExecutionManager extends Connection {
 
   val logger = new SimplestLogger("DataExecutionManager")
@@ -84,7 +86,6 @@ class DataExecutionManager extends Connection {
   private def getDataAccessAnyID(data: DataObject): ExecutedData = {
     
     data.ReadyState match {
-      
       case Ready(dataID) => {  
         logger.write(s"data for ${data.getClass} is ready (data id: $dataID)")
         return ExecutedData(data, data.access)
@@ -102,7 +103,6 @@ class DataExecutionManager extends Connection {
   private def getDataAccessSpecificID(data: DataObject, suppliedRunID: Long): AccessOrError = {
     
     data.ReadyState match {
-      
       case Ready(dataID) => {  
         logger.write(s"data for ${data.getClass} with id ${suppliedRunID} is ready")
         return data.access
