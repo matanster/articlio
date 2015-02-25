@@ -14,22 +14,16 @@ case class LDBData(csvFileName: String) extends DataObject
   
   val dependsOn = Seq()
   
-  // for now, no real creation for an ldb, this is just a stub.
-  def create()(runID: Long, dataType: String, articleName: String) : Option[CreateError] = Some(CreateError("for now, linguistic database must be present on disk, cannot be created from scratch by the software.")) 
-  val creator = create()_
+  val fullPath = s"${config.ldb}/$csvFileName"
   
-  // for now, availability of an ldb is not managed through the data status database. so just check if it's there or not, for now.
-  override def ReadyState: ReadyState = {
-    filePathExists(s"${config.ldb}/$csvFileName") match {
-      case true => Ready(0L) // for now. see comment above.
-      case false => NotReady
+  // this is just a stub. no real creation for a source pdf file (for now, maybe later, try to fetch it from distributed storage?)
+  def create()(runID: Long, dataType: String, fileName: String) : Option[CreateError] = {
+    filePathExists(fullPath) match {
+      case true  => None 
+      case false => Some(CreateError("ldb file $fileName was not found, so it could not be imported.")) 
     }
-  } 
-
+  }; val creator = create()_ // curried, alternatively could be a partial application (if creator collapses to single param list: create(_ :Long, _ :String))
+  
+  
   val access = LDBaccess(config.JATSout)
 }
-
-
-  
-    
-  
