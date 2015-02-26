@@ -137,6 +137,12 @@ libraryDependencies ++= Seq(
 com.jamesward.play.BrowserNotifierKeys.shouldOpenBrowser := false
 
 //
+// Riak
+//
+libraryDependencies += "com.basho.riak" % "riak-client" % "2.0.0"
+
+
+//
 // dummy task that does nothing
 //
 lazy val dummytask = taskKey[Unit]("dummy task")
@@ -148,7 +154,8 @@ dummytask := {
 
 //
 // sbt task that auto-generates Slick classes for a given existing database. Usage: sbt slickGenerate
-// This doesn't work yet - see http://stackoverflow.com/questions/28511698/adding-task-to-sbt-13-x-build-sbt
+// This doesn't work yet - see http://stackoverflow.com/questions/28511698/adding-task-to-sbt-13-x-build-sbt.
+// so the script slickGenerate.sh takes care of this instead (relying on a sibling repo)
 //
 
 libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "2.1.0"
