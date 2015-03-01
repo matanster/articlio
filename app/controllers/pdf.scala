@@ -27,9 +27,11 @@ object PdfConvert extends Controller {
     }   
   }
   
-  def convertSingle(fullPath: String) = Action.async { 
+  def convertSingle(fullPath: String) = Action.async {
+    println("in convert")
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    WS.url("http://localhost:3000/handleInputFile").withQueryString("localLocation" -> fullPath).get().map { response => 
+    WS.url("http://localhost:3000/handleInputFile").withQueryString("localLocation" -> fullPath).get().map { response =>
+      println(s"response $response")
       Ok(response.body)
     }   
   }

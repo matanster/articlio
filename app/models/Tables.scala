@@ -95,7 +95,7 @@ trait Tables {
   /** Entity class storing rows of table Data
    *  @param dataid Database column dataID DBType(BIGINT), AutoInc, PrimaryKey
    *  @param datatype Database column dataType DBType(VARCHAR), Length(45,true)
-   *  @param datatopic Database column dataTopic DBType(VARCHAR), Length(45,true)
+   *  @param datatopic Database column dataTopic DBType(VARCHAR), Length(1000,true)
    *  @param creationstatus Database column creationStatus DBType(VARCHAR), Length(45,true)
    *  @param creationerrordetail Database column creationErrorDetail DBType(VARCHAR), Length(10000,true), Default(None)
    *  @param creatorserver Database column creatorServer DBType(VARCHAR), Length(45,true)
@@ -118,8 +118,8 @@ trait Tables {
     val dataid: Column[Long] = column[Long]("dataID", O.AutoInc, O.PrimaryKey)
     /** Database column dataType DBType(VARCHAR), Length(45,true) */
     val datatype: Column[String] = column[String]("dataType", O.Length(45,varying=true))
-    /** Database column dataTopic DBType(VARCHAR), Length(45,true) */
-    val datatopic: Column[String] = column[String]("dataTopic", O.Length(45,varying=true))
+    /** Database column dataTopic DBType(VARCHAR), Length(1000,true) */
+    val datatopic: Column[String] = column[String]("dataTopic", O.Length(1000,varying=true))
     /** Database column creationStatus DBType(VARCHAR), Length(45,true) */
     val creationstatus: Column[String] = column[String]("creationStatus", O.Length(45,varying=true))
     /** Database column creationErrorDetail DBType(VARCHAR), Length(10000,true), Default(None) */

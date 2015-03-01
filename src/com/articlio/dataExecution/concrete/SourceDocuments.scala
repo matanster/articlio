@@ -59,6 +59,7 @@ case class RawPDF(fileName: String) extends Raw // TODO: connect with distribute
 
   // TODO: hook into distributed storage local caching
   def importer()(dataID: Long, dataType:String, fileName: String) : Option[CreateError] = {
+    println(fullPath)
     filePathExists(fullPath) match {
       case true  => None 
       case false => Some(CreateError("source pdf file $fileName was not found.")) 
