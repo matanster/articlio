@@ -1,6 +1,8 @@
 package com.articlio.cache
 
-import com.basho.riak.client.api.cap.Quorum
+import org.jclouds.rackspace.cloudfiles.v1._
+//import org.jclouds.cloudfiles.CloudFilesClient._
+import org.jclouds.ContextBuilder
 
 trait ExceptionDetail {
   def getExceptionDetail(exception: Throwable) {
@@ -11,7 +13,11 @@ trait ExceptionDetail {
   }
 }
 
-
+object CloudFiles {
+  val cloudFilesApi = ContextBuilder.newBuilder("rackspace-cloudfiles-us")
+    .credentials("{username}", "{apiKey}")
+    .buildApi(classOf[CloudFilesApi])
+}
 
 class FileCache {
   
