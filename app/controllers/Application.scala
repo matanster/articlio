@@ -11,8 +11,16 @@ import play.api.http.MimeTypes
 
 object Application extends Controller {
 
+  def bulkImport(path: String) = Action { implicit request =>
+    println("at bulk import controller")
+    com.articlio.dataExecution.concrete.Importer.bulkImport(path) match {
+      case true => Ok("Import successful")
+      case false => Ok("Import failed")
+    }
+  }
+  
   def showExtract(articleName: String,
-                  pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv",
+                  pdb: String,
                   dataID: Option[Long]) = DBAction { implicit request =>
 
     import com.articlio.dataExecution._
@@ -22,7 +30,7 @@ object Application extends Controller {
       val content = Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)
       val dataIDs = models.Tables.Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
       val unlifted = content.asInstanceOf[List[models.Tables.MatchesRow]]
-      Ok(views.html.showExtract(dataIDs, dataID, "some pdb", articleName, unlifted))
+      Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, unlifted))
     }
     
     val executionManager = new DataExecutionManager
@@ -75,7 +83,7 @@ object Application extends Controller {
   
   def index = Action { implicit request => Ok(s"app is up, got request [$request]") }
   
-  
+  /*
   import play.api.mvc._
   import play.api.Play.current
   import akka.actor._
@@ -93,5 +101,5 @@ object Application extends Controller {
   def socket = WebSocket.acceptWithActor[String, String] { request => out =>
     MyWebSocketActor.props(out)
   }
-  
+*/  
 }

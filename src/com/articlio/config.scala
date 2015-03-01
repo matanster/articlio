@@ -25,5 +25,5 @@ object config {
   val JATSstyled = config.getString("locations.JATS-input.styled")
   val JATSout = config.getString("locations.JATS")
   
-  val pdfSourceDir = config.getString("locations.pdf-input")
+  //val pdfSourceDir = config.getString("locations.pdf-source-input")
 }

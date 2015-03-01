@@ -20,7 +20,7 @@ case class sourceDocument(fileName: String) extends DataObject
   val raweLifeJATS = RaweLifeJATS(fileName)
   val dependsOn = Seq()
   
-  val fullPath = s"${config.config.getString("locations.pdf-input")}/$fileName"
+  val fullPath = s"${config.config.getString("locations.pdf-source-input")}/$fileName"
   
   override def ReadyStateAny(): ReadyState = {
     val rawPDFReadyState = rawPDF.ReadyStateAny
@@ -47,7 +47,7 @@ case class sourceDocument(fileName: String) extends DataObject
 abstract class Raw extends DataObject
 
 case class RawPDFaccess(dirPath: String) extends Access
-case class RawPDF(fileName: String) extends Raw
+case class RawPDF(fileName: String) extends Raw // TODO: connect with distributed storage local caching
 {
   val dataType = "RawPDF"
   
@@ -55,21 +55,21 @@ case class RawPDF(fileName: String) extends Raw
   
   val dependsOn = Seq()
   
-  val fullPath = s"${config.config.getString("locations.pdf-input")}/$fileName"
-  
-  // this is just a stub. no real creation for a source pdf file (for now, maybe later, try to fetch it from distributed storage?)
-  def create()(dataID: Long, dataType:String, fileName: String) : Option[CreateError] = {
+  val fullPath = s"${config.config.getString("locations.pdf-source-input")}/$fileName"
+
+  // TODO: hook into distributed storage local caching
+  def importer()(dataID: Long, dataType:String, fileName: String) : Option[CreateError] = {
     filePathExists(fullPath) match {
       case true  => None 
       case false => Some(CreateError("source pdf file $fileName was not found.")) 
     }
-  }; val creator = create()_
+  }; val creator = importer()_
 
   val access = RawPDFaccess(fullPath)
 }
 
 case class RaweLifeJATSAccess(dirPath: String) extends Access
-case class RaweLifeJATS(fileName: String) extends Raw
+case class RaweLifeJATS(fileName: String) extends Raw // TODO: connect with distributed storage local caching
 {
   val dataType = "RaweLifeJATS"
   
@@ -79,7 +79,6 @@ case class RaweLifeJATS(fileName: String) extends Raw
   
   val fullPath = s"${config.config.getString("locations.JATS-input.input")}/$fileName"
   
-  // this is just a stub. no real creation for a source pdf file (for now, maybe later, try to fetch it from distributed storage?)
   def importer()(runID: Long, dataType: String, fileName: String) : Option[CreateError] = {
     filePathExists(fullPath) match {
       case true  => None 
@@ -90,7 +89,7 @@ case class RaweLifeJATS(fileName: String) extends Raw
   val access = RaweLifeJATSAccess(fullPath)
 }
 
-object Importers {
+object Importer {
 
   // guessfully type raw input
   def rawGuessImport(path: String): Option[Raw] = {
@@ -102,10 +101,11 @@ object Importers {
     }
   }
   
-  def bulkImport(path: String) { // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files
+  def bulkImport(path: String) : Boolean = { // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files
                                  //       to avoid bloated data groups, and reduce statistic skew from duplicates
-    val files = new java.io.File(path).listFiles.filter(file => (file.isFile)).map(_.getName) 
+    val files = new java.io.File(/* path */"/home/matan/Downloads/articles").listFiles.filter(file => (file.isFile)).map(_.getName) 
     val executionManager = new DataExecutionManager
     files.map(rawGuessImport).flatten.map(executionManager.getSingleDataAccess) // nothing to do with the return value here 
+    true
   }
 }

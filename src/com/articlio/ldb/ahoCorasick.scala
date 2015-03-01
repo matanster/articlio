@@ -7,6 +7,7 @@ import com.articlio.semantic.AppActorSystem
 import akka.actor.Actor
 import akka.event.Logging
 import com.articlio.logger._
+import akka.actor.Props
 
 //
 // Aho-Corasick trie (for searching all pattern fragments implied in given linguistic database)
@@ -43,7 +44,12 @@ class AhoCorasickTrie {
 //
 // Actor wrapper
 //
-class AhoCorasickActor(ldb: LDB) extends Actor {
+object AhoCorasickActor { // Create Props for an actor of this type 
+                   // necessary as per as per http://doc.akka.io/docs/akka/snapshot/scala/actors.html
+  def props(ldb: LDB): Props = Props(new AhoCorasickActor(ldb))
+}
+
+case class AhoCorasickActor(ldb: LDB) extends Actor {
   val log = Logging(context.system, this)
   
   val ahoCorasick = new AhoCorasickTrie

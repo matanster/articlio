@@ -25,7 +25,7 @@ object LogManager {
 
   private def managedLogs = scala.collection.mutable.Map.empty[Seq[String], java.nio.file.Path]
   
-  val base = config.config.getString("logging")
+  val base = config.config.getString("locations.logging")
   if (!Files.exists(Paths.get(base))) Files.createDirectory(Paths.get(base)) // create base folder if it doesn't yet exist
   println("articlio logger starting...")
   
@@ -81,5 +81,5 @@ class SimpleLogger(loggerName: String) extends Logger {
 }
 
 class SimplestLogger(loggerName: String) extends Logger {
-  def write(string: String, logDirective: Option[LogDirective] = None) = LogManager.write(string, Seq(), logDirective)
+  def write(string: String, logDirective: Option[LogDirective] = None) = LogManager.write(string, Seq("general"), logDirective)
 }

@@ -32,10 +32,11 @@ object BulkSemanticRecreate extends Connection {
 }   
 
 //
-// Somewhat arbitrary way of generating a list of articles to run on - from file names in a directory
+// bulk run from a directory
 //
 object BulkSemanticArbitrary {
-  def buildRequest(dirName: String) {
+  def buildRequest(dirName: String) { 
+    // Generate a list of articles to run on - from file names in the input directory
     val ldb = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"  
     val files = new File(dirName).listFiles.filter(file => (file.isFile)) // TODO: remove file name's type suffix
     val articleNames = files.map(_.getName)
@@ -46,7 +47,11 @@ object BulkSemanticArbitrary {
     val executionManager = new BulkExecutionManager(data, Seq(ldbData))
   }
 }   
- 
+
+//
+// Receives a sequence of data objects, and parallelizes their execution after verifying their shared dependencies.
+// Shared dependencies are provided by the caller.
+//
 class BulkExecutionManager(dataSeq: Seq[DataObject], sharedDeps: Seq[DataObject]) extends Connection {
   val executionManager = new DataExecutionManager
   sharedDeps.map(sharedDep => executionManager.getSingleDataAccess(sharedDep)).forall(_.isInstanceOf[Access]) match {

@@ -191,21 +191,21 @@ lazy val slickGenerateTask = {
 // rackspace api
 //
 
-libraryDependencies ++= Seq("org.apache.jclouds.driver" % "jclouds-slf4j" % "1.7.3",
-"org.apache.jclouds.driver" % "jclouds-sshj" % "1.7.3",
-"org.apache.jclouds.provider" % "rackspace-cloudservers-us" % "1.7.3",
-"org.apache.jclouds.labs" % "rackspace-cloudfiles-us" % "1.7.3",
-"org.apache.jclouds.provider" % "rackspace-cloudblockstorage-us" % "1.7.3",
-"org.apache.jclouds.provider" % "rackspace-clouddatabases-us" % "1.7.3",
-"org.apache.jclouds.labs" % "rackspace-cloudqueues-us" % "1.7.3",
-"org.apache.jclouds.provider" % "rackspace-cloudloadbalancers-us" % "1.7.3",
-"org.apache.jclouds.provider" % "rackspace-clouddns-us" % "1.7.3",
-"org.apache.jclouds.provider" % "rackspace-cloudservers-uk" % "1.7.3",
-"org.apache.jclouds.labs" % "rackspace-cloudfiles-uk" % "1.7.3",
-"org.apache.jclouds.provider" % "rackspace-cloudblockstorage-uk" % "1.7.3",
-"org.apache.jclouds.provider" % "rackspace-clouddatabases-uk" % "1.7.3",
-"org.apache.jclouds.labs" % "rackspace-cloudqueues-uk" % "1.7.3",
-"org.apache.jclouds.labs" % "rackspace-autoscale-us" % "1.7.3",
-"org.apache.jclouds.provider" % "rackspace-cloudloadbalancers-uk" % "1.7.3",
-"org.apache.jclouds.provider" % "rackspace-clouddns-uk" % "1.7.3"
+libraryDependencies ++= Seq("org.apache.jclouds.driver" % "jclouds-slf4j" % "1.8.1",
+"org.apache.jclouds.driver" % "jclouds-sshj" % "1.8.1",
+"org.apache.jclouds.provider" % "rackspace-cloudservers-us" % "1.8.1",
+"org.apache.jclouds.labs" % "rackspace-cloudfiles-us" % "1.8.1",
+"org.apache.jclouds.provider" % "rackspace-cloudblockstorage-us" % "1.8.1",
+"org.apache.jclouds.provider" % "rackspace-clouddatabases-us" % "1.8.1",
+"org.apache.jclouds.labs" % "rackspace-cloudqueues-us" % "1.8.1",
+"org.apache.jclouds.provider" % "rackspace-cloudloadbalancers-us" % "1.8.1",
+"org.apache.jclouds.provider" % "rackspace-clouddns-us" % "1.8.1",
+"org.apache.jclouds.provider" % "rackspace-cloudservers-uk" % "1.8.1",
+"org.apache.jclouds.labs" % "rackspace-cloudfiles-uk" % "1.8.1",
+"org.apache.jclouds.provider" % "rackspace-cloudblockstorage-uk" % "1.8.1",
+"org.apache.jclouds.provider" % "rackspace-clouddatabases-uk" % "1.8.1",
+"org.apache.jclouds.labs" % "rackspace-cloudqueues-uk" % "1.8.1",
+"org.apache.jclouds.labs" % "rackspace-autoscale-us" % "1.8.1",
+"org.apache.jclouds.provider" % "rackspace-cloudloadbalancers-uk" % "1.8.1",
+"org.apache.jclouds.provider" % "rackspace-clouddns-uk" % "1.8.1"
 )

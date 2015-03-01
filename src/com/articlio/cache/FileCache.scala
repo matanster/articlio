@@ -1,7 +1,6 @@
 package com.articlio.cache
 
 import org.jclouds.rackspace.cloudfiles.v1._
-//import org.jclouds.cloudfiles.CloudFilesClient._
 import org.jclouds.ContextBuilder
 
 trait ExceptionDetail {

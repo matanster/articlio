@@ -45,7 +45,7 @@ case class ldbEngine(inputCSVfile: String) extends Connection {
   // Start actors ensemble
   //
   val concurrency = 4
-  val ahoCorasick = AppActorSystem.system.actorOf(Props[AhoCorasickActor]
+  val ahoCorasick = AppActorSystem.system.actorOf(AhoCorasickActor.props(ldb)
                                          .withRouter(BalancingPool(nrOfInstances = concurrency)), 
                                           name = "aho-corasick-pool-service") 
                                           //val ahoCorasick = new Array[AhoCorasickActor](concurrency)

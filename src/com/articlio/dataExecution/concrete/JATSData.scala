@@ -47,7 +47,7 @@ case class JATSData(articleName: String) extends DataObject
         case error:  AccessError => 
           executionManager.getSingleDataAccess(PDFDep) match {
             case access: Access => {
-              PdfConvert.convertSingle(s"${config.config.getString("locations.pdf-input")}/$articleName")
+              PdfConvert.convertSingle(s"${config.config.getString("locations.pdf-source-input")}/$articleName")
               registerDependency(this, eLifeJATSDep)
               None
             }

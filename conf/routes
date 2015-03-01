@@ -2,26 +2,20 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# Routes
-# This file defines all application routes (Higher priority routes first)
-# ~~~~
-
-# Home page
+# Home page - just say app is running
 GET  /                                      controllers.Application.index
 
 # Map static resources from the /public folder to the /assets URL path
 GET  /assets/*file                          controllers.Assets.at(path="/public", file)
 
 # Show article extract
-GET  /showExtract/:articleName              controllers.Application.showExtract(articleName: String, pdb: String, runID: Option[Long])
+GET  /showExtract/:articleName              controllers.Application.showExtract(articleName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", runID: Option[Long])
 
-# Show article extract
+GET  /bulkImport/:path                      controllers.Application.bulkImport(path: String)
+
 GET  /showOriginal/:article                 controllers.Application.showOriginal(article: String)
 
-###
-
 GET  /semantic/single/pdf/:inputFileName    controllers.Ldb.singlePdfSourced(inputFileName: String, pdb: String)
-
 
 GET  /semantic/single/eLife/:inputFileName  controllers.Ldb.singleeLifeSourced(inputFileName: String, pdb: String)
 GET  /semantic/all/                         controllers.Ldb.all
@@ -38,16 +32,14 @@ GET  /pipe                                  controllers.pipe.pipe
 GET  /pdf/convert/all                       controllers.PdfConvert.convertAll
 GET  /pdf/convert/single/:location          controllers.PdfConvert.convertSingle(location: String)
 
-###
-
-# Show admin page
+# Show admin page - not entirely implemented
 GET  /admin/                                controllers.Application.adminPage
 
 # development playground route
 GET  /playground/                           controllers.Application.playground
 
 # Map the JS resource paths - is this really still relevant?!
-GET  /*file                                 controllers.Assets.versioned(path="/public", file: Asset)
+# GET  /*file                                 controllers.Assets.versioned(path="/public", file: Asset)
 
 
 
