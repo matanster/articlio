@@ -181,3 +181,8 @@ lazy val slickGenerateTask = {
       Seq(file(fname))
     }
 }
+
+//
+// workaround / fix for http://stackoverflow.com/questions/28104968/scala-ide-4-0-0-thinks-theres-errors-in-an-out-of-the-box-play-framework-2-3-7/28550840#28550840 (tentatively related: https://github.com/typesafehub/sbteclipse/pull/242)
+//
+//EclipseKeys.createSrc := EclipseCreateSrc.All
