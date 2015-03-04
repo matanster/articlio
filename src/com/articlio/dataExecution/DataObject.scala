@@ -38,7 +38,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
       catch { 
       case anyException : Throwable =>
       recordException(anyException)
-      return Some(CreateError("exception")) }
+      return Some(CreateError(anyException.toString)) }
   } 
   
   def create: ReadyState = { 

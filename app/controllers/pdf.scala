@@ -23,14 +23,12 @@ object PdfConvert extends Controller {
     }   
   }
   
-  def convertSingle(articleName: String) = Action { implicit request => 
+  def convertSingle(articleName: String) = Action.async { implicit request => 
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    WS.url("http://localhost:3000/handleInputFile").withQueryString("localLocation" -> articleName).withRequestTimeout(6000).get().map { response => 
-      println(response.body)
-    }.onComplete { 
-        case Success(s) => Ok("successfully converted pdf to JATS")
-        case Failure(e) => InternalServerError("failed converting pdf to JATS")
-      }
-    Ok("")
-  }
+    WS.url("http://localhost:3000/handleInputFile").withQueryString("localLocation" -> articleName).withRequestTimeout(6000).get.map(response => 
+      response.status match {
+        case 200 => Ok("successfully converted pdf to JATS")
+        case _ => InternalServerError("failed converting pdf to JATS")
+      })
+    }
 }

@@ -31,7 +31,7 @@ class DataExecutionManager extends Connection {
           case access: Access => "created Ok."
         }}${executionTree.children.isEmpty match {
           case true  => ""
-          case false => s" - dependencies' details: ${executionTree.children.map(child => s"\ndependency ${child.data} ${doSerialize(child)}")}"
+          case false => s" - dependencies' details: ${executionTree.children.map(child => s"\ndependency ${child.data} - ${doSerialize(child)}")}"
           }}"
     }
     def serialize = s"Creating ${data.getClass.getSimpleName} for ${data.dataTopic}: ${doSerialize(this)}"
