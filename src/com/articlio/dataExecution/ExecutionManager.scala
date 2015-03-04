@@ -31,14 +31,14 @@ class DataExecutionManager extends Connection {
           case access: Access => "creation was Ok."
         }} \n ${ExecutionTree.children.isEmpty match {
           case true  => 
-          case false => s"Its dependencies were: ${ExecutionTree.children.map(child => s"dependency ${doSerialize(child)}\n")}"
+          case false => s"Its dependencies were: ${ExecutionTree.children.map(child => s"$child dependency ${doSerialize(child)}\n")}"
           }}"
     }
     def serialize = s"Creating ${doSerialize(this)}"
   }
   
   def unconditionalCreate(data: DataObject): AccessOrError = { // TODO: this is a bug - it won't check dependencies. refactor...
-    logger.write(s"attempting to create data for ${data.getClass} regardless of whether such data is already available...", Some(ConsoleMirror))
+    logger.write(s"attempting to create data for ${data.getClass} regardless of whether such data is already available...")
     attemptCreate(data).accessOrError 
   }
   
@@ -66,7 +66,7 @@ class DataExecutionManager extends Connection {
       immediateDendencies.forall(dep => dep.accessOrError.isInstanceOf[Access]) match {
         case false => {
           logger.write(s"some dependencies for ${data.getClass} were not met\n" + "")
-          ExecutedData(data, DepsError("some dependencies for ${data.getClass} were not met"), immediateDendencies) // TODO: log exact details of dependencies tree        
+          ExecutedData(data, DepsError(s"some dependencies for ${data.getClass} were not met"), immediateDendencies) // TODO: log exact details of dependencies tree        
         }
         case true =>
           data.create match { 
@@ -92,7 +92,7 @@ class DataExecutionManager extends Connection {
       }
       
       case NotReady => {
-        logger.write(s"data for ${data.getClass} is not yet ready... attempting to create it...", Some(ConsoleMirror))
+        logger.write(s"data for ${data.getClass} is not yet ready... attempting to create it...")
         attemptCreate(data)
       }
     }

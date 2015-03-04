@@ -17,10 +17,10 @@ class AhoCorasickTrie {
   val trie = new Trie
 
   def init (fragments: Set[String]) {
-    AppActorSystem.timelog ! "aho-corasick initialization (lazy operations not necessarily included)"
+    //AppActorSystem.timelog ! "aho-corasick initialization (lazy operations not necessarily included)"
     trie.onlyWholeWords()
     fragments foreach trie.addKeyword
-    AppActorSystem.timelog ! "aho-corasick initialization (lazy operations not necessarily included)"
+    //AppActorSystem.timelog ! "aho-corasick initialization (lazy operations not necessarily included)"
   }
 
   //

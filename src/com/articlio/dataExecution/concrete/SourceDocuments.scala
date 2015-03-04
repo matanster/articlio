@@ -29,7 +29,7 @@ case class sourceDocument(fileName: String) extends DataObject
   } 
 
   // this is just a stub. no real creation for a source pdf file (for now, maybe later, try to fetch it from distributed storage?)
-  def create()(dataID: Long, dataType: String, articleName:String) : Option[CreateError] = { 
+  def create()(dataID: Long, dataType: String, articleName:String) : Option[CreateError] = {
     filePathExists(fullPath) match {
       case true  => None 
       case false => Some(CreateError("source pdf file $fileName was not found.")) 
@@ -59,10 +59,13 @@ case class RawPDF(fileName: String) extends Raw // TODO: connect with distribute
 
   // TODO: hook into distributed storage local caching
   def importer()(dataID: Long, dataType:String, fileName: String) : Option[CreateError] = {
-    println(fullPath)
+    com.articlio.util.Console.log("in pdf importer", "green")
     filePathExists(fullPath) match {
       case true  => None 
-      case false => Some(CreateError("source pdf file $fileName was not found.")) 
+      case false => {
+        com.articlio.util.Console.log("in pdf importer", "green")
+        Some(CreateError("source pdf file $fileName was not found."))
+      }
     }
   }; val creator = importer()_
 

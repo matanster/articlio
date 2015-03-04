@@ -25,7 +25,7 @@ GET  /semantic/all/eLife                    controllers.Ldb.alleLife
 GET  /export                                controllers.Ldb.export
 GET  /export/analytic                       controllers.Ldb.exportAnalytic
 
-GET  /purge/semantic/matchesTable           controllers.Ldb.purge
+GET  /purge/semantic                        controllers.Ldb.purge
 
 GET  /pipe                                  controllers.pipe.pipe
 

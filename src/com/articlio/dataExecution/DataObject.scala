@@ -30,18 +30,18 @@ trait RecordException {
 
 abstract class DataObject(val requestedDataID: Option[Long] = None) extends RecordException with Connection { 
   
+  //
+  // tries a function, and collapses its exception into application type 
+  //
+  def safeRunCreator(func: => Option[CreateError]): Option[CreateError] = {             // this is function argument "by name passing" 
+      try { return func } 
+      catch { 
+      case anyException : Throwable =>
+      recordException(anyException)
+      return Some(CreateError("exception")) }
+  } 
+  
   def create: ReadyState = { 
-
-    //
-    // tries a function, and collapses its exception into application type 
-    //
-    def safeRunCreator(func: => Option[CreateError]): Option[CreateError] = {             // this is function argument "by name passing" 
-        try { return func } 
-        catch { 
-        case anyException : Throwable =>
-        recordException(anyException)
-        return Some(CreateError("exception")) }
-    } 
     
     def registerDependencies(data: DataObject): Unit = {
       data.dependsOn.map(dependedOnData => { 

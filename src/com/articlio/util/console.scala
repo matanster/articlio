@@ -16,6 +16,7 @@ object Console {
       case "performance" => println(MAGENTA + message + RESET)
       case "startup"     => println(GREEN + message + RESET)
       case "timers"      => println(message)
+      case "green"       => println(GREEN + message + RESET)
       case _ => // swallow the message
     }
   }

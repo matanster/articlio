@@ -52,10 +52,14 @@ class OutDB extends Actor with Connection {
   private def dropCreate {
     try {
       Matches.ddl.drop 
-      println("existing table dropped")
+      Data.ddl.drop
+      Datadependencies.ddl.drop
+      println("existing tables dropped")
     } catch { case e: Exception => } // exception type not documented
-    println("creating table")
-    Matches.ddl.create
+    println("creating tables")
+    Matches.ddl.create 
+    Data.ddl.create
+    Datadependencies.ddl.create
   }
 
   private def close = session.close

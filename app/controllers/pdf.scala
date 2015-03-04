@@ -7,16 +7,12 @@ import play.api.db.slick._
 import scala.slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 import play.api.http.MimeTypes
-
-//
-// play http client imports
-//
 import play.api.Play.current
 import play.api.libs.ws._
 import play.api.libs.ws.ning.NingAsyncHttpClientConfigBuilder
 import scala.concurrent.Future
-
 import com.articlio.config
+import scala.util.{Success, Failure}
 
 object PdfConvert extends Controller {
   
@@ -27,12 +23,14 @@ object PdfConvert extends Controller {
     }   
   }
   
-  def convertSingle(fullPath: String) = Action.async {
-    println("in convert")
+  def convertSingle(articleName: String) = Action { implicit request => 
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    WS.url("http://localhost:3000/handleInputFile").withQueryString("localLocation" -> fullPath).get().map { response =>
-      println(s"response $response")
-      Ok(response.body)
-    }   
+    WS.url("http://localhost:3000/handleInputFile").withQueryString("localLocation" -> articleName).withRequestTimeout(6000).get().map { response => 
+      println(response.body)
+    }.onComplete { 
+        case Success(s) => Ok("successfully converted pdf to JATS")
+        case Failure(e) => InternalServerError("failed converting pdf to JATS")
+      }
+    Ok("")
   }
 }

@@ -37,9 +37,12 @@ case class JATSData(articleName: String) extends DataObject
   
   def create()(dataID: Long, dataTopic: String, articleName:String) : Option[CreateError] = {
     import controllers.PdfConvert
+    import play.api.mvc._
+      com.articlio.util.Console.log("in JATS create", "green")
       val executionManager = new DataExecutionManager // TODO: no real reason to spawn a new execution manager just for this 
       executionManager.getSingleDataAccess(eLifeJATSDep) match {
         case access: Access => {
+          com.articlio.util.Console.log("before JATS convert/clean convertttttttttttttt", "green")
           ReadyJATS.fix()_
           registerDependency(this, eLifeJATSDep)
           None
@@ -47,9 +50,12 @@ case class JATSData(articleName: String) extends DataObject
         case error:  AccessError => 
           executionManager.getSingleDataAccess(PDFDep) match {
             case access: Access => {
-              PdfConvert.convertSingle(s"${config.config.getString("locations.pdf-source-input")}/$articleName")
-              registerDependency(this, eLifeJATSDep)
-              None
+              com.articlio.util.Console.log("before pdf convertttttttttttttt", "green")
+              PdfConvert.convertSingle(s"${config.config.getString("locations.pdf-source-input")}/$articleName") match {
+                case _ => 
+              }
+              registerDependency(this, PDFDep)
+              Some(CreateError(s"Failed to convert pdf to JATS"))
             }
             case error:  AccessError => Some(CreateError(s"disjunctive dependency for creating JATS for $articleName has not been met.")) 
           }  

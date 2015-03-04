@@ -31,7 +31,7 @@ object LogManager {
   
   // initialize a logging path under the logging base directory and overall logger name
   private def initialize(logicalPath:Seq[String]): java.nio.file.Path = {
-    val physicalPath = s"$base/${logicalPath.dropRight(1).map(pathSegment => s"$pathSegment/")}${logicalPath.last}.log"
+    val physicalPath = s"$base/${logicalPath.dropRight(1).mkString("/")}${logicalPath.last}.log"
     return Paths.get(physicalPath)
   }
   
@@ -52,7 +52,7 @@ object LogManager {
     val bytes = string + "\n"
     Files.write(getLog(logicalPath), bytes.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND) // buffered writing may be more performant than this... see java.nio.file...
     logDirective match {
-      case Some(ConsoleMirror) => println("bytes")  
+      case Some(ConsoleMirror) => println(bytes)  
       case _ =>
     }
   }
