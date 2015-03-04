@@ -28,10 +28,10 @@ class DataExecutionManager extends Connection {
     private def doSerialize(executionTree: ExecutedData): String = {
       /* s"${executionTree.data.dataType} ${executionTree.data.dataTopic}: */ s"${executionTree.accessOrError match {
           case accessError: AccessError => s"a ${accessError.getClass.getSimpleName} error was encountered: ${accessError.errorDetail}"
-          case access: Access => "created Ok"
-        }}. ${executionTree.children.isEmpty match {
+          case access: Access => "created Ok."
+        }}${executionTree.children.isEmpty match {
           case true  => ""
-          case false => s"Dependencies' details: ${executionTree.children.map(child => s"\ndependency ${child.data} ${doSerialize(child)}")}"
+          case false => s" - dependencies' details: ${executionTree.children.map(child => s"\ndependency ${child.data} ${doSerialize(child)}")}"
           }}"
     }
     def serialize = s"Creating ${data.getClass.getSimpleName} for ${data.dataTopic}: ${doSerialize(this)}"
@@ -66,7 +66,7 @@ class DataExecutionManager extends Connection {
       immediateDependencies.forall(dep => dep.accessOrError.isInstanceOf[Access]) match {
         case false => {
           logger.write(s"some dependencies for ${data.getClass.getSimpleName} were not met\n" + "")
-          ExecutedData(data, DepsError(s"some dependencies for ${data.getClass.getSimpleName} were not met"), immediateDependencies) // TODO: log exact details of dependencies tree        
+          ExecutedData(data, DepsError(s"some dependencies were not met"), immediateDependencies) // TODO: log exact details of dependencies tree        
         }
         case true =>
           data.create match { 
