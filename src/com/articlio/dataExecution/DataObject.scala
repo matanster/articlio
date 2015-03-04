@@ -10,14 +10,14 @@ import com.articlio.util.Time._
 
 sealed abstract class ReadyState
 case class Ready(dataID: Long) extends ReadyState 
-object NotReady extends ReadyState
+case class NotReady(error: Option[CreateError] = None) extends ReadyState
 
 abstract class AccessOrError {}
 abstract class AccessError extends AccessOrError { val errorDetail: String }
 case     class CreateError    (errorDetail: String) extends AccessError 
 case     class DepsError      (errorDetail: String) extends AccessError
 case     class DataIDNotFound (errorDetail: String) extends AccessError
-class    Access extends AccessOrError
+class    Access(dataID: Option[Long] = None) extends AccessOrError
 
 trait RecordException {
   def recordException(exception: Throwable) {
@@ -96,7 +96,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
         registerDependencies(this)
         Ready(dataID.get)
       }
-      case Some(error) => NotReady 
+      case Some(error) => NotReady(Some(error)) 
     }
   } 
 
@@ -110,7 +110,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   def ReadyStateSpecific(suppliedRunID: Long): ReadyState = {
     DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getName).filter(_.datatopic === dataTopic).list.nonEmpty match {
       case true => Ready(suppliedRunID)
-      case false => NotReady
+      case false => new NotReady
     }
   } 
   
@@ -118,7 +118,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
     // TODO: collapse to just one call to the database
     DataRecord.filter(_.datatype === this.getClass.getName).filter(_.datatopic === dataTopic).list.nonEmpty match {
       case true => Ready(DataRecord.filter(_.datatype === this.getClass.getName).filter(_.datatopic === dataTopic).list.head.dataid) 
-      case false => NotReady
+      case false =>new NotReady
     }
   } 
 
@@ -156,8 +156,8 @@ trait oldResultWrapper extends Execute {
     execute(func) match {
       case Some(bool) => bool match {
         case true  => Ready(0L)
-        case false => NotReady
-      } case None  => NotReady
+        case false => new NotReady
+      } case None  => new NotReady
     } 
   } 
 }

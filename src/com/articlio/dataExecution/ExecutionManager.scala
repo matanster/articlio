@@ -25,16 +25,16 @@ class DataExecutionManager extends Connection {
   case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Seq[ExecutedData] = Seq()) {
 
     // recursively serialize the error/Ok status of the entire tree. might be a bit ugly for now
-    private def doSerialize(ExecutionTree: ExecutedData): String = {
-      s"${data.dataType} ${data.dataTopic}: ${ExecutionTree.accessOrError match {
-          case accessError: AccessError => s"an ${accessError.getClass} error was encountered: ${accessError.errorDetail}"
-          case access: Access => "creation was Ok."
-        }} \n ${ExecutionTree.children.isEmpty match {
-          case true  => 
-          case false => s"Its dependencies were: ${ExecutionTree.children.map(child => s"$child dependency ${doSerialize(child)}\n")}"
+    private def doSerialize(executionTree: ExecutedData): String = {
+      /* s"${executionTree.data.dataType} ${executionTree.data.dataTopic}: */ s"${executionTree.accessOrError match {
+          case accessError: AccessError => s"a ${accessError.getClass.getSimpleName} error was encountered: ${accessError.errorDetail}"
+          case access: Access => "created Ok"
+        }}. ${executionTree.children.isEmpty match {
+          case true  => ""
+          case false => s"Dependencies' details: ${executionTree.children.map(child => s"\ndependency ${child.data} ${doSerialize(child)}")}"
           }}"
     }
-    def serialize = s"Creating ${doSerialize(this)}"
+    def serialize = s"Creating ${data.getClass.getSimpleName} for ${data.dataTopic}: ${doSerialize(this)}"
   }
   
   def unconditionalCreate(data: DataObject): AccessOrError = { // TODO: this is a bug - it won't check dependencies. refactor...
@@ -60,22 +60,22 @@ class DataExecutionManager extends Connection {
   
   private def attemptCreate(data: DataObject): ExecutedData = {
     // recurse for own dependencies
-      val immediateDendencies = data.dependsOn.map(dep => getDataAccess(dep)) 
+      val immediateDependencies = data.dependsOn.map(dep => getDataAccess(dep)) 
 
       // is entire dependencies tree ready?
-      immediateDendencies.forall(dep => dep.accessOrError.isInstanceOf[Access]) match {
+      immediateDependencies.forall(dep => dep.accessOrError.isInstanceOf[Access]) match {
         case false => {
-          logger.write(s"some dependencies for ${data.getClass} were not met\n" + "")
-          ExecutedData(data, DepsError(s"some dependencies for ${data.getClass} were not met"), immediateDendencies) // TODO: log exact details of dependencies tree        
+          logger.write(s"some dependencies for ${data.getClass.getSimpleName} were not met\n" + "")
+          ExecutedData(data, DepsError(s"some dependencies for ${data.getClass.getSimpleName} were not met"), immediateDependencies) // TODO: log exact details of dependencies tree        
         }
         case true =>
           data.create match { 
             case Ready(createdDataID) => {
               logger.write(s"data for ${data.getClass} now ready (data id: $createdDataID)")
-              ExecutedData(data, data.access, immediateDendencies)
+              ExecutedData(data, data.access, immediateDependencies)
             }
-            case NotReady => {
-              ExecutedData(data, CreateError("failed creating data"), immediateDendencies)
+            case NotReady(error) => {
+              ExecutedData(data, CreateError(s"failed creating data: ${error.get.errorDetail}"), immediateDependencies)
             }
           }
       }  
@@ -91,7 +91,7 @@ class DataExecutionManager extends Connection {
         return ExecutedData(data, data.access)
       }
       
-      case NotReady => {
+      case NotReady(_) => {
         logger.write(s"data for ${data.getClass} is not yet ready... attempting to create it...")
         attemptCreate(data)
       }
@@ -108,7 +108,7 @@ class DataExecutionManager extends Connection {
         return data.access
       }
       
-      case NotReady => {
+      case NotReady(_) => {
         val error = s"there is no data with id ${suppliedRunID} for ${data.getClass}"
         logger.write(error)
         return DataIDNotFound(error)  

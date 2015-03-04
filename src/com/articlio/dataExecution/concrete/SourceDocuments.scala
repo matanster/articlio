@@ -25,14 +25,14 @@ case class sourceDocument(fileName: String) extends DataObject
   override def ReadyStateAny(): ReadyState = {
     val rawPDFReadyState = rawPDF.ReadyStateAny
     val raweLifeJATSReadyState = raweLifeJATS.ReadyStateAny
-    NotReady
+    new NotReady
   } 
 
   // this is just a stub. no real creation for a source pdf file (for now, maybe later, try to fetch it from distributed storage?)
   def create()(dataID: Long, dataType: String, articleName:String) : Option[CreateError] = {
     filePathExists(fullPath) match {
       case true  => None 
-      case false => Some(CreateError("source pdf file $fileName was not found.")) 
+      case false => Some(CreateError(s"source pdf file $fileName was not found.")) 
     }
   }; val creator = create()_ 
 
@@ -64,7 +64,7 @@ case class RawPDF(fileName: String) extends Raw // TODO: connect with distribute
       case true  => None 
       case false => {
         com.articlio.util.Console.log("in pdf importer", "green")
-        Some(CreateError("source pdf file $fileName was not found."))
+        Some(CreateError(s"source pdf file $fileName was not found."))
       }
     }
   }; val creator = importer()_
@@ -86,7 +86,7 @@ case class RaweLifeJATS(fileName: String) extends Raw // TODO: connect with dist
   def importer()(runID: Long, dataType: String, fileName: String) : Option[CreateError] = {
     filePathExists(fullPath) match {
       case true  => None 
-      case false => Some(CreateError("source eLife JATS file $fileName was not found.")) 
+      case false => Some(CreateError(s"source eLife JATS file $fileName was not found.")) 
     }
   }; val creator = importer()_ // curried, alternatively could be a partial application (if creator collapses to single param list: create(_ :Long, _ :String))
 
