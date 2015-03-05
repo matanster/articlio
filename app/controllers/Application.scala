@@ -27,10 +27,9 @@ object Application extends Controller {
     import com.articlio.dataExecution.concrete._
     
     def show(dataID: Long) = {
-      val content = Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)
+      val content = Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch).list
       val dataIDs = models.Tables.Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
-      val unlifted = content.asInstanceOf[List[models.Tables.MatchesRow]]
-      Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, unlifted))
+      Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, content))
     }
     
     val executionManager = new DataExecutionManager

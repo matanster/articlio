@@ -137,7 +137,7 @@ trait Tables {
   lazy val Data = new TableQuery(tag => new Data(tag))
   
   /** Entity class storing rows of table Datadependencies
-   *  @param dataid Database column dataID DBType(BIGINT), PrimaryKey
+   *  @param dataid Database column dataID DBType(BIGINT)
    *  @param depdataid Database column depDataID DBType(BIGINT) */
   case class DatadependenciesRow(dataid: Long, depdataid: Long)
   /** GetResult implicit for fetching DatadependenciesRow objects using plain SQL queries */
@@ -151,8 +151,8 @@ trait Tables {
     /** Maps whole row to an option. Useful for outer joins. */
     def ? = (dataid.?, depdataid.?).shaped.<>({r=>import r._; _1.map(_=> DatadependenciesRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
     
-    /** Database column dataID DBType(BIGINT), PrimaryKey */
-    val dataid: Column[Long] = column[Long]("dataID", O.PrimaryKey)
+    /** Database column dataID DBType(BIGINT) */
+    val dataid: Column[Long] = column[Long]("dataID")
     /** Database column depDataID DBType(BIGINT) */
     val depdataid: Column[Long] = column[Long]("depDataID")
   }

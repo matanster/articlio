@@ -27,7 +27,7 @@ class DataExecutionManager extends Connection {
     // recursively serialize the error/Ok status of the entire tree. might be a bit ugly for now
     private def doSerialize(executionTree: ExecutedData): String = {
       /* s"${executionTree.data.dataType} ${executionTree.data.dataTopic}: */ s"${executionTree.accessOrError match {
-          case accessError: AccessError => s"a ${accessError.getClass.getSimpleName} error was encountered: ${accessError.errorDetail}"
+          case accessError: AccessError => s"${accessError.errorDetail}"
           case access: Access => "created Ok."
         }}${executionTree.children.isEmpty match {
           case true  => ""
@@ -65,7 +65,7 @@ class DataExecutionManager extends Connection {
       // is entire dependencies tree ready?
       immediateDependencies.forall(dep => dep.accessOrError.isInstanceOf[Access]) match {
         case false => {
-          logger.write(s"some dependencies for ${data.getClass.getSimpleName} were not met\n" + "")
+          //logger.write(s"some dependencies for ${data.getClass.getSimpleName} were not met")
           ExecutedData(data, DepsError(s"some dependencies were not met"), immediateDependencies) // TODO: log exact details of dependencies tree        
         }
         case true =>

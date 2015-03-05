@@ -45,7 +45,7 @@ class AhoCorasickTrie {
 // Actor wrapper
 //
 object AhoCorasickActor { // Create Props for an actor of this type 
-                   // necessary as per as per http://doc.akka.io/docs/akka/snapshot/scala/actors.html
+                          // necessary as per as per http://doc.akka.io/docs/akka/snapshot/scala/actors.html
   def props(ldb: LDB): Props = Props(new AhoCorasickActor(ldb))
 }
 

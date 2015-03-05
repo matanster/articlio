@@ -68,9 +68,10 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
       creatorserverendtime   = None,
       softwareversion = com.articlio.Version.id))
 
+    println(s"got back data ID $dataID.get")
+
     // now try this data's creation function    
     val creationError = safeRunCreator(creator(dataID.get, dataType, dataTopic))
-      
     // now record the outcome - was the data successfully created by this run?
     DataRecord.filter(_.dataid === dataID.get).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
       dataid                 = dataID.get,
