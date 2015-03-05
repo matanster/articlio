@@ -13,7 +13,7 @@ abstract class Raw extends DataObject
 case class RawPDFaccess(dirPath: String) extends Access
 case class RawPDF(articleName: String) extends Raw // TODO: connect with distributed storage local caching
 {
-  val dataType = "RawPDF"
+  //val dataType = "RawPDF"
   
   val dataTopic = articleName // for now
   
@@ -37,7 +37,7 @@ case class RawPDF(articleName: String) extends Raw // TODO: connect with distrib
 case class RaweLifeJATSAccess(dirPath: String) extends Access
 case class RaweLifeJATS(articleName: String) extends Raw // TODO: connect with distributed storage local caching
 {
-  val dataType = "RaweLifeJATS"
+  //val dataType = "RaweLifeJATS"
   
   val dataTopic = articleName // for now
   
@@ -92,7 +92,7 @@ case class sourceDocument(fileName: String) extends DataObject
   import models.Tables.{Data => DataRecord}
   import com.articlio.storage.Connection
 
-  val dataType = "sourceDocument"
+  //val dataType = "sourceDocument"
   
   val dataTopic = fileName // for now
   

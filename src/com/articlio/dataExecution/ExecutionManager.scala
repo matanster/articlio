@@ -24,9 +24,10 @@ class DataExecutionManager extends Connection {
   //
   case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Seq[ExecutedData] = Seq()) {
 
-    // recursively serialize the error/Ok status of the entire tree. might be a bit ugly for now
+    // recursively serialize the error/Ok status of the entire tree. might be a bit ugly for now. (nested formatting strings work great, but arguably less readable).
     private def doSerialize(executionTree: ExecutedData): String = {
-      /* s"${executionTree.data.dataType} ${executionTree.data.dataTopic}: */ s"${executionTree.accessOrError match {
+      /* s"${executionTree.data.dataType} ${executionTree.data.dataTopic}: */ 
+      s"${executionTree.accessOrError match {
           case accessError: AccessError => s"${accessError.errorDetail}"
           case access: Access => "created Ok."
         }}${executionTree.children.isEmpty match {
@@ -34,6 +35,7 @@ class DataExecutionManager extends Connection {
           case false => s" - dependencies' details: ${executionTree.children.map(child => s"\ndependency ${child.data} - ${doSerialize(child)}")}"
           }}"
     }
+    
     def serialize = s"Creating ${data.getClass.getSimpleName} for ${data.dataTopic}: ${doSerialize(this)}"
   }
   
@@ -43,9 +45,15 @@ class DataExecutionManager extends Connection {
   }
   
   def getSingleDataAccess(data: DataObject): AccessOrError = {
-    val executedTree = getDataAccess(data: DataObject)
-    logger.write(executedTree.serialize) // log the entire execution tree 
-    executedTree.accessOrError
+    logger.write(s"=== handling top-level request for data ${data} ===") //
+    data.ReadyState match {
+      case Ready(dataID) => new Access(Some(dataID)) // TROUBLE? This is problematic, it loses the specific subclass of Access 
+      case NotReady(_) => {
+        val executedTree = getDataAccess(data: DataObject)
+        logger.write(executedTree.serialize) // log the entire execution tree 
+        executedTree.accessOrError
+      }
+    }
   } 
 
   //
@@ -84,6 +92,8 @@ class DataExecutionManager extends Connection {
   // checks whether data already exists. if data doesn't exist yet, attempts to create it.
   // returns: access details for ready data, or None cannot be readied
   private def getDataAccessAnyID(data: DataObject): ExecutedData = {
+    
+    println("In getDataAccessAnyID!!!")
     
     data.ReadyState match {
       case Ready(dataID) => {  

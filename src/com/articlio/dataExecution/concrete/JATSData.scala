@@ -17,7 +17,7 @@ import scala.concurrent.duration._
 case class JATSaccess(dirPath: String) extends Access
 case class JATSData(articleName: String) extends DataObject
 {
-  val dataType = "JATS"
+  //val dataType = "JATS"
   
   val dataTopic = articleName
   

@@ -68,7 +68,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
       creatorserverendtime   = None,
       softwareversion = com.articlio.Version.id))
 
-    println(s"got back data ID $dataID.get")
+    println(s"got back data ID $dataID")
 
     // now try this data's creation function    
     val creationError = safeRunCreator(creator(dataID.get, dataType, dataTopic))
@@ -102,6 +102,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   } 
 
   def ReadyState: ReadyState = {
+    println("In ReadyState!!!")
     requestedDataID match {
       case Some(dataIDrequested) => ReadyStateSpecific(dataIDrequested)
       case None                  => ReadyStateAny
@@ -109,7 +110,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   }
   
   def ReadyStateSpecific(suppliedRunID: Long): ReadyState = {
-    DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getName).filter(_.datatopic === dataTopic).list.nonEmpty match {
+    DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list.nonEmpty match {
       case true => Ready(suppliedRunID)
       case false => new NotReady
     }
@@ -117,13 +118,15 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   
   def ReadyStateAny(): ReadyState = {
     // TODO: collapse to just one call to the database
-    DataRecord.filter(_.datatype === this.getClass.getName).filter(_.datatopic === dataTopic).list.nonEmpty match {
-      case true => Ready(DataRecord.filter(_.datatype === this.getClass.getName).filter(_.datatopic === dataTopic).list.head.dataid) 
+    println(s"In ReadyStateAny!! for ${this.getClass.getSimpleName}, $dataTopic")
+    println(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list)
+    DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list.nonEmpty match {
+      case true => Ready(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list.head.dataid) 
       case false =>new NotReady
     }
   } 
 
-  def dataType: String
+  val dataType = this.getClass.getSimpleName
   
   def dataTopic: String
   

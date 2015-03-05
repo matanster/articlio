@@ -8,7 +8,7 @@ case class LDBaccess(dirPath: String) extends Access
 
 case class LDBData(csvFileName: String) extends DataObject
 {
-  val dataType = "LDB"
+  //val dataType = "LDB"
   
   val dataTopic = csvFileName // for now
   

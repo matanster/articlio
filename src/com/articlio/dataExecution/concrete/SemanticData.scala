@@ -20,7 +20,7 @@ class SemanticData(articleName: String, ldbFile: String = "Normalized from July 
                    LDB: LDBData = LDBData(ldbFile)) 
                   extends DataObject with Connection {
 
-  val dataType = "semantic"
+  //val dataType = "semantic"
   
   val dataTopic = articleName
   
