@@ -12,7 +12,7 @@ sealed abstract class ReadyState
 case class Ready(dataID: Long) extends ReadyState 
 case class NotReady(error: Option[CreateError] = None) extends ReadyState
 
-abstract class AccessOrError {}
+abstract class AccessOrError 
 abstract class AccessError extends AccessOrError { val errorDetail: String }
 case     class CreateError    (errorDetail: String) extends AccessError 
 case     class DepsError      (errorDetail: String) extends AccessError
@@ -28,6 +28,7 @@ trait RecordException {
   }
 }
 
+// Data Object That Needs to be Attempted
 abstract class DataObject(val requestedDataID: Option[Long] = None) extends RecordException with Connection { 
   
   //
@@ -140,6 +141,25 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   
 }
 
+// Data Object that Has Been Attempted, Hence Representing a Final State of Data
+case class AttemptedDataObject(data: DataObject) {
+  
+  def humanAccessMessage = accessOrError match { 
+    case dataAccessDetail : Access => s"${data.dataType} for ${data.dataTopic} is ready."
+    case error: CreateError        => s"${data.dataType} for ${data.dataTopic} failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
+    case error: DataIDNotFound     => s"${data.dataType} for ${data.dataTopic} with requested data ID ${data.requestedDataID}, does not exist."
+    case unexpectedErrorType : AccessError => s"unexpected access error type while tyring to get ${data.dataType} for ${this}: $unexpectedErrorType"
+  }  
+  
+  val executionManager = new DataExecutionManager
+
+  val accessOrError: AccessOrError = executionManager.getSingleDataAccess(data)
+
+  // carry over all immutables of the original data object relevant to the finalized state
+  val dataType: String = data.dataType
+  val dataTopic: String = data.dataTopic
+  val dataID: Option[Long] = data.dataID
+}
 
 
 

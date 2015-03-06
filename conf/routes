@@ -11,7 +11,7 @@ GET  /assets/*file                          controllers.Assets.at(path="/public"
 GET  /showExtract/:articleName              controllers.Application.showExtract(articleName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", runID: Option[Long])
 
 # Generate Semantic Data for Input PDF
-GET  /semantic/single/pdf/:inputFileName    controllers.Ldb.singlePdfSourced(inputFileName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
+GET  /semantic/single/pdf/:inputFileName    controllers.Ldb.semanticFromArticle(inputFileName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
 
 # Purge Semantic Data
 GET  /purge/semantic                        controllers.Ldb.purge

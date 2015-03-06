@@ -18,8 +18,29 @@ object Application extends Controller {
       case false => Ok("Import failed")
     }
   }
-  
+
   def showExtract(articleName: String,
+                  pdb: String,
+                  dataID: Option[Long]) = DBAction { implicit request =>
+
+    import com.articlio.dataExecution._
+    import com.articlio.dataExecution.concrete._
+    
+    def show(dataID: Long) = {
+      val content = Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch).list
+      val dataIDs = models.Tables.Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
+      Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, content))
+    }
+    
+    val attemptedData = Ldb.getSemanticForArticle(articleName, pdb)
+
+    attemptedData.accessOrError match {
+      case access: Access =>     show(attemptedData.dataID.get)
+      case error: AccessError => Ok(s"couldn't find or create data for request: ${attemptedData.humanAccessMessage}")
+    }
+  }
+  
+  def showExtractOld(articleName: String,
                   pdb: String,
                   dataID: Option[Long]) = DBAction { implicit request =>
 
