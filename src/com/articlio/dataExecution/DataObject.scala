@@ -8,28 +8,10 @@ import models.Tables.{Data => DataRecord}
 import com.articlio.storage.Connection
 import com.articlio.util.Time._
 
-sealed abstract class ReadyState
-case class Ready(dataID: Long) extends ReadyState 
-case class NotReady(error: Option[CreateError] = None) extends ReadyState
-
-abstract class AccessOrError 
-abstract class AccessError extends AccessOrError { val errorDetail: String }
-case     class CreateError    (errorDetail: String) extends AccessError 
-case     class DepsError      (errorDetail: String) extends AccessError
-case     class DataIDNotFound (errorDetail: String) extends AccessError
-class    Access(dataID: Option[Long] = None) extends AccessOrError
-
-trait RecordException {
-  def recordException(exception: Throwable) {
-    println(s"exception message: ${exception.getMessage}")
-    println(s"exception cause  : ${exception.getCause}")
-    println(s"exception class  : ${exception.getClass}")
-    println(s"exception stack trace:\n ${exception.getStackTrace.toList.mkString("\n")}")
-  }
-}
 
 // Data Object That Needs to be Attempted
-abstract class DataObject(val requestedDataID: Option[Long] = None) extends RecordException with Connection { 
+abstract class DataObject(val requestedDataID: Option[Long] = None) extends RecordException 
+                                                                    with DataExecution { 
   
   //
   // tries a function, and collapses its exception into application type 
@@ -141,19 +123,17 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   
 }
 
-// Data Object that Has Been Attempted, Hence Representing a Final State of Data
-case class AttemptedDataObject(data: DataObject) {
+// Attempts to Execute a Data Object and Hold Outcome (hence Representing Final State)
+case class AttemptDataObject(data: DataObject) extends DataExecution {
   
   def humanAccessMessage = accessOrError match { 
-    case dataAccessDetail : Access => s"${data.dataType} for ${data.dataTopic} is ready."
-    case error: CreateError        => s"${data.dataType} for ${data.dataTopic} failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
-    case error: DataIDNotFound     => s"${data.dataType} for ${data.dataTopic} with requested data ID ${data.requestedDataID}, does not exist."
-    case unexpectedErrorType : AccessError => s"unexpected access error type while tyring to get ${data.dataType} for ${this}: $unexpectedErrorType"
+    case dataAccessDetail : Access => s"$dataType for $dataTopic is ready."
+    case error: CreateError        => s"$dataType for $dataTopic failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
+    case error: DataIDNotFound     => s"$dataType for $dataTopic with requested data ID ${data.requestedDataID}, does not exist."
+    case unexpectedErrorType : AccessError => s"unexpected access error type while tyring to get $this: $unexpectedErrorType"
   }  
   
-  val executionManager = new DataExecutionManager
-
-  val accessOrError: AccessOrError = executionManager.getSingleDataAccess(data)
+  val accessOrError: AccessOrError = getSingleDataAccess(data)
 
   // carry over all immutables of the original data object relevant to the finalized state
   val dataType: String = data.dataType
@@ -163,7 +143,7 @@ case class AttemptedDataObject(data: DataObject) {
 
 
 
-@deprecated("to be removed","bla")
+@deprecated("to be removed","")
 trait Execute extends RecordException {
   def execute[ExpectedType](func: => ExpectedType): Option[ExpectedType] = { // this form of prototype takes a function by name
     try { return Some(func) } 
@@ -174,7 +154,7 @@ trait Execute extends RecordException {
   } 
 }
 
-@deprecated("to be removed","bla")
+@deprecated("to be removed","")
 trait oldResultWrapper extends Execute {
   def resultWrapper(func: => Boolean): ReadyState = { // this form of prototype takes a function by name
     execute(func) match {

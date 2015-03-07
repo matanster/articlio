@@ -53,15 +53,14 @@ case class JATSData(articleName: String) extends DataObject
         })
     }
     
-    val executionManager = new DataExecutionManager // TODO: no real reason to spawn a new execution manager just for this 
-    executionManager.getSingleDataAccess(eLifeJATSDep) match {
+    AttemptDataObject(eLifeJATSDep).accessOrError match {
       case access: Access => {
         ReadyJATS.fix()_
         registerDependency(this, eLifeJATSDep)
         None
       }
       case error:  AccessError => 
-        executionManager.getSingleDataAccess(PDFDep) match {
+        AttemptDataObject(PDFDep).accessOrError match {
           case access: Access => {
             //com.articlio.util.Console.log("before pdf convertttttttttttttt", "green")
             Await.result(convertSingle(s"${config.config.getString("locations.pdf-source-input")}/$articleName"), 10.seconds) match {

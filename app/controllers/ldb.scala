@@ -19,13 +19,9 @@ object Ldb extends Controller {
   
   val pdb = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"
   
-  def getSemanticForArticle(articleName: String, pdb: String, dataID: Option[Long] = None) = {
-    AttemptedDataObject(new SemanticData(articleName, pdb)())
+  def semanticFromArticle(articleName: String, pdb: String) = Action { 
+    implicit request => Ok(AttemptDataObject(SemanticData(articleName, pdb)()).humanAccessMessage) 
   }
-  
-  def semanticFromArticle(articleName: String, 
-                          pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv") = 
-                            Action { implicit request => Ok(getSemanticForArticle(articleName, pdb).humanAccessMessage) }
 
   def singleeLifeSourced(articleName: String,
                          pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv") = Action { implicit request =>

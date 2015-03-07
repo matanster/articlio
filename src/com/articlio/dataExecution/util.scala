@@ -7,13 +7,15 @@ package object util {
     Files.exists(Paths.get(filePath))
   }
   
-  // non-useful helper function 
+  // non-useful helper function
+  @deprecated("thought to be not in use", "")
   def orderlyTry[T](func: => Option[T]): Option[T] = {
     try {
       return func
     } catch { case _ : Throwable => return None}
   }
-  
+
+  @deprecated("thought to be not in use", "")  
   def isReady(func: => Boolean) : Boolean = {
     try {
       return func match {
@@ -22,6 +24,5 @@ package object util {
       } 
     } catch { case _ : Throwable => return false}
   } 
-  
 }
 

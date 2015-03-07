@@ -15,10 +15,11 @@ import models.Tables.{Data => DataRecord}
 
 case class SemanticAccess() extends Access
 
-class SemanticData(articleName: String, ldbFile: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
-                  (JATS: JATSData = JATSData(articleName),
-                   LDB: LDBData = LDBData(ldbFile)) 
-                  extends DataObject with Connection {
+case class SemanticData(articleName: String, 
+                        ldbFile: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv",
+                        ReQDataID: Option[Long] = None)
+                       (JATS: JATSData = JATSData(articleName),
+                        LDB: LDBData = LDBData(ldbFile)) extends DataObject(ReQDataID) {
 
   //val dataType = "semantic"
   

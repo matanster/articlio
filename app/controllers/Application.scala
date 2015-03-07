@@ -32,7 +32,7 @@ object Application extends Controller {
       Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, content))
     }
     
-    val attemptedData = Ldb.getSemanticForArticle(articleName, pdb, dataID)
+    val attemptedData = AttemptDataObject(SemanticData(articleName, pdb, dataID)())
 
     attemptedData.accessOrError match {
       case access: Access =>      show(attemptedData.dataID.get)
@@ -40,6 +40,7 @@ object Application extends Controller {
     }
   }
   
+  @deprecated("depcracated by newer", "showExtract")
   def showExtractOld(articleName: String,
                   pdb: String,
                   dataID: Option[Long]) = DBAction { implicit request =>
@@ -53,8 +54,6 @@ object Application extends Controller {
       Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, content))
     }
     
-    val executionManager = new DataExecutionManager
-
     //
     // split on whether a specific data ID was requested or not 
     //
@@ -62,7 +61,7 @@ object Application extends Controller {
       
       // no specific run id requested
       case None => 
-        executionManager.getSingleDataAccess(new SemanticData(articleName)()) match {
+        AttemptDataObject(SemanticData(articleName)()).accessOrError match {
           case error: AccessError => 
             Ok("Result data failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
           case access: Access => {
@@ -74,7 +73,7 @@ object Application extends Controller {
       
       // a specific run id requested
       case Some(dataID) =>
-        executionManager.getSingleDataAccess(new SemanticData(articleName)()) match {
+        AttemptDataObject(SemanticData(articleName)()).accessOrError match {
           case error: DataIDNotFound => 
             Ok("There is no result data for the requested data ID")
           case accesss: Access => {

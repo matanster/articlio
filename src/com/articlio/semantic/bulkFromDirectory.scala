@@ -28,10 +28,9 @@ class BulkFromDirectory(runID: String) {
   def processAll(runID: String, sourceDirName: String, treatAs: Option[String] = None) {
     
     val files = new File(sourceDirName).listFiles.filter(file => (file.isFile)) // && file.getName.endsWith(".xml")))
-    val executionManager = new DataExecutionManager
     
     def makeOrVerify(articleName: String): Boolean = {
-        executionManager.getSingleDataAccess(new SemanticData(articleName)(LDB = LDBData("aa"))) match {
+        AttemptDataObject(SemanticData(articleName)(LDB = LDBData("aa"))).accessOrError match {
         case error:  AccessError =>
           println("Semantic data for $articleName failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
           false

@@ -8,11 +8,10 @@ import com.articlio.storage.Connection
 import com.articlio.logger._
 
 /*
- * Execute data preparation by dependencies. 
- * 
+ * Executes data preparation by dependencies. 
  */
 
-class DataExecutionManager extends Connection {
+trait DataExecution extends Connection {
 
   val logger = new SimplestLogger("DataExecutionManager")
 
@@ -39,7 +38,7 @@ class DataExecutionManager extends Connection {
     def serialize = s"Creating ${data.getClass.getSimpleName} for ${data.dataTopic}: ${doSerialize(this)}"
   }
   
-  def unconditionalCreate(data: DataObject): AccessOrError = { // TODO: this is a bug - it won't check dependencies. refactor...
+  def unconditionalCreate(data: DataObject): AccessOrError = { 
     logger.write(s"attempting to create data for ${data.getClass} regardless of whether such data is already available...")
     attemptCreate(data).accessOrError 
   }

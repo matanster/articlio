@@ -26,7 +26,7 @@ object BulkSemanticRecreate extends Connection {
     
     val ldbData = LDBData(ldb) 
     
-    val data = articleNames.map(articleName => new SemanticData(articleName.toString)(LDB = ldbData))
+    val data = articleNames.map(articleName => SemanticData(articleName.toString)(LDB = ldbData))
     val executionManager = new BulkExecutionManager(data, Seq(ldbData))
   }
 }   
@@ -42,7 +42,7 @@ object BulkSemanticArbitrary {
     val articleNames = files.map(_.getName)
     
     val ldbData = LDBData(ldb)
-    val data = articleNames.map(articleName => new SemanticData(articleName)(LDB = ldbData))
+    val data = articleNames.map(articleName => SemanticData(articleName)(LDB = ldbData))
     
     val executionManager = new BulkExecutionManager(data, Seq(ldbData))
   }
@@ -53,10 +53,9 @@ object BulkSemanticArbitrary {
 // Shared dependencies are provided by the caller.
 //
 class BulkExecutionManager(dataSeq: Seq[DataObject], sharedDeps: Seq[DataObject]) extends Connection {
-  val executionManager = new DataExecutionManager
-  sharedDeps.map(sharedDep => executionManager.getSingleDataAccess(sharedDep)).forall(_.isInstanceOf[Access]) match {
+  sharedDeps.map(sharedDep => AttemptDataObject(sharedDep)).forall(_.accessOrError.isInstanceOf[Access]) match {
     case false => DepsError("bulk run aborted as one or more shared dependencies failed.")
-    case true  => dataSeq.par.map(data => executionManager.getSingleDataAccess(data))
+    case true  => dataSeq.par.map(data => AttemptDataObject(data))
   }
 }
 
