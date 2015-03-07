@@ -94,7 +94,11 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   
   def ReadyStateSpecific(suppliedRunID: Long): ReadyState = {
     DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list.nonEmpty match {
-      case true => Ready(suppliedRunID)
+      case true => { 
+        // TODO: these two lines represent redundancy and therefore bug potential - need tilt towards o
+        dataID = Some(suppliedRunID)
+        Ready(dataID.get)
+      }
       case false => new NotReady
     }
   } 
@@ -104,7 +108,10 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
     println(s"In ReadyStateAny!! for ${this.getClass.getSimpleName}, $dataTopic")
     println(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list)
     DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list.nonEmpty match {
-      case true => Ready(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list.head.dataid) 
+      case true => {
+        dataID = Some(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list.head.dataid) 
+        Ready(dataID.get)
+      }
       case false =>new NotReady
     }
   } 
@@ -126,19 +133,27 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
 // Attempts to Execute a Data Object and Hold Outcome (hence Representing Final State)
 case class AttemptDataObject(data: DataObject) extends DataExecution {
   
-  def humanAccessMessage = accessOrError match { 
-    case dataAccessDetail : Access => s"$dataType for $dataTopic is ready."
-    case error: CreateError        => s"$dataType for $dataTopic failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
-    case error: DataIDNotFound     => s"$dataType for $dataTopic with requested data ID ${data.requestedDataID}, does not exist."
-    case unexpectedErrorType : AccessError => s"unexpected access error type while tyring to get $this: $unexpectedErrorType"
-  }  
-  
   val accessOrError: AccessOrError = getSingleDataAccess(data)
+  accessOrError match {
+    case dataAccessDetail : Access =>  { 
+      println(s"in AttemptDataObject: dataAccessDetail is $dataAccessDetail")
+      println(s"in AttemptDataObject: data             is ${data.dataID}")
+    }
+    case _ => None
+  }
 
   // carry over all immutables of the original data object relevant to the finalized state
   val dataType: String = data.dataType
   val dataTopic: String = data.dataTopic
   val dataID: Option[Long] = data.dataID
+
+  def humanAccessMessage = accessOrError match { 
+    case dataAccessDetail : Access => s"$dataType for $dataTopic is ready."
+    case error: CreateError        => s"$dataType for $dataTopic failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
+    case error: DataIDNotFound     => s"$dataType for $dataTopic with requested data ID ${data.requestedDataID}, does not exist."
+    case unexpectedErrorType : AccessError => s"unexpected access error type while tyring to get $this: $unexpectedErrorType"
+  }
+  
 }
 
 

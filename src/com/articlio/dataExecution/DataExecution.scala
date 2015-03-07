@@ -39,14 +39,20 @@ trait DataExecution extends Connection {
   }
   
   def unconditionalCreate(data: DataObject): AccessOrError = { 
-    logger.write(s"attempting to create data for ${data.getClass} regardless of whether such data is already available...")
+    // UI fit message: s"attempting to create data for ${data.getClass} regardless of whether such data is already available...")
+    logger.write(s"=== handling unconditional top-level request for data ${data} ===") //
     attemptCreate(data).accessOrError 
   }
   
-  def getSingleDataAccess(data: DataObject): AccessOrError = {
+  def getSingleDataAccess(data: DataObject): AccessOrError = { 
     logger.write(s"=== handling top-level request for data ${data} ===") //
+    logger.write(data.ReadyState.toString)
     data.ReadyState match {
-      case Ready(dataID) => new Access(Some(dataID)) // TROUBLE? This is problematic, it loses the specific subclass of Access 
+      case Ready(dataID) => { 
+        logger.write(dataID.toString)
+        logger.write(data.dataID.toString)
+        new Access(Some(dataID)) // TROUBLE? This is problematic, it loses the specific subclass of Access
+      }
       case NotReady(_) => {
         val executedTree = getDataAccess(data: DataObject)
         logger.write(executedTree.serialize) // log the entire execution tree 
@@ -58,7 +64,7 @@ trait DataExecution extends Connection {
   //
   // chooses between two forms of processing this function
   //
-  private def getDataAccess(data: DataObject): ExecutedData = {
+  private def getDataAccess(data: DataObject): ExecutedData = { // TODO: rename?
     data.requestedDataID match {
       case None                => getDataAccessAnyID(data)
       case Some(suppliedRunID) => ExecutedData(data, getDataAccessSpecificID(data, suppliedRunID)) 
