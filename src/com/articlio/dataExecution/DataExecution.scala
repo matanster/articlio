@@ -35,7 +35,7 @@ trait DataExecution extends Connection {
           }}"
     }
     
-    def serialize = s"Creating ${data.getClass.getSimpleName} for ${data.dataTopic}: ${doSerialize(this)}"
+    def serialize = s"${doSerialize(this)}"
   }
   
   def unconditionalCreate(data: DataObject): AccessOrError = { 
@@ -45,17 +45,15 @@ trait DataExecution extends Connection {
   }
   
   def getSingleDataAccess(data: DataObject): AccessOrError = { 
-    logger.write(s"=== handling top-level request for data ${data} ===") //
-    logger.write(data.ReadyState.toString)
+    logger.write(s"<<< handling top-level request for data ${data}") //
     data.ReadyState match {
-      case Ready(dataID) => { 
-        logger.write(dataID.toString)
-        logger.write(data.dataID.toString)
-        new Access(Some(dataID)) // TROUBLE? This is problematic, it loses the specific subclass of Access
+      case Ready(dataID) => {
+        logger.write(s"Data ${data.getClass.getSimpleName} for ${data.dataTopic} is already ready" + ">>>") 
+        new Access // 
       }
       case NotReady(_) => {
         val executedTree = getDataAccess(data: DataObject)
-        logger.write(executedTree.serialize) // log the entire execution tree 
+        logger.write(s"Creating data ${data.getClass.getSimpleName} for ${data.dataTopic}:" + executedTree.serialize + ">>>") // log the entire execution tree 
         executedTree.accessOrError
       }
     }

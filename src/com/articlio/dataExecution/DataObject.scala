@@ -95,7 +95,10 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   def ReadyStateSpecific(suppliedRunID: Long): ReadyState = {
     DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list.nonEmpty match {
       case true => { 
-        // TODO: these two lines represent redundancy and therefore bug potential - need tilt towards o
+        // TODO: these two lines showcase redundancy and therefore bug potential:
+        //       the overall code currently both propagates the dataID in a return type Ready,
+        //       in addition to recording it in this.dataID. 
+        //       Probably, the former could be dropped in favor of the latter, across the board.
         dataID = Some(suppliedRunID)
         Ready(dataID.get)
       }
@@ -112,7 +115,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
         dataID = Some(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list.head.dataid) 
         Ready(dataID.get)
       }
-      case false =>new NotReady
+      case false => new NotReady
     }
   } 
 
@@ -134,13 +137,6 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
 case class AttemptDataObject(data: DataObject) extends DataExecution {
   
   val accessOrError: AccessOrError = getSingleDataAccess(data)
-  accessOrError match {
-    case dataAccessDetail : Access =>  { 
-      println(s"in AttemptDataObject: dataAccessDetail is $dataAccessDetail")
-      println(s"in AttemptDataObject: data             is ${data.dataID}")
-    }
-    case _ => None
-  }
 
   // carry over all immutables of the original data object relevant to the finalized state
   val dataType: String = data.dataType
