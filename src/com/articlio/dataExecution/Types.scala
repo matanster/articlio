@@ -1,7 +1,8 @@
 package com.articlio.dataExecution
 
 sealed abstract class ReadyState
-case class Ready(dataID: Long) extends ReadyState 
+case class Ready(dataID: Long) extends ReadyState // it might be redundant to pass along the dataID, 
+                                                  // as it is already stored inside the executed data object.
 case class NotReady(error: Option[CreateError] = None) extends ReadyState
 
 abstract class AccessOrError 
