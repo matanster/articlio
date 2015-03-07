@@ -32,11 +32,11 @@ object Application extends Controller {
       Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, content))
     }
     
-    val attemptedData = Ldb.getSemanticForArticle(articleName, pdb)
+    val attemptedData = Ldb.getSemanticForArticle(articleName, pdb, dataID)
 
     attemptedData.accessOrError match {
-      case access: Access =>     show(attemptedData.dataID.get)
-      case error: AccessError => Ok(s"couldn't find or create data for request: ${attemptedData.humanAccessMessage}")
+      case access: Access =>      show(attemptedData.dataID.get)
+      case error:  AccessError => Ok(s"couldn't find or create data for request: ${attemptedData.humanAccessMessage}")
     }
   }
   
