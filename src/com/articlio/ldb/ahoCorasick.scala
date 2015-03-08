@@ -52,13 +52,13 @@ object AhoCorasickActor { // Create Props for an actor of this type
 case class AhoCorasickActor(ldb: LDB) extends Actor {
   val log = Logging(context.system, this)
   
-  val ahoCorasick = new AhoCorasickTrie
-  ahoCorasick.init(ldb.allFragmentsDistinct)
+  val AhoCorasickTrie = new AhoCorasickTrie
+  AhoCorasickTrie.init(ldb.allFragmentsDistinct)
   
   def receive = { 
     case ProcessSentenceMessage(s, l) =>
       //log.info(s"received message with sentence: $s")
-      sender ! ahoCorasick.findAll(s, l)
+      sender ! AhoCorasickTrie.findAll(s, l)
     case _ => throw new Exception("unexpected actor message type received")
   }
 }

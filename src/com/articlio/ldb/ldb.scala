@@ -38,8 +38,6 @@ class LDB(inputRules: Seq[RuleInput], logger: SimpleLogger) {
       }
     }
   
-  //
-  
   //val expansion : Seq[String] = ASRRules.flatMap (rule => ArticleSelfReference.refsText.map
   //                                      (refText => rule.pattern.patch(rule.pattern.indexOfSlice("{asr}"), refText, "{asr}".length)))
   

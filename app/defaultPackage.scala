@@ -30,7 +30,8 @@ object Global extends GlobalSettings {
 
   override def onStop(app: Application) {
     println("Global object stopping non-Play stuff...")
-    play.api.Logger.info("Global object stopping non-Play stuff...")    
+    play.api.Logger.info("Global object stopping non-Play stuff...")
+    AppActorSystem.shutdown
     //SelfMonitor.shutdown
   }  
   

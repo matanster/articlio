@@ -26,29 +26,66 @@ import scala.slick.jdbc.meta._
 import com.articlio.dataExecution.CreateError 
 import com.articlio.logger._
 
-//
-// Initializes engine for input ldb, and expose method to run for a given document
-// old tentative TODO: use newBuilder and .result rather than hold mutable and immutable collections - for correct coding style without loss of performance!
-//
-case class ldbEngine(inputCSVfile: String) extends Connection {
+/*
+ *  provides caching & pooling of the heavy initialization of aho-corasick tries 
+ */
+object ldbEnginePooling {
+
+  val logger = new SimpleLogger("ldb-engine-pooler") // ...might get fancy with a logger per pool later
+
+  // map to a pair of objects - an actor encompassing a trie, 
+  // and a compiled ldb. Because callers will currently need both 
+  case class InitializedSeed(router: ActorRef, ldb: LDB)
+  val ldbActorPools = collection.mutable.Map.empty[String, InitializedSeed]
+  
+  val concurrencyPerActorPool = 10
+
+  private def initialize(inputCSVfileName: String) = {
+
+    //
+    // initialize ldb
+    //
+    val inputRules = CSV.deriveFromCSV(inputCSVfileName)
+    val ldb = new LDB(inputRules, logger)
+    
+    //
+    // Start actors ensemble, actors being initialized with it
+    //
+    val ahoCorasickPool = AppActorSystem.system.actorOf(AhoCorasickActor.props(ldb)
+                                    .withRouter(BalancingPool(nrOfInstances = concurrencyPerActorPool)), 
+                                     name = s"aho-corasick-tree-pool-${inputCSVfileName.replace(" ","-")}")
+                                     // val ahoCorasick = new Array[AhoCorasickActor](concurrency)
+                                     
+    ldbActorPools += ((inputCSVfileName, InitializedSeed(ahoCorasickPool, ldb)))
+  }
+  
+  def apply(inputCSVfileName: String) : InitializedSeed = {
+    if (ldbActorPools.get(inputCSVfileName).isEmpty) initialize(inputCSVfileName) // initialize if necessary 
+    ldbActorPools.get(inputCSVfileName).get                                       // provide
+  }
+  
+  // since no control over the number of actor pools is exerted now, 
+  // providing API to clear the entire cache makes sense... 
+  def clearCache {
+    // as per http://doc.akka.io/docs/akka/snapshot/scala/routing.html,
+    // explaining how it needs to be used to gracefully shut down (drain) a router and all its children. 
+    // Alternatively see https://groups.google.com/forum/#!topic/akka-user/J08T3OyOyMQ 
+    ldbActorPools.map { case(_, InitializedSeed(router, _)) => router ! akka.routing.Broadcast(PoisonPill) } 
+  }
+}
+
+/*
+ *  Operates the engine 
+ */
+case class ldbEngine(inputCSVfileName: String) extends Connection {
+  // old tentative TODO: 
+  // use newBuilder and .result rather than hold mutable and immutable collections - for correct coding style without loss of performance!
 
   val logger = new SimpleLogger("ldb-engine")
   //val overallLogger = new Logger("overall")
+  
+  val (ahoCorasick, ldb) = ldbEnginePooling(inputCSVfileName)
 
-  //
-  // Initialize ldb    
-  //
-  val inputRules = CSV.deriveFromCSV(inputCSVfile)
-  val ldb = new LDB(inputRules, logger)
-
-  //
-  // Start actors ensemble
-  //
-  val concurrency = 4
-  val ahoCorasick = AppActorSystem.system.actorOf(AhoCorasickActor.props(ldb)
-                                         .withRouter(BalancingPool(nrOfInstances = concurrency)), 
-                                          name = "aho-corasick-pool-service") 
-                                          //val ahoCorasick = new Array[AhoCorasickActor](concurrency)
   //
   // Public interface to process a document 
   //                                        
