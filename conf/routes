@@ -13,6 +13,9 @@ GET  /showExtract/:articleName              controllers.Application.showExtract(
 # Generate Semantic Data for Input PDF
 GET  /semantic/single/pdf/:inputFileName    controllers.Ldb.semanticFromArticle(inputFileName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
 
+# Generate Semantic Data for Input Text File
+GET  /semantic/single/txtFile/:inputFileName    controllers.Ldb.semanticFromTextFile(inputFileName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
+
 # Purge Semantic Data
 GET  /purge/semantic                        controllers.Ldb.purge
 

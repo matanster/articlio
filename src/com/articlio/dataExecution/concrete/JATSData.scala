@@ -9,15 +9,20 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 /*
- *  This class handles its own dependencies, as they are disjunctive (one of the two is enough).
- *  In case this class survives further on, its handling of disjunctive dependencies may be
- *  merged into the overall object model, as a variant to existing classes.
+ *  Classes for creating JATS from various raw inputs 
  */
 
-case class JATSaccess(dirPath: String) extends Access
-case class JATSData(articleName: String) extends DataObject
+case class JATSaccess(dirPath: String) extends Access 
+abstract class JATSData extends DataObject { val access : JATSaccess }
+
+//
+// this class handles its own dependencies, as they are disjunctive (one of the two is enough).
+// In case this class survives further on, its handling of disjunctive dependencies may be
+// merged into the overall object model, as a variant to existing classes.
+//
+case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
 {
-  //val dataType = "JATS"
+  // TODO: uber-factor this function, to rely on a function that manages collision in the case of duplicate sources for the same articleName (selects one source, or returns error)
   
   val dataTopic = articleName
   
@@ -73,5 +78,49 @@ case class JATSData(articleName: String) extends DataObject
     }
   }; val creator = create()_
   
-  val access = JATSaccess(config.config.getString("locations.JATS")) // floggingfasdflePathExists(s"${config.eLife}/$articleName.xml"))))) match {
+  val access = JATSaccess(config.config.getString("locations.JATS")) // PathExists(s"${config.eLife}/$articleName.xml"))))) match {
 }
+
+//
+// Create JATS naively, from raw file of mere lines of text
+//
+case class JATSDataFromTxtFile(articleName: String)(rawTxt: RawTxtFile = RawTxtFile(articleName)) extends JATSData
+{
+  val dataTopic = articleName
+  
+  val dependsOn = Seq(rawTxt)
+  
+  def create()(dataID: Long, dataTopic: String, articleName:String) : Option[CreateError] = {
+    
+    def writeOutputFile(fileText: String, outDir: String, fileName: String) { // TODO: move someplace more general
+      import java.nio.file.{Path, Paths, Files}
+      import java.nio.charset.StandardCharsets
+      import scala.io.Source
+
+      Files.write(Paths.get(outDir + "/" + fileName), fileText.getBytes(StandardCharsets.UTF_8))
+    }
+    
+    def XMLescape(text: String) : String = { // TODO: move someplace more general
+      text.replace("&","&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;")
+    }
+
+    val fullSourcePath = s"${config.config.getString("locations.txtFile-source-input")}/$articleName.txt"
+    val targetPath = s"${config.config.getString("locations.JATS")}"
+    filePathExists(fullSourcePath) match {
+      case false => Some(CreateError(s"source txt file $articleName was not found.")) 
+      case true  => {
+        val jats = "<article>" + 
+                     "<body>" + 
+                       scala.io.Source.fromFile(fullSourcePath).getLines.toArray.map(line =>  
+                         "<sec sec-type=unknown><title>unknown</title>" + "<p>" + XMLescape(line) + "</p>" + "</sec>") + 
+                     "</body>" + 
+                   "</article>"
+        writeOutputFile(jats, targetPath, s"$articleName.xml")
+        None
+      }
+    }
+  }; val creator = create()_
+  
+  val access = JATSaccess(config.config.getString("locations.JATS")) // PathExists(s"${config.eLife}/$articleName.xml"))))) match {
+}
+

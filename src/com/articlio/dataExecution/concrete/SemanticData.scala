@@ -18,7 +18,7 @@ case class SemanticAccess() extends Access
 case class SemanticData(articleName: String, 
                         ldbFile: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv",
                         ReQDataID: Option[Long] = None)
-                       (JATS: JATSData = JATSData(articleName),
+                       (JATS: JATSData = JATSDataDisjunctiveSourced(articleName),
                         LDB: LDBData = LDBData(ldbFile)) extends DataObject(ReQDataID) {
 
   //val dataType = "semantic"

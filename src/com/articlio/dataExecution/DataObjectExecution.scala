@@ -48,12 +48,12 @@ trait DataExecution extends Connection {
     logger.write(s"<<< handling top-level request for data ${data}") //
     data.ReadyState match {
       case Ready(dataID) => {
-        logger.write(s"Data ${data.getClass.getSimpleName} for ${data.dataTopic} is already ready" + ">>>") 
+        logger.write(s"Data ${data.getClass.getSimpleName} for ${data.dataTopic} is already ready" + " >>>") 
         new Access // 
       }
       case NotReady(_) => {
         val executedTree = getDataAccess(data: DataObject)
-        logger.write(s"Creating data ${data.getClass.getSimpleName} for ${data.dataTopic}:" + executedTree.serialize + ">>>") // log the entire execution tree 
+        logger.write(s"Creating data ${data.getClass.getSimpleName} for ${data.dataTopic}:" + executedTree.serialize + " >>>") // log the entire execution tree 
         executedTree.accessOrError
       }
     }

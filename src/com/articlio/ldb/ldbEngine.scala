@@ -27,21 +27,23 @@ import com.articlio.dataExecution.CreateError
 import com.articlio.logger._
 
 /*
- *  provides caching & pooling of the heavy initialization of aho-corasick tries 
+ *  provide caching & pooling of the heavy initialization of aho-corasick tries 
  */
+case class InitializedSeed(router: ActorRef, ldb: LDB)
 object ldbEnginePooling {
 
   val logger = new SimpleLogger("ldb-engine-pooler") // ...might get fancy with a logger per pool later
 
   // map to a pair of objects - an actor encompassing a trie, 
   // and a compiled ldb. Because callers will currently need both 
-  case class InitializedSeed(router: ActorRef, ldb: LDB)
   val ldbActorPools = collection.mutable.Map.empty[String, InitializedSeed]
   
   val concurrencyPerActorPool = 10
 
   private def initialize(inputCSVfileName: String) = {
 
+    println(s"initializing objects for $inputCSVfileName")
+    
     //
     // initialize ldb
     //
@@ -67,7 +69,7 @@ object ldbEnginePooling {
   // since no control over the number of actor pools is exerted now, 
   // providing API to clear the entire cache makes sense... 
   def clearCache {
-    // as per http://doc.akka.io/docs/akka/snapshot/scala/routing.html,
+    // as per http://doc.akka.io/docs/akka/snapshot/scala/routing.html under #PoisonPill Messages#,
     // explaining how it needs to be used to gracefully shut down (drain) a router and all its children. 
     // Alternatively see https://groups.google.com/forum/#!topic/akka-user/J08T3OyOyMQ 
     ldbActorPools.map { case(_, InitializedSeed(router, _)) => router ! akka.routing.Broadcast(PoisonPill) } 
@@ -84,7 +86,7 @@ case class ldbEngine(inputCSVfileName: String) extends Connection {
   val logger = new SimpleLogger("ldb-engine")
   //val overallLogger = new Logger("overall")
   
-  val (ahoCorasick, ldb) = ldbEnginePooling(inputCSVfileName)
+  val (ahoCorasick, ldb) = ldbEnginePooling(inputCSVfileName) match { case InitializedSeed(actorRef, ldb) => (actorRef, ldb) }  
 
   //
   // Public interface to process a document 
@@ -102,7 +104,10 @@ case class ldbEngine(inputCSVfileName: String) extends Connection {
     //if (sections.isEmpty) return s"${document.name} appears to have no sections and was not processed"  
     if (sections.isEmpty) return Some(CreateError("no sections detected in JATS input - cannot extract")) // Seq.empty[Matches]  
     
-    implicit class MyStringOps(val s: String) { // TODO: separate into util package object or something 
+    //
+    // Enriching the string type with custom method. TODO: separate into util package object?
+    //
+    implicit class MyStringOps(val s: String) {  
       def endsWithAny(any: Seq[String]) : Boolean = {
         for (word <- any)
           if (s.endsWith(SPACE + word)) return true

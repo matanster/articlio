@@ -22,6 +22,10 @@ object Ldb extends Controller {
   def semanticFromArticle(articleName: String, pdb: String) = Action { 
     implicit request => Ok(AttemptDataObject(SemanticData(articleName, pdb)()).humanAccessMessage) 
   }
+  
+  def semanticFromTextFile(articleName: String, pdb: String) = Action { 
+    implicit request => Ok(AttemptDataObject(SemanticData(articleName, pdb)(JATS = JATSDataFromTxtFile(articleName)())).humanAccessMessage) 
+  }
 
   def singleeLifeSourced(articleName: String,
                          pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv") = Action { implicit request =>

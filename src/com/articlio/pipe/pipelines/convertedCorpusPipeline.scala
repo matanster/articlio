@@ -8,6 +8,7 @@ import com.articlio.pipe.Step
 import scala.io.Source
 
 // TODO: refactor to use one function that runs a modifier function and writes its output to file
+@deprecated("probably not in use for now, the task is fully taken care of by node.js's part for now", "")
 class ConvertedCorpusPipeline {
 
   def XSL(fileText: String) : String = {
@@ -49,7 +50,7 @@ class ConvertedCorpusPipeline {
   val base = "pdf/"
   
   val fromTextSentencesFile: Seq[Step] = Seq(Step(config.asText, config.asEscapedText, writer(_:String, _:String, _:String, clean), nullInitializer), // for more beautyful code switch from this partial application technique, to currying or other nicer functional design
-                                                Step(config.asEscapedText, config.copyTo, writer(_:String, _:String, _:String, toJatsNaive), nullInitializer))
+                                             Step(config.asEscapedText, config.copyTo, writer(_:String, _:String, _:String, toJatsNaive), nullInitializer))
 
   val steps: Seq[Step] = Seq(Step(config.pdfAsJATS, config.copyTo, writer(_:String, _:String, _:String, identity), nullInitializer))
 

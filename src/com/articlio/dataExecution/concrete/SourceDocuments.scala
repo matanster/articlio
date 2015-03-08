@@ -8,7 +8,10 @@ import com.articlio.config
  *  they register it in the Data DB, and thus make it available for processing. 
  */
  
-abstract class Raw extends DataObject
+//
+// TODO: derive trait that encompasses most of the repetition of the subclasses
+//
+abstract class Raw extends DataObject 
 
 case class RawPDFaccess(dirPath: String) extends Access
 case class RawPDF(articleName: String) extends Raw // TODO: connect with distributed storage local caching
@@ -40,21 +43,43 @@ case class RaweLifeJATS(articleName: String) extends Raw // TODO: connect with d
   //val dataType = "RaweLifeJATS"
   
   val dataTopic = articleName // for now
+      
+      val dependsOn = Seq()
+      
+      val fileName = s"$articleName.xml"
+      
+      val fullPath = s"${config.config.getString("locations.JATS-input.input")}/$fileName"
+      
+      def importer()(runID: Long, dataType: String, fileName: String) : Option[CreateError] = {
+        filePathExists(fullPath) match {
+        case true  => None 
+        case false => Some(CreateError(s"source eLife JATS file $fileName was not found.")) 
+        }
+      }; val creator = importer()_ // curried, alternatively could be a partial application (if creator collapses to single param list: create(_ :Long, _ :String))
+          
+          val access = RaweLifeJATSAccess(fullPath)
+}
+
+case class RaweTxtFileAccess(dirPath: String) extends Access
+case class RawTxtFile(articleName: String) extends Raw // TODO: connect with distributed storage local caching
+{
+
+  val dataTopic = articleName // for now
   
   val dependsOn = Seq()
   
-  val fileName = s"$articleName.xml"
+  val fileName = s"$articleName.txt"
   
-  val fullPath = s"${config.config.getString("locations.JATS-input.input")}/$fileName"
+  val fullPath = s"${config.config.getString("locations.txtFile-source-input")}/$fileName"
   
   def importer()(runID: Long, dataType: String, fileName: String) : Option[CreateError] = {
     filePathExists(fullPath) match {
       case true  => None 
-      case false => Some(CreateError(s"source eLife JATS file $fileName was not found.")) 
+      case false => Some(CreateError(s"source txt file $fileName was not found.")) 
     }
   }; val creator = importer()_ // curried, alternatively could be a partial application (if creator collapses to single param list: create(_ :Long, _ :String))
 
-  val access = RaweLifeJATSAccess(fullPath)
+  val access = RaweTxtFileAccess(fullPath)
 }
 
 object Importer {
