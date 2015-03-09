@@ -93,6 +93,7 @@ case class JATSDataFromTxtFile(articleName: String)(rawTxt: RawTxtFile = RawTxtF
   def create()(dataID: Long, dataTopic: String, articleName:String) : Option[CreateError] = {
     
     def writeOutputFile(fileText: String, outDir: String, fileName: String) { // TODO: move someplace more general
+      //import java.io.{File}
       import java.nio.file.{Path, Paths, Files}
       import java.nio.charset.StandardCharsets
       import scala.io.Source
@@ -109,10 +110,12 @@ case class JATSDataFromTxtFile(articleName: String)(rawTxt: RawTxtFile = RawTxtF
     filePathExists(fullSourcePath) match {
       case false => Some(CreateError(s"source txt file $articleName was not found.")) 
       case true  => {
-        val jats = "<article>" + 
+        //val sections = scala.io.Source.fromFile(fullSourcePath).getLines.toArray.map(line => println("<sec sec-type=unknown><title>unknown</title>" + "<p>" + XMLescape(line.toString) + "</p>" + "</sec>"))
+        val jats : String = 
+                   "<article>" + 
                      "<body>" + 
                        scala.io.Source.fromFile(fullSourcePath).getLines.toArray.map(line =>  
-                         "<sec sec-type=unknown><title>unknown</title>" + "<p>" + XMLescape(line) + "</p>" + "</sec>") + 
+                         "<sec sec-type=\"unknown\"><title>unknown</title>" + "<p>" + XMLescape(line.toString) + "</p>" + "</sec>").mkString + 
                      "</body>" + 
                    "</article>"
         writeOutputFile(jats, targetPath, s"$articleName.xml")

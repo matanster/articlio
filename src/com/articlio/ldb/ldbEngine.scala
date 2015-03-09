@@ -86,8 +86,9 @@ case class ldbEngine(inputCSVfileName: String) extends Connection {
   val logger = new SimpleLogger("ldb-engine")
   //val overallLogger = new Logger("overall")
   
-  val (ahoCorasick, ldb) = ldbEnginePooling(inputCSVfileName) match { case InitializedSeed(actorRef, ldb) => (actorRef, ldb) }  
-
+  //val (ahoCorasick, ldb) = ldbEnginePooling(inputCSVfileName) match { case InitializedSeed(actorRef, ldb) => (actorRef, ldb) }  
+  val InitializedSeed(ahoCorasick, ldb) = ldbEnginePooling(inputCSVfileName) 
+  
   //
   // Public interface to process a document 
   //                                        

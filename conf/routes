@@ -2,49 +2,49 @@
 # This file defines all application routes (Higher priority routes first)
 
 # Home page - just say app is running
-GET  /                                      controllers.Application.index
+GET  /                                        controllers.Application.index
 
 # Map static resources from the /public folder to the /assets URL path
-GET  /assets/*file                          controllers.Assets.at(path="/public", file)
+GET  /assets/*file                            controllers.Assets.at(path="/public", file)
 
 # Show Article Extract
-GET  /showExtract/:articleName              controllers.Application.showExtract(articleName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", runID: Option[Long])
+GET  /showExtract/:articleName                controllers.Application.showExtract(articleName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", runID: Option[Long])
 
 # Generate Semantic Data for Input PDF
-GET  /semantic/single/pdf/:inputFileName    controllers.Ldb.semanticFromArticle(inputFileName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
+GET  /semantic/single/pdf/:inputFileName      controllers.Ldb.semanticFromArticle(inputFileName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
 
 # Generate Semantic Data for Input Text File
-GET  /semantic/single/txtFile/:inputFileName    controllers.Ldb.semanticFromTextFile(inputFileName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
+GET  /semantic/single/txtFile/:inputFileName  controllers.Ldb.semanticFromTextFile(inputFileName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
 
 # Purge Semantic Data
-GET  /purge/semantic                        controllers.Ldb.purge
+GET  /purge/semantic                          controllers.Ldb.purge
 
 # tested / being tested
 ########################
 # not tested
 
-GET  /bulkImport/:path                      controllers.Application.bulkImport(path: String)
+GET  /bulkImport/:path                        controllers.Application.bulkImport(path: String)
 
-GET  /showOriginal/:article                 controllers.Application.showOriginal(article: String)
+GET  /showOriginal/:article                   controllers.Application.showOriginal(article: String)
 
-GET  /semantic/single/eLife/:inputFileName  controllers.Ldb.singleeLifeSourced(inputFileName: String, pdb: String)
-GET  /semantic/all/                         controllers.Ldb.all
-GET  /semantic/all/pdf                      controllers.Ldb.allPdf
-GET  /semantic/all/eLife                    controllers.Ldb.alleLife
+GET  /semantic/single/eLife/:inputFileName    controllers.Ldb.singleeLifeSourced(inputFileName: String, pdb: String)
+GET  /semantic/all/                           controllers.Ldb.all
+GET  /semantic/all/pdf                        controllers.Ldb.allPdf
+GET  /semantic/all/eLife                      controllers.Ldb.alleLife
 
-GET  /export                                controllers.Ldb.export
-GET  /export/analytic                       controllers.Ldb.exportAnalytic
+GET  /export                                  controllers.Ldb.export
+GET  /export/analytic                         controllers.Ldb.exportAnalytic
 
-GET  /pipe                                  controllers.pipe.pipe
+GET  /pipe                                    controllers.pipe.pipe
 
-GET  /pdf/convert/all                       controllers.PdfConvert.convertAll
-GET  /pdf/convert/single/:location          controllers.PdfConvert.convertSingle(location: String)
+GET  /pdf/convert/all                         controllers.PdfConvert.convertAll
+GET  /pdf/convert/single/:location            controllers.PdfConvert.convertSingle(location: String)
 
 # Show admin page - not entirely implemented
-GET  /admin/                                controllers.Application.adminPage
+GET  /admin/                                  controllers.Application.adminPage
 
 # development playground route
-GET  /playground/                           controllers.Application.playground
+GET  /playground/                             controllers.Application.playground
 
 # Map the JS resource paths - is this really still relevant?!
 # GET  /*file                                 controllers.Assets.versioned(path="/public", file: Asset)
