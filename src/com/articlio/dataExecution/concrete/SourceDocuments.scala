@@ -94,9 +94,10 @@ object Importer {
     }
   }
   
-  def bulkImport(path: String) : Boolean = { // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files
-                                 //       to avoid bloated data groups, and reduce statistic skew from duplicates
-    val files = new java.io.File(/* path */"/home/matan/Downloads/articles").listFiles.filter(file => (file.isFile)).map(_.getName) 
+  def bulkImportRaw(path: String): Boolean = { // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files
+                                             //       to avoid bloated data groups, and reduce statistic skew from duplicates
+    println(path)
+    val files = new java.io.File(path /*"/home/matan/Downloads/articles"*/).listFiles.filter(file => (file.isFile)).map(_.getName) 
     files.map(rawGuessImport).flatten.map(AttemptDataObject) // nothing to do with the return value here 
     true
   }

@@ -19,11 +19,13 @@ GET  /semantic/single/txtFile/:inputFileName  controllers.Ldb.semanticFromTextFi
 # Purge Semantic Data
 GET  /purge/semantic                          controllers.Ldb.purge
 
+# Import (and only import) Raw Documents 
+GET  /bulkImportRaw/:dirPath                  controllers.Application.bulkImportRaw(dirPath: String)
+
 # tested / being tested
 ########################
 # not tested
 
-GET  /bulkImport/:path                        controllers.Application.bulkImport(path: String)
 
 GET  /showOriginal/:article                   controllers.Application.showOriginal(article: String)
 

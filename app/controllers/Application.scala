@@ -11,9 +11,9 @@ import play.api.http.MimeTypes
 
 object Application extends Controller {
 
-  def bulkImport(path: String) = Action { implicit request =>
+  def bulkImportRaw(path: String) = Action { implicit request =>
     println("at bulk import controller")
-    com.articlio.dataExecution.concrete.Importer.bulkImport(path) match {
+    com.articlio.dataExecution.concrete.Importer.bulkImportRaw(path) match {
       case true => Ok("Import successful")
       case false => Ok("Import failed")
     }
