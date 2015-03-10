@@ -5,9 +5,9 @@
 package com.articlio.storage
 
 //import language.experimental.macros
-import scala.slick.driver.MySQLDriver.simple._
+import slick.driver.MySQLDriver.simple._
 //import scala.slick.lifted._ // more clumsy to debug/use than "direct/simple"
-import scala.slick.direct._   // http://slick.typesafe.com/doc/2.1.0/direct-embedding.html
+import slick.direct._   // http://slick.typesafe.com/doc/2.1.0/direct-embedding.html
 
 // direct SQL access imports
 //import scala.slick.driver.JdbcDriver.backend.Database

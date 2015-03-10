@@ -9,7 +9,7 @@ import com.articlio.dataExecution._
 import models.Tables
 import com.articlio.storage.{Connection}
 import play.api.db.slick._
-import scala.slick.driver.MySQLDriver.simple._
+import slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 import models.Tables.{Data => DataRecord}
 

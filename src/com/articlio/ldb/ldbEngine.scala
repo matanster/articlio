@@ -21,8 +21,8 @@ import scala.concurrent.duration._
 import models.Tables._
 import models.Tables.{Data => DataRecord}
 import com.articlio.storage.Connection
-import scala.slick.driver.MySQLDriver.simple._
-import scala.slick.jdbc.meta._
+import slick.driver.MySQLDriver.simple._
+import slick.jdbc.meta._
 import com.articlio.dataExecution.CreateError 
 import com.articlio.logger._
 

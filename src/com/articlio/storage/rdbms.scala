@@ -3,7 +3,7 @@ import akka.actor.Actor
 
 //import language.experimental.macros
 import models.Tables._
-import scala.slick.driver.MySQLDriver.simple._
+import slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 
 trait Connection {

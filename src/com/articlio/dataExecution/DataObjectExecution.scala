@@ -2,8 +2,8 @@ package com.articlio.dataExecution
 
 import com.articlio.dataExecution.concrete._
 import models.Tables._
-import scala.slick.driver.MySQLDriver.simple._
-import scala.slick.jdbc.meta._
+import slick.driver.MySQLDriver.simple._
+import slick.jdbc.meta._
 import com.articlio.storage.Connection
 import com.articlio.logger._
 

@@ -7,8 +7,8 @@ import com.articlio.ldb
 import com.articlio.config
 import com.articlio.dataExecution._
 import com.articlio.dataExecution.concrete._
-import scala.slick.driver.MySQLDriver.simple._
-import scala.slick.jdbc.meta._
+import slick.driver.MySQLDriver.simple._
+import slick.jdbc.meta._
 import models.Tables._
 import com.articlio.storage.Connection
 

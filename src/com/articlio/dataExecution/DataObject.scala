@@ -1,8 +1,8 @@
 package com.articlio.dataExecution
 
 import play.api.db.slick._
-import scala.slick.driver.MySQLDriver.simple._
-import scala.slick.jdbc.meta._
+import slick.driver.MySQLDriver.simple._
+import slick.jdbc.meta._
 import models.Tables._
 import models.Tables.{Data => DataRecord}
 import com.articlio.storage.Connection

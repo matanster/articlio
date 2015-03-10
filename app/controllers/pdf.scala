@@ -4,7 +4,7 @@ import models._
 import play.api._
 import play.api.mvc._
 import play.api.db.slick._
-import scala.slick.driver.MySQLDriver.simple._
+import slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 import play.api.http.MimeTypes
 import play.api.Play.current

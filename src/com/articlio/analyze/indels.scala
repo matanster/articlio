@@ -7,7 +7,7 @@
 
 package com.articlio.analyze
 import com.articlio.storage.{Connection}
-import scala.slick.driver.MySQLDriver.simple._
+import slick.driver.MySQLDriver.simple._
 import scala.slick.jdbc.meta._
 import scala.slick.util.CloseableIterator
 import com.articlio.semantic.AppActorSystem

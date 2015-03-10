@@ -4,8 +4,8 @@ import play.api._
 import play.api.mvc._
 import play.api.db.slick._
 import models.Tables._
-import scala.slick.driver.MySQLDriver.simple._
-import scala.slick.jdbc.meta._
+import slick.driver.MySQLDriver.simple._
+import slick.jdbc.meta._
 import play.api.http.MimeTypes
 //import play.api.libs.json._
 
