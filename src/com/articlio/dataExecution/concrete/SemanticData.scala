@@ -8,9 +8,9 @@ import com.articlio.util.runID
 import com.articlio.dataExecution._
 import models.Tables
 import com.articlio.storage.{Connection}
-import play.api.db.slick._
+//import play.api.db.slick._ play slick plugin is not yet interoperable with Slick 3.0.0
 import slick.driver.MySQLDriver.simple._
-import scala.slick.jdbc.meta._
+import slick.jdbc.meta._
 import models.Tables.{Data => DataRecord}
 
 case class SemanticAccess() extends Access

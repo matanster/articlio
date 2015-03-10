@@ -1,6 +1,6 @@
 package com.articlio.dataExecution
 
-import play.api.db.slick._
+//import play.api.db.slick._ play slick plugin is not yet interoperable with Slick 3.0.0
 import slick.driver.MySQLDriver.simple._
 import slick.jdbc.meta._
 import models.Tables._

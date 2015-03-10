@@ -3,9 +3,9 @@ package controllers
 import models._
 import play.api._
 import play.api.mvc._
-import play.api.db.slick._
+//import play.api.db.slick._ play slick plugin is not yet interoperable with Slick 3.0.0
 import slick.driver.MySQLDriver.simple._
-import scala.slick.jdbc.meta._
+import slick.jdbc.meta._
 import play.api.http.MimeTypes
 import play.api.Play.current
 import play.api.libs.ws._

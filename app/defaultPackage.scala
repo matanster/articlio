@@ -12,9 +12,13 @@ import com.articlio.SelfMonitor
 import akka.actor.ActorSystem
 import com.articlio.semantic.AppActorSystem
 import com.articlio.logger._
+import slick.driver.MySQLDriver.simple._
+import slick.jdbc.meta._
 
 object Global extends GlobalSettings {
 
+  val db = com.articlio.storage.slickDb.db // start the slick database connection
+  
   play.api.Logger.info("Global object started")
   println("Global object started")
   

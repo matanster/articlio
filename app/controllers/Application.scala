@@ -1,13 +1,18 @@
 package controllers
 
-import play.api._
+import play.api.{db => _, _}
 import play.api.mvc._
-import play.api.db.slick._
 import models.Tables._
-import slick.driver.MySQLDriver.simple._
-import slick.jdbc.meta._
+import com.articlio.storage.slickDb
+import slick.driver.MySQLDriver.api._
 import play.api.http.MimeTypes
-//import play.api.libs.json._
+import models.Tables
+import scala.concurrent.{Future, Await}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+//import slick.backend.DatabasePublisher
+//import slick.driver.H2Driver.api._
+//import slick.lifted.{ProvenShape, ForeignKeyQuery}
 
 object Application extends Controller {
 
@@ -21,29 +26,37 @@ object Application extends Controller {
 
   def showExtract(articleName: String,
                   pdb: String,
-                  dataID: Option[Long]) = DBAction { implicit request =>
+                  dataID: Option[Long]) = Action.async { implicit request =>
 
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     import com.articlio.dataExecution._
     import com.articlio.dataExecution.concrete._
     
     def show(dataID: Long) = {
-      val content = Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch).list
-      val dataIDs = models.Tables.Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
-      Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, content))
+      val query : DBIO[Seq[MatchesRow]] = Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch).result
+      val content: Future[Seq[Tables.MatchesRow]] = slickDb.db.run(query)
+      content.map { result => {  
+          //val dataIDs = models.Tables.Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
+          val dataIDs = List(3L,4L)
+          Ok(views.html.showExtract(dataIDs, dataID, pdb, articleName, result.toList))
+        }
+      }
+      //val content = slickDb.db.run()
+
     }
     
     val attemptedData = AttemptDataObject(SemanticData(articleName, pdb, dataID)())
 
     attemptedData.accessOrError match {
       case access: Access =>      show(attemptedData.dataID.get)
-      case error:  AccessError => Ok(s"couldn't find or create data for request: ${attemptedData.humanAccessMessage}")
+      case error:  AccessError => Future { Ok(s"couldn't find or create data for request: ${attemptedData.humanAccessMessage}") }
     }
   }
   
   @deprecated("depcracated by newer", "showExtract")
   def showExtractOld(articleName: String,
                   pdb: String,
-                  dataID: Option[Long]) = DBAction { implicit request =>
+                  dataID: Option[Long]) = Action { implicit request =>
 
     import com.articlio.dataExecution._
     import com.articlio.dataExecution.concrete._

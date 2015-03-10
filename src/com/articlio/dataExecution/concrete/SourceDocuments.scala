@@ -112,7 +112,7 @@ object Importer {
 case class sourceDocument(fileName: String) extends DataObject
 {
   import scala.slick.driver.MySQLDriver.simple._
-  import scala.slick.jdbc.meta._
+  import slick.jdbc.meta._
   import models.Tables._
   import models.Tables.{Data => DataRecord}
   import com.articlio.storage.Connection

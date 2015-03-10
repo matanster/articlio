@@ -3,8 +3,13 @@ import akka.actor.Actor
 
 //import language.experimental.macros
 import models.Tables._
-import slick.driver.MySQLDriver.simple._
-import scala.slick.jdbc.meta._
+import slick.driver.MySQLDriver.api._
+//import slick.driver.MySQLDriver.simple._
+//import slick.jdbc.meta._
+
+object slickDb {
+  val db = Database.forConfig("slickdb")
+}
 
 trait Connection {
   // connection parameters

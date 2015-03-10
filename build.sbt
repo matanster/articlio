@@ -158,6 +158,7 @@ dummytask := {
 
 //libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "2.1.0"
 libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.0.0-RC1"
+
 lazy val slickGenerate = TaskKey[Seq[File]]("slick code generation")
 
 slickGenerate <<= slickGenerateTask 
