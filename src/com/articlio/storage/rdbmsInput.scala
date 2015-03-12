@@ -1,3 +1,8 @@
+/*
+ *  Obsolete test out of slick - although nice idea to have a separate db for pdf conversion data, for safe purging of each one 
+ */
+
+/*
 //
 // Experiment with analyzing header detection data created by the node.js app 
 //
@@ -5,9 +10,9 @@
 package com.articlio.storage
 
 //import language.experimental.macros
-import slick.driver.MySQLDriver.simple._
+import slick.driver.MySQLDriver.api._
 //import scala.slick.lifted._ // more clumsy to debug/use than "direct/simple"
-import slick.direct._   // http://slick.typesafe.com/doc/2.1.0/direct-embedding.html
+//import slick.direct._   // http://slick.typesafe.com/doc/2.1.0/direct-embedding.html
 
 // direct SQL access imports
 //import scala.slick.driver.JdbcDriver.backend.Database
@@ -58,3 +63,4 @@ object InDB {
      val groupes = filtered.groupBy(row => row.docName).map( { case (docName, group) =>  (docName, group.length, group.filter(groupRow => groupRow.header === "Introduction").length) } ).list
   }  
 }
+*/

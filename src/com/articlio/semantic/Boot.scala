@@ -33,6 +33,6 @@ object Boot extends App {
 }
 
 object Analytic {
-  val inDb = storage.InDB.Query("ubuntu-2014-11-21T12:06:51.286Z")
-  storage.InDB.close
+  //val inDb = storage.InDB.Query("ubuntu-2014-11-21T12:06:51.286Z")
+  //storage.InDB.close
 } 

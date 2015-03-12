@@ -7,9 +7,10 @@ import com.articlio.ldb
 import com.articlio.config
 import com.articlio.dataExecution._
 import com.articlio.dataExecution.concrete._
-import slick.driver.MySQLDriver.simple._
+import slick.driver.MySQLDriver.api._
 import slick.jdbc.meta._
 import models.Tables._
+import com.articlio.storage.slickDb._
 import com.articlio.storage.Connection
 
 //
@@ -19,15 +20,17 @@ object BulkSemanticRecreate extends Connection {
   def buildRequest(bulkID: Long) {
     val ldb = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"  
 
-    val articleNames = (for {
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    dbQuery(for {
       bulkGroup <- Bulkdatagroups if bulkGroup.bulkid === bulkID
       data <- Data if data.dataid === bulkGroup.dataid 
-    } yield data.datatopic).list
-    
-    val ldbData = LDBData(ldb) 
-    
-    val data = articleNames.map(articleName => SemanticData(articleName.toString)(LDB = ldbData))
-    val executionManager = new BulkExecutionManager(data, Seq(ldbData))
+    } yield data.datatopic) map { articleNames =>
+      
+        val ldbData = LDBData(ldb)
+        val data = articleNames.map(articleName => SemanticData(articleName.toString)(LDB = ldbData))
+        val executionManager = new BulkExecutionManager(data, Seq(ldbData))
+      
+    }
   }
 }   
 

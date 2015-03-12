@@ -38,7 +38,10 @@ object ldbEnginePooling {
   // and a compiled ldb. Because callers will currently need both 
   val ldbActorPools = collection.mutable.Map.empty[String, InitializedSeed]
   
-  val concurrencyPerActorPool = 10
+  val serverAffordedLogicalCores = Runtime.getRuntime().availableProcessors // unless the JVM has been allowed access to less than all of them (rare)
+  println(s"JVM detected $serverAffordedLogicalCores logical cores available, and will assume this number for concurrency.")
+
+  val concurrencyPerActorPool = serverAffordedLogicalCores - 1
 
   private def initialize(inputCSVfileName: String) = {
 

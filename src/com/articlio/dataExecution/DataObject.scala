@@ -1,12 +1,16 @@
 package com.articlio.dataExecution
 
 //import play.api.db.slick._ play slick plugin is not yet interoperable with Slick 3.0.0
-import slick.driver.MySQLDriver.simple._
+import slick.driver.MySQLDriver.api._
+import com.articlio.storage.slickDb._
 import slick.jdbc.meta._
 import models.Tables._
 import models.Tables.{Data => DataRecord}
 import com.articlio.storage.Connection
 import com.articlio.util.Time._
+import scala.concurrent.Future
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 
 // Data Object That Needs to be Attempted
@@ -38,9 +42,10 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
     val startTime = localNow
 
     //
-    // register a new data run, and get its unique auto-ID from the RDBMS
+    // register a new data run, and get its unique auto-ID from the RDBMS.
+    // should be forgivable blocking the thread for a single database insert..
     //
-    dataID = Some(DataRecord.returning(DataRecord.map(_.dataid)) += DataRow(
+    dataID = Some(Await.result(db.run(DataRecord.returning(DataRecord.map(_.dataid)) += DataRow(
       dataid                 = 0L, // will be auto-generated 
       datatype               = dataType, 
       datatopic              = dataTopic, 
@@ -49,14 +54,14 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
       creatorserver          = ownHostName,
       creatorserverstarttime = Some(startTime),
       creatorserverendtime   = None,
-      softwareversion = com.articlio.Version.id))
+      softwareversion = com.articlio.Version.id)), Duration.Inf))
 
     println(s"got back data ID $dataID")
 
     // now try this data's creation function    
     val creationError = safeRunCreator(creator(dataID.get, dataType, dataTopic))
     // now record the outcome - was the data successfully created by this run?
-    DataRecord.filter(_.dataid === dataID.get).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
+    db.run(DataRecord.filter(_.dataid === dataID.get).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
       dataid                 = dataID.get,
       datatype               = dataType, 
       datatopic              = dataTopic, 
@@ -69,7 +74,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
       creatorserver          = ownHostName,
       creatorserverstarttime = Some(startTime),
       creatorserverendtime   = Some(localNow),
-      softwareversion = com.articlio.Version.id)
+      softwareversion = com.articlio.Version.id))
     ) 
     
     //
@@ -84,7 +89,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
     }
   } 
 
-  def ReadyState: ReadyState = {
+  def ReadyState: Future[ReadyState] = {
     println("In ReadyState!!!")
     requestedDataID match {
       case Some(dataIDrequested) => ReadyStateSpecific(dataIDrequested)
@@ -92,30 +97,35 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
     }
   }
   
-  def ReadyStateSpecific(suppliedRunID: Long): ReadyState = {
-    DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list.nonEmpty match {
-      case true => { 
-        // TODO: these two lines showcase redundancy and therefore bug potential:
-        //       the overall code currently both propagates the dataID in a return type Ready,
-        //       in addition to recording it in this.dataID. 
-        //       Probably, the former could be dropped in favor of the latter, across the board.
-        dataID = Some(suppliedRunID)
-        Ready(dataID.get)
+  def ReadyStateSpecific(suppliedRunID: Long): Future[ReadyState] = {
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    dbQuery(DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) map { 
+      result => result.nonEmpty match {
+        case true => { 
+          // TODO: these two lines showcase redundancy and therefore bug potential:
+          //       the overall code currently both propagates the dataID in a return type Ready,
+          //       in addition to recording it in this.dataID. 
+          //       Probably, the former could be dropped in favor of the latter, across the board.
+          dataID = Some(suppliedRunID)
+          Ready(dataID.get)
+        }
+        case false => new NotReady
       }
-      case false => new NotReady
     }
   } 
   
-  def ReadyStateAny(): ReadyState = {
+  def ReadyStateAny(): Future[ReadyState] = {
     // TODO: collapse to just one call to the database
-    println(s"In ReadyStateAny!! for ${this.getClass.getSimpleName}, $dataTopic")
-    println(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list)
-    DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list.nonEmpty match {
-      case true => {
-        dataID = Some(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic).list.head.dataid) 
-        Ready(dataID.get)
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    dbQuery(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) flatMap {
+      result => result.nonEmpty match {
+        case true => {
+          dbQuery(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) map { 
+            result => Ready(result.head.dataid) 
+          }
+        }
+        case false => Future { new NotReady }
       }
-      case false => new NotReady
     }
   } 
 
@@ -136,7 +146,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
 // Attempts to Execute a Data Object and Hold Outcome (hence Representing Final State)
 case class AttemptDataObject(data: DataObject) extends DataExecution {
   
-  val accessOrError: AccessOrError = getSingleDataAccess(data)
+  val accessOrError: Future[AccessOrError] = getSingleDataAccess(data)
 
   // carry over all immutables of the original data object relevant to the finalized state
   val dataType: String = data.dataType

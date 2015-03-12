@@ -107,11 +107,11 @@ object Importer {
 
 
 
-
+/*
 @deprecated("redundant", "redundant")
 case class sourceDocument(fileName: String) extends DataObject
 {
-  import scala.slick.driver.MySQLDriver.simple._
+  import slick.driver.MySQLDriver.simple._
   import slick.jdbc.meta._
   import models.Tables._
   import models.Tables.{Data => DataRecord}
@@ -143,3 +143,4 @@ case class sourceDocument(fileName: String) extends DataObject
 
   val access = RawPDFaccess(fullPath)
 }
+*/

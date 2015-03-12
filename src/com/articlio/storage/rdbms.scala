@@ -1,30 +1,19 @@
 package com.articlio.storage
 import akka.actor.Actor
-
-//import language.experimental.macros
 import models.Tables._
 import slick.driver.MySQLDriver.api._
-//import slick.driver.MySQLDriver.simple._
-//import slick.jdbc.meta._
+import slick.profile.BasicStreamingAction
+import slick.jdbc.meta._
+import com.articlio.storage.slickDb._
+
+trait Connection
 
 object slickDb {
   val db = Database.forConfig("slickdb")
+  def dbQuery[T1, T2](query: Query[T1, T2, Seq]) = db.run(query.result)
 }
 
-trait Connection {
-  // connection parameters
-  private val host     = "localhost"
-  private val port     = "3306"
-  private val database = "articlio"
-  private val user     = "articlio"
-
-  // acquire single database connection used as implicit throughout this object
-  println("starting output DB connection...")
-  private val db = Database.forURL(s"jdbc:mysql://$host:$port/$database", user, driver = "com.mysql.jdbc.Driver")
-  implicit val session: Session = db.createSession
-}
-
-class OutDB extends Actor with Connection {
+class OutDB extends Actor {
 
   // Table write functions
   private def write (data: Seq[MatchesRow]) = {
@@ -50,25 +39,24 @@ class OutDB extends Actor with Connection {
   private def ++= (data: Seq[String]) = println("stringgggggggggggggg")
   
   private def createIfNeeded {
-    if (MTable.getTables("Matches").list.isEmpty) 
-      Matches.ddl.create
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    val query: BasicStreamingAction[Effect.Read, Vector[MTable], MTable] = slick.jdbc.meta.MTable.getTables("Matches")
+    db.run(query) map { result => if (result.isEmpty) Matches.schema.create }
   }
   
   private def dropCreate {
     try {
-      Matches.ddl.drop 
-      Data.ddl.drop
-      Datadependencies.ddl.drop
+      Matches.schema.drop 
+      Data.schema.drop
+      Datadependencies.schema.drop
       println("existing tables dropped")
     } catch { case e: Exception => } // exception type not documented
     println("creating tables")
-    Matches.ddl.create 
-    Data.ddl.create
-    Datadependencies.ddl.create
+    Matches.schema.create 
+    Data.schema.create
+    Datadependencies.schema.create
   }
 
-  private def close = session.close
-  
   //matches += ("something", "matches something", "indicates something")   
   //matches ++= Seq(("something new", "matches something new", "indicates something"),
   //                ("something new", "matches something new", "indicates something"))
@@ -91,25 +79,38 @@ trait googleSpreadsheetCreator {
   }
 }
 
-object createCSV extends Connection with googleSpreadsheetCreator {
+object createCSV extends googleSpreadsheetCreator {
   import com.github.tototoshi.csv._ // only good for "small" csv files; https://github.com/tototoshi/scala-csv/issues/11
-  def go(dataID: Long = Matches.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse).head) = {
+  
+  // this old default value is actually meaningless now that the system is geared for concurrency etc....
+  // import scala.concurrent.Future
+  // implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+  // val defaultDataId = dbExecute(Matches.map(m => m.dataid)) map { _.distinct.sorted(Ordering[Long].reverse).head }
+  
+  def go(dataID: Long) = {
     val outFile = new java.io.File("out.csv")
     val writer = CSVWriter.open(outFile)
 
-    val filteredData = Matches.filter(m => m.dataid === dataID).list.map(m => 
-    List(m.docname, 
-        withHyperlink("showOriginal/" + m.dataid.toString.dropRight(4),"view original"),          
-        withHyperlink("showExtractFoundation/" + m.dataid.toString.dropRight(4) + s"?dataID=${m.dataid}","view result"),
-        m.dataid, m.sentence, m.matchpattern, m.locationactual, m.locationtest, m.fullmatch, m.matchindication))
-        val data = List("Run ID", "", "", "Article", "Sentence", "Pattern", "Location Test", "Location Actual", "Final Match?", "Match Indication") :: filteredData 
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    dbQuery(Matches.filter(m => m.dataid === dataID)) map { filteredData => 
+      filteredData.map(m => 
+        List(m.docname, 
+             withHyperlink("showOriginal/" + m.dataid.toString.dropRight(4),"view original"),          
+             withHyperlink("showExtractFoundation/" + m.dataid.toString.dropRight(4) + s"?dataID=${m.dataid}","view result"),
+             m.dataid, m.sentence, m.matchpattern, m.locationactual, m.locationtest, m.fullmatch, m.matchindication)) 
+        val data = List(List("Run ID", "", "", "Article", "Sentence", "Pattern", "Location Test", "Location Actual", "Final Match?", "Match Indication") :: filteredData.toList) 
         writer.writeAll(data)
+    }
   }
 }
 
+object createAnalyticSummary { def go = {} } // TODO: restore the real object below, which worked well, adapting it to slick 3.0.0
+                                             // TODO: make sure java.io or the CSV Writer are not blocking, wrap in future if they are
+/*
 object createAnalyticSummary extends Connection with googleSpreadsheetCreator {
   import com.github.tototoshi.csv._ // only good for "small" csv files; https://github.com/tototoshi/scala-csv/issues/11
-  def go(dataID: Long = Matches.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse).head) = {
+  // no longer relevant going for the last id with dataID = Matches.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse).head
+  def go(dataID: Long) = {
     val outFile = new java.io.File("outAnalytic.csv")
     val writer = CSVWriter.open(outFile)
     
@@ -123,7 +124,6 @@ object createAnalyticSummary extends Connection with googleSpreadsheetCreator {
       case _ =>    "no"
     }                          
     
-    /*
     val result : List[List[Any]] = grouped.map { case(docName, matches) =>  
                                      List(withHyperlink("showOriginal/" + docName.dropRight(4), docName), hasLimitationSection("ubuntu-2014-11-21T12:06:51.286Z")) ++
                                          matchIndications.map(i => matches.filter(m => m.matchindication == i).length)}.toList
@@ -131,7 +131,7 @@ object createAnalyticSummary extends Connection with googleSpreadsheetCreator {
     val headerRow = List(List("Article", "has limitation section?") ++ matchIndications.toList)
     val output = headerRow ++ result
     writer.writeAll(output)
-    */
+
   }
 }
-
+*/
