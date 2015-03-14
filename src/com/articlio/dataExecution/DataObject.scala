@@ -20,7 +20,10 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   //
   // tries a function, and collapses its exception into application type 
   //
-  def safeRunCreator(func: => Future[Option[CreateError]]): Future[Option[CreateError]] = {             // this is function argument "by name passing" 
+  def safeRunCreator(func: => Future[Option[CreateError]]): Future[Option[CreateError]] = { // syntax explanation: 
+                                                                                            // this is function passing "by name".
+                                                                                            // the function supplied by caller is passed as is,
+                                                                                            // so that this function can execute it.
       try { return func } 
         catch { 
           case anyException : Throwable =>
