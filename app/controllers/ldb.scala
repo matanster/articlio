@@ -19,12 +19,16 @@ object Ldb extends Controller {
   
   val pdb = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"
   
-  def semanticFromArticle(articleName: String, pdb: String) = Action { 
-    implicit request => Ok(AttemptDataObject(SemanticData(articleName, pdb)()).humanAccessMessage) 
+  def semanticFromArticle(articleName: String, pdb: String) = Action.async { 
+    implicit request =>
+      implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+      FinalData(SemanticData(articleName, pdb)()).humanAccessMessage map { message => Ok(message) } 
   }
   
-  def semanticFromTextFile(articleName: String, pdb: String) = Action { 
-    implicit request => Ok(AttemptDataObject(SemanticData(articleName, pdb)(JATS = JATSDataFromTxtFile(articleName)())).humanAccessMessage) 
+  def semanticFromTextFile(articleName: String, pdb: String) = Action.async {
+    implicit request => 
+      implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+      FinalData(SemanticData(articleName, pdb)(JATS = JATSDataFromTxtFile(articleName)())).humanAccessMessage map { message => Ok(message) } 
   }
 
   def singleeLifeSourced(articleName: String,

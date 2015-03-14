@@ -8,10 +8,10 @@ import com.articlio.util.runID
 import com.articlio.dataExecution._
 import models.Tables
 import com.articlio.storage.{Connection}
-//import play.api.db.slick._ play slick plugin is not yet interoperable with Slick 3.0.0
 import slick.driver.MySQLDriver.simple._
 import slick.jdbc.meta._
 import models.Tables.{Data => DataRecord}
+import scala.concurrent.Future
 
 case class SemanticAccess() extends Access
 
@@ -27,7 +27,10 @@ case class SemanticData(articleName: String,
   
   val dependsOn = Seq(JATS,LDB)
   
-  val creator = ldbEngine(ldbFile).process(JATS.access)_ // underscore makes it a curried function
+  def creator(runID: Long, dataType: String, fileName: String) : Future[Option[CreateError]] = {
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext 
+    Future.successful(ldbEngine(ldbFile).process(JATS.access)(runID, dataType, fileName))
+  }
   
   val access = SemanticAccess()                          // no refined access details for now
 }

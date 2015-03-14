@@ -20,15 +20,17 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   //
   // tries a function, and collapses its exception into application type 
   //
-  def safeRunCreator(func: => Option[CreateError]): Option[CreateError] = {             // this is function argument "by name passing" 
+  def safeRunCreator(func: => Future[Option[CreateError]]): Future[Option[CreateError]] = {             // this is function argument "by name passing" 
       try { return func } 
-      catch { 
-      case anyException : Throwable =>
-      recordException(anyException)
-      return Some(CreateError(anyException.toString)) }
+        catch { 
+          case anyException : Throwable =>
+          recordException(anyException)
+          implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+          return Future { Some(CreateError(anyException.toString)) } 
+        }
   } 
   
-  def create: ReadyState = { 
+  def create: Future[ReadyState] = { 
     
     def registerDependencies(data: DataObject): Unit = {
       data.dependsOn.map(dependedOnData => { 
@@ -36,14 +38,13 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
         registerDependencies(dependedOnData)
       })
     }
-
       
-    val ownHostName = java.net.InetAddress.getLocalHost.getHostName
+    val ownHostName = java.net.InetAddress.getLocalHost.getHostName // TODO: move to global initialization object of some sort
     val startTime = localNow
 
     //
     // register a new data run, and get its unique auto-ID from the RDBMS.
-    // should be forgivable blocking the thread for a single database insert..
+    // should be forgivable blocking the thread for a single database insert for now..
     //
     dataID = Some(Await.result(db.run(DataRecord.returning(DataRecord.map(_.dataid)) += DataRow(
       dataid                 = 0L, // will be auto-generated 
@@ -56,41 +57,42 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
       creatorserverendtime   = None,
       softwareversion = com.articlio.Version.id)), Duration.Inf))
 
-    println(s"got back data ID $dataID")
+    //println(s"got back data ID $dataID")
 
-    // now try this data's creation function    
-    val creationError = safeRunCreator(creator(dataID.get, dataType, dataTopic))
-    // now record the outcome - was the data successfully created by this run?
-    db.run(DataRecord.filter(_.dataid === dataID.get).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
-      dataid                 = dataID.get,
-      datatype               = dataType, 
-      datatopic              = dataTopic, 
-      creationstatus         = creationError match {
-                                 case None => "success"
-                                 case Some(error) => "failed"}, 
-      creationerrordetail    = creationError match { // for now redundant, but if CreationError evolves... need to convert to string like so
-                                 case None => None
-                                 case Some(error) => Some(error.toString)},
-      creatorserver          = ownHostName,
-      creatorserverstarttime = Some(startTime),
-      creatorserverendtime   = Some(localNow),
-      softwareversion = com.articlio.Version.id))
-    ) 
-    
-    //
-    // register dependencies if successful creation, and return
-    //
-    creationError match {
-      case None  => {
-        registerDependencies(this)
-        Ready(dataID.get)
+    // now try this data's creation function
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext      
+    safeRunCreator(creator(dataID.get, dataType, dataTopic)) map { creationError => 
+      // now record the outcome - was the data successfully created by this run?
+      db.run(DataRecord.filter(_.dataid === dataID.get).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
+        dataid                 = dataID.get,
+        datatype               = dataType, 
+        datatopic              = dataTopic, 
+        creationstatus         = creationError match {
+                                   case None => "success"
+                                   case Some(error) => "failed"}, 
+        creationerrordetail    = creationError match { // for now redundant, but if CreationError evolves... need to convert to string like so
+                                   case None => None
+                                   case Some(error) => Some(error.toString)},
+        creatorserver          = ownHostName,
+        creatorserverstarttime = Some(startTime),
+        creatorserverendtime   = Some(localNow),
+        softwareversion = com.articlio.Version.id))
+      ) 
+      
+      //
+      // register dependencies if successful creation, and return
+      //
+      creationError match {
+        case None  => {
+          registerDependencies(this)
+          Ready(dataID.get)
+        }
+        case Some(error) => NotReady(Some(error)) 
       }
-      case Some(error) => NotReady(Some(error)) 
     }
   } 
 
   def ReadyState: Future[ReadyState] = {
-    println("In ReadyState!!!")
     requestedDataID match {
       case Some(dataIDrequested) => ReadyStateSpecific(dataIDrequested)
       case None                  => ReadyStateAny
@@ -133,7 +135,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   
   def dataTopic: String
   
-  def creator: (Long, String, String) => Option[CreateError]
+  def creator(dataID: Long, dataTopic: String, articleName:String) : Future[Option[CreateError]]
     
   def access: Access
   
@@ -144,20 +146,23 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
 }
 
 // Attempts to Execute a Data Object and Hold Outcome (hence Representing Final State)
-case class AttemptDataObject(data: DataObject) extends DataExecution {
+case class FinalData(data: DataObject) extends DataExecution {
   
-  val accessOrError: Future[AccessOrError] = getSingleDataAccess(data)
+  val accessOrError: Future[AccessOrError] = get(data)
 
   // carry over all immutables of the original data object relevant to the finalized state
   val dataType: String = data.dataType
   val dataTopic: String = data.dataTopic
   val dataID: Option[Long] = data.dataID
 
-  def humanAccessMessage = accessOrError match { 
-    case dataAccessDetail : Access => s"$dataType for $dataTopic is ready."
-    case error: CreateError        => s"$dataType for $dataTopic failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
-    case error: DataIDNotFound     => s"$dataType for $dataTopic with requested data ID ${data.requestedDataID}, does not exist."
-    case unexpectedErrorType : AccessError => s"unexpected access error type while tyring to get $this: $unexpectedErrorType"
+  implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+  def humanAccessMessage: Future[String] = accessOrError map { _ match { 
+      case dataAccessDetail : Access => s"$dataType for $dataTopic is ready."
+      case error: CreateError        => s"$dataType for $dataTopic failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
+      case error: DataIDNotFound     => s"$dataType for $dataTopic with requested data ID ${data.requestedDataID}, does not exist."
+      case unexpectedErrorType : AccessError => s"unexpected access error type while tyring to get $this: $unexpectedErrorType"
+      case _ => s"error: unexpected match type ${accessOrError.getClass}"
+    }
   }
   
 }

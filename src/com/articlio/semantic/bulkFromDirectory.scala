@@ -30,7 +30,7 @@ class BulkFromDirectory(runID: String) {
     val files = new File(sourceDirName).listFiles.filter(file => (file.isFile)) // && file.getName.endsWith(".xml")))
     
     def makeOrVerify(articleName: String): Boolean = {
-        AttemptDataObject(SemanticData(articleName)(LDB = LDBData("aa"))).accessOrError match {
+        FinalData(SemanticData(articleName)(LDB = LDBData("aa"))).accessOrError match {
         case error:  AccessError =>
           println("Semantic data for $articleName failed to create. Please contact development with all necessary details (url, and description of what you were doing)")
           false

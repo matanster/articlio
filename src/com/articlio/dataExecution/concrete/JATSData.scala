@@ -44,7 +44,7 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
     Datadependencies += DatadependenciesRow(data.dataID.get, dependedOnData.dataID.get)
   }
   
-  def create()(dataID: Long, dataTopic: String, articleName:String) : Option[CreateError] = {
+  def creator(dataID: Long, dataTopic: String, articleName:String) : Future[Option[CreateError]] = {
     
     // TODO: merge common core with same named method in controllers.
     def convertSingle(articleName: String) : Future[Option[CreateError]] = {
@@ -58,16 +58,17 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
         })
     }
     
-    AttemptDataObject(eLifeJATSDep).accessOrError match {
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    FinalData(eLifeJATSDep).accessOrError map { _ match {
       case access: Access => {
         ReadyJATS.fix()_
         registerDependency(this, eLifeJATSDep)
         None
       }
       case error:  AccessError => 
-        AttemptDataObject(PDFDep).accessOrError match {
+        FinalData(PDFDep).accessOrError match {
           case access: Access => {
-            //com.articlio.util.Console.log("before pdf convertttttttttttttt", "green")
+            com.articlio.util.Console.log("before pdf convertttttttttttttt", "green")
             Await.result(convertSingle(s"${config.config.getString("locations.pdf-source-input")}/$articleName"), 10.seconds) match {
               case None => registerDependency(this, PDFDep); None
               case Some(error) => Some(CreateError(s"failed to convert pdf to JATS - response from http service was: ${error.errorDetail}"))
@@ -75,8 +76,8 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
           }
           case error:  AccessError => Some(CreateError(s"disjunctive dependency for creating JATS for $articleName has not been met.")) 
         }  
-    }
-  }; val creator = create()_
+    }}
+  }; // val creator = create()_
   
   val access = JATSaccess(config.config.getString("locations.JATS")) // PathExists(s"${config.eLife}/$articleName.xml"))))) match {
 }
@@ -90,13 +91,13 @@ case class JATSDataFromTxtFile(articleName: String)(rawTxt: RawTxtFile = RawTxtF
   
   val dependsOn = Seq(rawTxt)
   
-  def create()(dataID: Long, dataTopic: String, articleName:String) : Option[CreateError] = {
+  def creator(dataID: Long, dataTopic: String, articleName:String) : Future[Option[CreateError]] = {
     
     def writeOutputFile(fileText: String, outDir: String, fileName: String) { // TODO: move someplace more general
       //import java.io.{File}
       import java.nio.file.{Path, Paths, Files}
       import java.nio.charset.StandardCharsets
-      import scala.io.Source
+      //import scala.io.Source
 
       Files.write(Paths.get(outDir + "/" + fileName), fileText.getBytes(StandardCharsets.UTF_8))
     }
@@ -107,22 +108,26 @@ case class JATSDataFromTxtFile(articleName: String)(rawTxt: RawTxtFile = RawTxtF
 
     val fullSourcePath = s"${config.config.getString("locations.txtFile-source-input")}/$articleName.txt"
     val targetPath = s"${config.config.getString("locations.JATS")}"
-    filePathExists(fullSourcePath) match {
-      case false => Some(CreateError(s"source txt file $articleName was not found.")) 
-      case true  => {
-        //val sections = scala.io.Source.fromFile(fullSourcePath).getLines.toArray.map(line => println("<sec sec-type=unknown><title>unknown</title>" + "<p>" + XMLescape(line.toString) + "</p>" + "</sec>"))
-        val jats : String = 
-                   "<article>" + 
-                     "<body>" + 
-                       scala.io.Source.fromFile(fullSourcePath).getLines.toArray.map(line =>  
-                         "<sec sec-type=\"unknown\"><title>unknown</title>" + "<p>" + XMLescape(line.toString) + "</p>" + "</sec>").mkString + 
-                     "</body>" + 
-                   "</article>"
-        writeOutputFile(jats, targetPath, s"$articleName.xml")
-        None
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    Future { // non-blocking with java.nio is rather complex, this dispatched future will block
+      filePathExists(fullSourcePath) match {
+        case false => Some(CreateError(s"source txt file $articleName was not found.")) 
+        case true  => { 
+          //val sections = scala.io.Source.fromFile(fullSourcePath).getLines.toArray.map(line => println("<sec sec-type=unknown><title>unknown</title>" + "<p>" + XMLescape(line.toString) + "</p>" + "</sec>"))
+          val jats : String = 
+                     "<article>" + 
+                       "<body>" + 
+                         scala.io.Source.fromFile(fullSourcePath).getLines.toArray.map(line =>  
+                           "<sec sec-type=\"unknown\"><title>unknown</title>" + "<p>" + XMLescape(line.toString) + "</p>" + "</sec>").mkString + 
+                       "</body>" + 
+                     "</article>"
+          writeOutputFile(jats, targetPath, s"$articleName.xml")
+          implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+          None
+        }
       }
     }
-  }; val creator = create()_
+  }; //val creator = create()_
   
   val access = JATSaccess(config.config.getString("locations.JATS")) // PathExists(s"${config.eLife}/$articleName.xml"))))) match {
 }

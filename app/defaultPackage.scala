@@ -17,7 +17,7 @@ import slick.jdbc.meta._
 
 object Global extends GlobalSettings {
 
-  val db = com.articlio.storage.slickDb.db // start the slick database connection
+  val db = com.articlio.storage.slickDb.db // start the slick database connection, don't wait for first use
   
   play.api.Logger.info("Global object started")
   println("Global object started")
@@ -39,6 +39,7 @@ object Global extends GlobalSettings {
     SelfMonitor.shutdown
   }  
   
+  /*
   import sorm._
 
   object Db extends Instance (
@@ -49,5 +50,5 @@ object Global extends GlobalSettings {
   
   case class Coffee ( name : String, supplier : Supplier, price : Double, sales : Int, total : Int )
   case class Supplier ( name : String, street : String, city : String, state : String, zip : String )
-  
+  */
 }

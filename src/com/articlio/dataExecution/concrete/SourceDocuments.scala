@@ -2,6 +2,7 @@ package com.articlio.dataExecution.concrete
 import com.articlio.dataExecution._
 import util._
 import com.articlio.config
+import scala.concurrent.Future
 
 /* 
  *  These data classes effectively just "import" a file from a file system type -
@@ -27,12 +28,12 @@ case class RawPDF(articleName: String) extends Raw // TODO: connect with distrib
   val fullPath = s"${config.config.getString("locations.pdf-source-input")}/$fileName"
 
   // TODO: hook into distributed storage local caching
-  def importer()(dataID: Long, dataType:String, fileName: String) : Option[CreateError] = {
+  def creator(dataID: Long, dataType:String, fileName: String) : Future[Option[CreateError]] = {
     filePathExists(fullPath) match {
-      case true  => None 
-      case false => Some(CreateError(s"source pdf file $fileName was not found."))
+      case true  => Future.successful(None) 
+      case false => Future.successful(Some(CreateError(s"source pdf file $fileName was not found.")))
     }
-  }; val creator = importer()_
+  }
 
   val access = RawPDFaccess(fullPath)
 }
@@ -50,14 +51,14 @@ case class RaweLifeJATS(articleName: String) extends Raw // TODO: connect with d
       
       val fullPath = s"${config.config.getString("locations.JATS-input.input")}/$fileName"
       
-      def importer()(runID: Long, dataType: String, fileName: String) : Option[CreateError] = {
+      def creator(runID: Long, dataType: String, fileName: String) : Future[Option[CreateError]] = {
         filePathExists(fullPath) match {
-        case true  => None 
-        case false => Some(CreateError(s"source eLife JATS file $fileName was not found.")) 
+          case true  => Future.successful(None) 
+          case false => Future.successful(Some(CreateError(s"source eLife JATS file $fileName was not found."))) 
         }
-      }; val creator = importer()_ // curried, alternatively could be a partial application (if creator collapses to single param list: create(_ :Long, _ :String))
+      }
           
-          val access = RaweLifeJATSAccess(fullPath)
+      val access = RaweLifeJATSAccess(fullPath)
 }
 
 case class RaweTxtFileAccess(dirPath: String) extends Access
@@ -72,21 +73,23 @@ case class RawTxtFile(articleName: String) extends Raw // TODO: connect with dis
   
   val fullPath = s"${config.config.getString("locations.txtFile-source-input")}/$fileName"
   
-  def importer()(runID: Long, dataType: String, fileName: String) : Option[CreateError] = {
+  def creator(runID: Long, dataType: String, fileName: String) : Future[Option[CreateError]] = {
     filePathExists(fullPath) match {
-      case true  => None 
-      case false => Some(CreateError(s"source txt file $fileName was not found.")) 
+      case true  => Future.successful(None) 
+      case false => Future.successful(Some(CreateError(s"source txt file $fileName was not found."))) 
     }
-  }; val creator = importer()_ // curried, alternatively could be a partial application (if creator collapses to single param list: create(_ :Long, _ :String))
+  }
 
   val access = RaweTxtFileAccess(fullPath)
 }
 
-object Importer {
+object Importer { // not for Windows OS...
 
+  def filePathEscape(path: String) = path.replace(" ", "\\ ")
+  
   // guessfully type raw input
   def rawGuessImport(path: String): Option[Raw] = {
-    val fileName = path.split("/").last // not for Windows...
+    val fileName = path.split("/").last 
     fileName match {
       case s: String if s.endsWith(".pdf") => Some(RawPDF(path))
       case s: String if s.endsWith(".xml") => Some(RaweLifeJATS(path))
@@ -95,11 +98,11 @@ object Importer {
   }
   
   def bulkImportRaw(path: String): Boolean = { // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files
-                                             //       to avoid bloated data groups, and reduce statistic skew from duplicates
+                                               //       to avoid bloated data groups, and reduce statistic skew from duplicates
+                                               // TODO: use java.nio (or scala.io) - as per http://docs.oracle.com/javase/7/docs/api/java/nio/file/DirectoryStream.html
     println(path)
     val files = new java.io.File(path /*"/home/matan/Downloads/articles"*/).listFiles.filter(file => (file.isFile)).map(_.getName) 
-    files.map(rawGuessImport).flatten.map(AttemptDataObject) // nothing to do with the return value here 
-    true
+    files.map(fileName => rawGuessImport(filePathEscape(fileName))).flatten.map(FinalData).forall(_.accessOrError.isInstanceOf[Access])  
   }
 }
 

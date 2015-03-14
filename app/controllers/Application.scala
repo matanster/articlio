@@ -32,8 +32,7 @@ object Application extends Controller {
     import com.articlio.dataExecution._
     import com.articlio.dataExecution.concrete._
     
-    def show(dataID: Long, allApplicableDataIDs: List[Long]) = {
-      // db.run(Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch).result) map { 
+    def show(dataID: Long, allApplicableDataIDs: List[Long]): Future[Result] = {
       dbQuery(Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)) map { 
         contentResult => Ok(views.html.showExtract(allApplicableDataIDs, dataID, pdb, articleName, contentResult.toList))
       }
@@ -42,12 +41,13 @@ object Application extends Controller {
     val allApplicableDataIDs = List() // TODO: find all data ID's for the same dataType and dataTopic
                                       //       something in the style of the former models.Tables.Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
 
-    val attemptedData = AttemptDataObject(SemanticData(articleName, pdb, dataID)())
+    val attemptedData = FinalData(SemanticData(articleName, pdb, dataID)())
     
-    attemptedData.accessOrError match {
-      case access: Access =>      show(attemptedData.dataID.get, allApplicableDataIDs)
-      case error:  AccessError => Future { Ok(s"couldn't find or create data for request: ${attemptedData.humanAccessMessage}") } // to adhere to the future return type
-    }
+    attemptedData.accessOrError flatMap { _ match {
+        case error:  AccessError => Future { Ok(s"couldn't find or create data for request: ${attemptedData.humanAccessMessage}") } 
+        case access: Access =>      show(attemptedData.dataID.get, allApplicableDataIDs)
+      }
+    } 
   }
   
   def showOriginal(article: String) = Action { implicit request =>

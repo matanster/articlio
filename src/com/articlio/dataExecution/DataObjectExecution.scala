@@ -24,17 +24,18 @@ trait DataExecution extends Connection {
   // so it is used to freeze the status as creation unfolds, for accurate 
   // error reporting.
   //
-  case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Seq[ExecutedData] = Seq()) {
+  case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Option[Future[Seq[ExecutedData]]] = None) {
 
     // recursively serialize the error/Ok status of the entire tree. might be a bit ugly for now. (nested formatting strings work great, but arguably less readable).
     private def doSerialize(executionTree: ExecutedData): String = {
-      /* s"${executionTree.data.dataType} ${executionTree.data.dataTopic}: */ 
+      /* s"${executionTree.data.dataType} ${executionTree.data.dataTopic}: */
+      implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext      
       s"${executionTree.accessOrError match {
           case accessError: AccessError => s"${accessError.errorDetail}"
           case access: Access => "created Ok."
-        }}${executionTree.children.isEmpty match {
-          case true  => ""
-          case false => s" - dependencies' details: ${executionTree.children.map(child => s"\ndependency ${child.data} - ${doSerialize(child)}")}"
+        }}${executionTree.children match {
+          case None  => ""
+          case Some(children) => s" - dependencies' details: ${children.map(_.map(child => s"\ndependency ${child.data} - ${doSerialize(child)}"))}"
           }}"
     }
     
@@ -48,7 +49,7 @@ trait DataExecution extends Connection {
     attemptCreate(data) map { _.accessOrError} 
   }
   
-  def getSingleDataAccess(data: DataObject): Future[AccessOrError] = { 
+  def get(data: DataObject): Future[AccessOrError] = { 
     logger.write(s"<<< handling top-level request for data ${data}") //
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     data.ReadyState flatMap { _ match { 
@@ -58,7 +59,7 @@ trait DataExecution extends Connection {
         }
         case NotReady(_) => {
           getDataAccess(data) map { executedTree  => 
-          logger.write(s"Creating data ${data.getClass.getSimpleName} for ${data.dataTopic}:" + executedTree.serialize + " >>>") // log the entire execution tree 
+          logger.write(s"Creating data ${data.getClass.getSimpleName} for ${data.dataTopic}: " + executedTree.serialize + " >>>") // log the entire execution tree 
           executedTree.accessOrError
           }
         }
@@ -81,23 +82,25 @@ trait DataExecution extends Connection {
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     // recurse for own dependencies
       val immediateDependencies = Future.sequence(data.dependsOn.map(dep => getDataAccess(dep)))
-
+      
       // is entire dependencies tree ready?
-      immediateDependencies map { _.forall(dep => dep.accessOrError.isInstanceOf[Access])} map { _ match {
+      immediateDependencies map { _.forall(dep => dep.accessOrError.isInstanceOf[Access])} flatMap { _ match {
         case false => {
           //logger.write(s"some dependencies for ${data.getClass.getSimpleName} were not met")
-          ExecutedData(data, DepsError(s"some dependencies were not met"), Await.result(immediateDependencies, Duration.Inf)) // TODO: log exact details of dependencies tree
+          Future.successful { 
+            ExecutedData(data, DepsError(s"some dependencies were not met"), Some(immediateDependencies)) // TODO: log exact details of dependencies tree
+          }
         }
         case true =>
-          data.create match { 
+          data.create map { _ match { 
             case Ready(createdDataID) => {
               logger.write(s"data for ${data.getClass} now ready (data id: $createdDataID)")
-              ExecutedData(data, data.access, Await.result(immediateDependencies, Duration.Inf)) 
+              ExecutedData(data, data.access, Some(immediateDependencies)) 
             }
             case NotReady(error) => {
-              ExecutedData(data, CreateError(s"failed creating data: ${error.get.errorDetail}"), Await.result(immediateDependencies, Duration.Inf))
+              ExecutedData(data, CreateError(s"failed creating data: ${error.get.errorDetail}"), Some(immediateDependencies))
             }
-          }
+          }}
         }   
       } 
   }

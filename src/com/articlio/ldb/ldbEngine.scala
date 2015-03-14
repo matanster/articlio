@@ -39,7 +39,7 @@ object ldbEnginePooling {
   val ldbActorPools = collection.mutable.Map.empty[String, InitializedSeed]
   
   val serverAffordedLogicalCores = Runtime.getRuntime().availableProcessors // unless the JVM has been allowed access to less than all of them (rare)
-  println(s"JVM detected $serverAffordedLogicalCores logical cores available, and will assume this number for concurrency.")
+  println(s"JVM detected $serverAffordedLogicalCores logical cores available, and application will assume this number for concurrency.")
 
   val concurrencyPerActorPool = serverAffordedLogicalCores - 1
 
