@@ -22,7 +22,7 @@ object Global extends GlobalSettings {
   play.api.Logger.info("Global object started")
   println("Global object started")
   
-  SelfMonitor
+  //SelfMonitor
   
   //AppActorSystem.outDB ! "createIfNeeded"
   
@@ -36,7 +36,7 @@ object Global extends GlobalSettings {
     println("Global object stopping non-Play stuff...")
     play.api.Logger.info("Global object stopping non-Play stuff...")
     AppActorSystem.shutdown
-    SelfMonitor.shutdown
+    //SelfMonitor.shutdown
   }  
   
   /*

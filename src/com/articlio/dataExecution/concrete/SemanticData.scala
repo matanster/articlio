@@ -28,8 +28,8 @@ case class SemanticData(articleName: String,
   val dependsOn = Seq(JATS,LDB)
   
   def creator(runID: Long, dataType: String, fileName: String) : Future[Option[CreateError]] = {
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext 
-    Future.successful(ldbEngine(ldbFile).process(JATS.access)(runID, dataType, fileName))
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    Future { ldbEngine(ldbFile).process(JATS.access)(runID, dataType, fileName) }
   }
   
   val access = SemanticAccess()                          // no refined access details for now

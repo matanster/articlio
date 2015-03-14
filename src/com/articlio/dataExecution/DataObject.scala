@@ -34,9 +34,11 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   } 
   
   def create: Future[ReadyState] = { 
-    
+    println(s"in create for $this")
     def registerDependencies(data: DataObject): Unit = {
       data.dependsOn.map(dependedOnData => { 
+        val a = data.dataID.get
+        val b = dependedOnData.dataID.get
         Datadependencies += DatadependenciesRow(data.dataID.get, dependedOnData.dataID.get)
         registerDependencies(dependedOnData)
       })
@@ -159,15 +161,16 @@ case class FinalData(data: DataObject) extends DataExecution {
   val dataID: Option[Long] = data.dataID
 
   implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-  def humanAccessMessage: Future[String] = accessOrError map { _ match { 
-      case dataAccessDetail : Access => s"$dataType for $dataTopic is ready."
-      case error: CreateError        => s"$dataType for $dataTopic failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
-      case error: DataIDNotFound     => s"$dataType for $dataTopic with requested data ID ${data.requestedDataID}, does not exist."
-      case unexpectedErrorType : AccessError => s"unexpected access error type while tyring to get $this: $unexpectedErrorType"
-      case _ => s"error: unexpected match type ${accessOrError.getClass}"
+  def humanAccessMessage: Future[String] = {
+    accessOrError map { _ match { 
+        case dataAccessDetail : Access => s"$dataType for $dataTopic is ready."
+        case error: CreateError        => s"$dataType for $dataTopic failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
+        case error: DataIDNotFound     => s"$dataType for $dataTopic with requested data ID ${data.requestedDataID}, does not exist."
+        case unexpectedErrorType : AccessError => s"unexpected access error type while tyring to get $this: $unexpectedErrorType"
+        case _ => s"error: unexpected match type ${accessOrError.getClass}"
+      }
     }
   }
-  
 }
 
 

@@ -19,7 +19,8 @@ case class LDBData(csvFileName: String) extends DataObject
   
   // just tests that the ldb file is there (maybe later, try to fetch it from distributed storage instead)
   def creator(runID: Long, dataType: String, fileName: String) : Future[Option[CreateError]] = {
-    Future.successful {
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    Future {
       filePathExists(fullPath) match {
         case true  => None 
         case false => Some(CreateError("ldb file $fileName was not found, so it could not be imported.")) 

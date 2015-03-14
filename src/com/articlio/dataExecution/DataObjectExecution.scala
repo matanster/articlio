@@ -79,6 +79,7 @@ trait DataExecution extends Connection {
   }
   
   private def attemptCreate(data: DataObject): Future[ExecutedData] = {
+    println(s"in attemptCreate for $data")
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     // recurse for own dependencies
       val immediateDependencies = Future.sequence(data.dependsOn.map(dep => getDataAccess(dep)))
@@ -87,7 +88,7 @@ trait DataExecution extends Connection {
       immediateDependencies map { _.forall(dep => dep.accessOrError.isInstanceOf[Access])} flatMap { _ match {
         case false => {
           //logger.write(s"some dependencies for ${data.getClass.getSimpleName} were not met")
-          Future.successful { 
+          Future { 
             ExecutedData(data, DepsError(s"some dependencies were not met"), Some(immediateDependencies)) // TODO: log exact details of dependencies tree
           }
         }
@@ -109,10 +110,11 @@ trait DataExecution extends Connection {
   // returns: access details for ready data, or None cannot be readied
   private def getDataAccessAnyID(data: DataObject): Future[ExecutedData] = {
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    println(s"in getDataAccessAnyID for $data")
     data.ReadyState flatMap { _ match {
         case Ready(dataID) => {  
           logger.write(s"data for ${data.getClass} is ready (data id: $dataID)")
-          return Future { ExecutedData(data, data.access) }
+          Future { ExecutedData(data, data.access) }
         }
         
         case NotReady(_) => {
@@ -131,13 +133,13 @@ trait DataExecution extends Connection {
     data.ReadyState map { _ match {
         case Ready(dataID) => {  
           logger.write(s"data for ${data.getClass} with id ${suppliedRunID} is ready")
-          return Future { data.access }
+          data.access
         }
         
         case NotReady(_) => {
           val error = s"there is no data with id ${suppliedRunID} for ${data.getClass}"
           logger.write(error)
-          return Future { DataIDNotFound(error) }  
+          DataIDNotFound(error)  
         }
       }
     }
