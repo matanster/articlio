@@ -9,6 +9,7 @@ import com.articlio.logger._
 import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.concurrent.ExecutionContext
 
 /*
  * Executes data preparation by dependencies. 
@@ -114,7 +115,7 @@ trait DataExecution extends Connection {
     data.ReadyState flatMap { _ match {
         case Ready(dataID) => {  
           logger.write(s"data for ${data.getClass} is ready (data id: $dataID)")
-          Future { ExecutedData(data, data.access) }
+          Future.successful(ExecutedData(data, data.access))
         }
         
         case NotReady(_) => {
@@ -127,9 +128,7 @@ trait DataExecution extends Connection {
   
   // checks whether data with specific ID already exists, but doesn't attempt to create it.
   // returns: access details for ready data, or None if data is not ready
-  private def getDataAccessSpecificID(data: DataObject, suppliedRunID: Long): Future[AccessOrError] = {
-    
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+  private def getDataAccessSpecificID(data: DataObject, suppliedRunID: Long)(implicit ec: ExecutionContext): Future[AccessOrError] = {
     data.ReadyState map { _ match {
         case Ready(dataID) => {  
           logger.write(s"data for ${data.getClass} with id ${suppliedRunID} is ready")

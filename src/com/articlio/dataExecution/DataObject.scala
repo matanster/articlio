@@ -11,7 +11,7 @@ import com.articlio.util.Time._
 import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 // Data Object That Needs to be Attempted
 abstract class DataObject(val requestedDataID: Option[Long] = None) extends RecordException 
@@ -28,11 +28,12 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
         catch { 
           case anyException : Throwable =>
           recordException(anyException)
-          implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-          return Future { Some(CreateError(anyException.toString)) } 
+          //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+          Future.successful(Some(CreateError(anyException.toString))) 
         }
   } 
   
+  // TODO: consider refining the time stamp values to sub-second granularity (see https://github.com/tototoshi/slick-joda-mapper if helpful)
   def create: Future[ReadyState] = { 
     println(s"in create for $this")
     def registerDependencies(data: DataObject): Unit = {
@@ -65,7 +66,6 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
     //println(s"got back data ID $dataID")
 
     // now try this data's creation function
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext      
     safeRunCreator(creator(dataID.get, dataType, dataTopic)) map { creationError => 
       // now record the outcome - was the data successfully created by this run?
       db.run(DataRecord.filter(_.dataid === dataID.get).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
@@ -105,7 +105,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   }
   
   def ReadyStateSpecific(suppliedRunID: Long): Future[ReadyState] = {
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     dbQuery(DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) map { 
       result => result.nonEmpty match {
         case true => { 
@@ -123,7 +123,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   
   def ReadyStateAny(): Future[ReadyState] = {
     // TODO: collapse to just one call to the database
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     dbQuery(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) flatMap {
       result => result.nonEmpty match {
         case true => {
@@ -160,7 +160,7 @@ case class FinalData(data: DataObject) extends DataExecution {
   val dataTopic: String = data.dataTopic
   val dataID: Option[Long] = data.dataID
 
-  implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+  //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
   def humanAccessMessage: Future[String] = {
     accessOrError map { _ match { 
         case dataAccessDetail : Access => s"$dataType for $dataTopic is ready."

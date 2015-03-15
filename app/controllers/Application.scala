@@ -44,7 +44,7 @@ object Application extends Controller {
     val attemptedData = FinalData(SemanticData(articleName, pdb, dataID)())
     
     attemptedData.accessOrError flatMap { _ match {
-        case error:  AccessError => Future { Ok(s"couldn't find or create data for request: ${attemptedData.humanAccessMessage}") } 
+        case error:  AccessError => Future.successful(Ok(s"couldn't find or create data for request: ${attemptedData.humanAccessMessage}")) 
         case access: Access =>      show(attemptedData.dataID.get, allApplicableDataIDs)
       }
     } 
