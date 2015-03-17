@@ -26,20 +26,24 @@ trait DataExecution extends Connection {
   // so it is used to freeze the status as creation unfolds, for accurate 
   // error reporting.
   //
-  case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Option[Future[Seq[ExecutedData]]] = None) {
+  case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Future[Seq[ExecutedData]] = Future.successful(Seq())) {
 
     // recursively serialize the error/Ok status of the entire tree. maybe a bit ugly for now, comprising nested formatting strings.
+    // Note: assumes children's future sequence is already completed when deconstructing it
     private def doSerialize(executionTree: ExecutedData): String = {
-      // assumes children's future sequence is already completed when deconstructing it
-      implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext      
+      implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext   
+      
+      val children = executionTree.children.value.get.get // extract the sequence from the (assumed completed) Future
+      
       s"${executionTree.accessOrError match {
-          case access: Access           => "created Ok."
+          case access:      Access      => "created Ok,"
           case accessError: AccessError => s"${accessError.errorDetail}"
-        }}${executionTree.children match {
-          case Some(children) => s" Dependencies' details: ${children.value.get.get.map(child => s"\ndependency ${child.data} - ${doSerialize(child)}")}"
-          //children.value.get.value.get.data  
-          case None           => ""
-          }}"
+         }} ${children.nonEmpty match { 
+               case true => s"dependencies' details: ${children.map(child =>
+                            s"\ndependency ${child.data} - ${doSerialize(child)}")}"
+               case false => "had no dependencies"
+             }
+      }"
     }
     
     def serialize = doSerialize(this)
@@ -92,17 +96,17 @@ trait DataExecution extends Connection {
       case false => {
         //logger.write(s"some dependencies for ${data.getClass.getSimpleName} were not met")
         Future.successful( 
-          ExecutedData(data, DepsError(s"some dependencies were not met"), Some(immediateDependencies)) // TODO: log exact details of dependencies tree
+          ExecutedData(data, DepsError(s"some dependencies were not met"), immediateDependencies) // TODO: log exact details of dependencies tree
         )
       }
       case true =>
         data.create map { _ match { 
           case Ready(createdDataID) => {
             logger.write(s"data for ${data.getClass} now ready (data id: $createdDataID)")
-            ExecutedData(data, data.access, Some(immediateDependencies)) 
+            ExecutedData(data, data.access, immediateDependencies) 
           }
           case NotReady(error) => {
-            ExecutedData(data, CreateError(s"failed creating data: ${error.get.errorDetail}"), Some(immediateDependencies))
+            ExecutedData(data, CreateError(s"failed creating data: ${error.get.errorDetail}"), immediateDependencies)
           }
         }}
       }   
