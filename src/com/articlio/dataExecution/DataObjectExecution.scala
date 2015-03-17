@@ -10,6 +10,7 @@ import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext
+import scala.util.Success
 
 /*
  * Executes data preparation by dependencies. 
@@ -27,20 +28,21 @@ trait DataExecution extends Connection {
   //
   case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Option[Future[Seq[ExecutedData]]] = None) {
 
-    // recursively serialize the error/Ok status of the entire tree. might be a bit ugly for now. (nested formatting strings work great, but arguably less readable).
+    // recursively serialize the error/Ok status of the entire tree. maybe a bit ugly for now, comprising nested formatting strings.
     private def doSerialize(executionTree: ExecutedData): String = {
-      /* s"${executionTree.data.dataType} ${executionTree.data.dataTopic}: */
+      // assumes children's future sequence is already completed when deconstructing it
       implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext      
       s"${executionTree.accessOrError match {
+          case access: Access           => "created Ok."
           case accessError: AccessError => s"${accessError.errorDetail}"
-          case access: Access => "created Ok."
         }}${executionTree.children match {
-          case None  => ""
-          case Some(children) => s" - dependencies' details: ${children.map(_.map(child => s"\ndependency ${child.data} - ${doSerialize(child)}"))}"
+          case Some(children) => s" Dependencies' details: ${children.value.get.get.map(child => s"\ndependency ${child.data} - ${doSerialize(child)}")}"
+          //children.value.get.value.get.data  
+          case None           => ""
           }}"
     }
     
-    def serialize = s"${doSerialize(this)}"
+    def serialize = doSerialize(this)
   }
   
   def unconditionalCreate(data: DataObject): Future[AccessOrError] = { 
@@ -83,28 +85,28 @@ trait DataExecution extends Connection {
     println(s"in attemptCreate for $data")
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     // recurse for own dependencies
-      val immediateDependencies = Future.sequence(data.dependsOn.map(dep => getDataAccess(dep)))
-      
-      // is entire dependencies tree ready?
-      immediateDependencies map { _.forall(dep => dep.accessOrError.isInstanceOf[Access])} flatMap { _ match {
-        case false => {
-          //logger.write(s"some dependencies for ${data.getClass.getSimpleName} were not met")
-          Future { 
-            ExecutedData(data, DepsError(s"some dependencies were not met"), Some(immediateDependencies)) // TODO: log exact details of dependencies tree
+    val immediateDependencies = Future.sequence(data.dependsOn.map(dep => getDataAccess(dep)))
+    
+    // is entire dependencies tree ready?
+    immediateDependencies map { _.forall(dep => dep.accessOrError.isInstanceOf[Access])} flatMap { _ match {
+      case false => {
+        //logger.write(s"some dependencies for ${data.getClass.getSimpleName} were not met")
+        Future.successful( 
+          ExecutedData(data, DepsError(s"some dependencies were not met"), Some(immediateDependencies)) // TODO: log exact details of dependencies tree
+        )
+      }
+      case true =>
+        data.create map { _ match { 
+          case Ready(createdDataID) => {
+            logger.write(s"data for ${data.getClass} now ready (data id: $createdDataID)")
+            ExecutedData(data, data.access, Some(immediateDependencies)) 
           }
-        }
-        case true =>
-          data.create map { _ match { 
-            case Ready(createdDataID) => {
-              logger.write(s"data for ${data.getClass} now ready (data id: $createdDataID)")
-              ExecutedData(data, data.access, Some(immediateDependencies)) 
-            }
-            case NotReady(error) => {
-              ExecutedData(data, CreateError(s"failed creating data: ${error.get.errorDetail}"), Some(immediateDependencies))
-            }
-          }}
-        }   
-      } 
+          case NotReady(error) => {
+            ExecutedData(data, CreateError(s"failed creating data: ${error.get.errorDetail}"), Some(immediateDependencies))
+          }
+        }}
+      }   
+    } 
   }
   
   // checks whether data already exists. if data doesn't exist yet, attempts to create it.
