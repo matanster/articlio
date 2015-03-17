@@ -28,20 +28,21 @@ trait DataExecution extends Connection {
   //
   case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Future[Seq[ExecutedData]] = Future.successful(Seq())) {
 
-    // recursively serialize the error/Ok status of the entire tree. maybe a bit ugly for now, comprising nested formatting strings.
-    // Note: assumes children's future sequence is already completed when deconstructing it
+    // recursively serialize the error/Ok status of the entire tree. 
+    // Note: assumes children's future sequence is already completed when being called
     private def doSerialize(executionTree: ExecutedData): String = {
       implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext   
       
       val children = executionTree.children.value.get.get // extract the sequence from the (assumed completed) Future
       
+      // maybe a bit ugly string composition, comprising nested formatting strings.
       s"${executionTree.accessOrError match {
           case access:      Access      => "created Ok,"
-          case accessError: AccessError => s"${accessError.errorDetail}"
-         }} ${children.nonEmpty match { 
-               case true => s"dependencies' details: ${children.map(child =>
+          case accessError: AccessError => accessError.errorDetail
+         }} ${children.isEmpty match { 
+               case true  => "had no dependencies"
+               case false => s"dependencies' details: ${children.map(child =>
                             s"\ndependency ${child.data} - ${doSerialize(child)}")}"
-               case false => "had no dependencies"
              }
       }"
     }
