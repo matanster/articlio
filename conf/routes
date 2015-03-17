@@ -17,7 +17,7 @@ GET  /semantic/single/pdf/:inputFileName      controllers.Ldb.semanticFromArticl
 GET  /semantic/single/txtFile/:inputFileName  controllers.Ldb.semanticFromTextFile(inputFileName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
 
 # Purge Semantic Data
-GET  /purge/semantic                          controllers.Ldb.purge
+GET  /purge                                   controllers.Ldb.purge
 
 # Import (and only import) Raw Documents 
 GET  /bulkImportRaw/:dirPath                  controllers.Application.bulkImportRaw(dirPath: String)

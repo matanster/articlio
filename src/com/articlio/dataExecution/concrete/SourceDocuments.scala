@@ -97,12 +97,14 @@ object Importer { // not for Windows OS...
     }
   }
   
-  def bulkImportRaw(path: String): Boolean = { // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files
+  def bulkImportRaw(path: String) = { // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files
                                                //       to avoid bloated data groups, and reduce statistic skew from duplicates
                                                // TODO: use java.nio (or scala.io) - as per http://docs.oracle.com/javase/7/docs/api/java/nio/file/DirectoryStream.html
-    println(path)
-    val files = new java.io.File(path /*"/home/matan/Downloads/articles"*/).listFiles.filter(file => (file.isFile)).map(_.getName) 
-    files.map(fileName => rawGuessImport(filePathEscape(fileName))).flatten.map(FinalData).forall(_.accessOrError.isInstanceOf[Access])  
+    import play.api.libs.concurrent.Execution.Implicits.defaultContext
+    println(s"bulk importing from $path")
+    val files = new java.io.File(path /*"/home/matan/Downloads/articles"*/).listFiles.toSeq.filter(file => (file.isFile)).map(_.getName)    
+    files.map(fileName => rawGuessImport(filePathEscape(fileName))).flatten // remove options rather than return failed void data object
+                                                                   .map(data => FinalData(data))                                                                       
   }
 }
 

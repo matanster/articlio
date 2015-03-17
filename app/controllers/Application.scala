@@ -10,18 +10,22 @@ import models.Tables
 import scala.concurrent.{Future, Await}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
+import com.articlio.dataExecution.FinalData
+import com.articlio.dataExecution.AccessOrError
+import com.articlio.dataExecution.Access
 //import slick.backend.DatabasePublisher
 //import slick.driver.H2Driver.api._
 //import slick.lifted.{ProvenShape, ForeignKeyQuery}
 
 object Application extends Controller {
 
-  def bulkImportRaw(path: String) = Action { implicit request =>
-    println("at bulk import controller")
-    com.articlio.dataExecution.concrete.Importer.bulkImportRaw(path) match {
-      case true => Ok("Import successful")
+  def bulkImportRaw(path: String) = Action.async { implicit request =>
+    val data: Seq[FinalData]  = com.articlio.dataExecution.concrete.Importer.bulkImportRaw(path)
+    val simplifiedAggregateDataStatus: Future[Boolean] = Future.sequence(data.map(_.accessOrError)) map { _.forall(_.isInstanceOf[Access]) }
+    simplifiedAggregateDataStatus map { _ match {
+      case true =>  Ok("Import successful")
       case false => Ok("Import failed")
-    }
+    }}
   }
 
   def showExtract(articleName: String,

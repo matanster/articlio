@@ -37,6 +37,8 @@ object Global extends GlobalSettings {
     play.api.Logger.info("Global object stopping non-Play stuff...")
     AppActorSystem.shutdown
     //SelfMonitor.shutdown
+
+    // TODO: is it necessary to close connection pools to keep the database happy? or does that already happen.... 
   }  
   
   /*

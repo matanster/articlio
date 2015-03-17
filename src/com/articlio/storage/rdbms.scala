@@ -5,12 +5,20 @@ import slick.driver.MySQLDriver.api._
 import slick.profile.BasicStreamingAction
 import slick.jdbc.meta._
 import com.articlio.storage.slickDb._
+import slick.jdbc.SimpleJdbcAction
+import scala.concurrent.duration.Duration
+import scala.concurrent._
+import slick.jdbc.JdbcBackend
 
 trait Connection
 
-object slickDb {
+object slickDb extends {
   val db = Database.forConfig("slickdb")
   def dbQuery[T1, T2](query: Query[T1, T2, Seq]) = db.run(query.result)
+  
+  import scala.concurrent.ExecutionContext.Implicits.global
+  val getAutoCommit = SimpleDBIO[Boolean](_.connection.getAutoCommit)
+  println(s"autocommit is: ${Await.result(db.run(getAutoCommit), Duration.Inf)}")
 }
 
 class OutDB extends Actor {
@@ -45,16 +53,15 @@ class OutDB extends Actor {
   }
   
   private def dropCreate {
-    try {
-      Matches.schema.drop 
-      Data.schema.drop
-      Datadependencies.schema.drop
-      println("existing tables dropped")
-    } catch { case e: Exception => } // exception type not documented
-    println("creating tables")
-    Matches.schema.create 
-    Data.schema.create
-    Datadependencies.schema.create
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    println("about to recreate tables")
+    db.run(DBIO.seq(Matches.schema.drop, 
+                    Data.schema.drop,
+                    Datadependencies.schema.drop)).onComplete { _ => 
+      db.run(DBIO.seq(Matches.schema.create, 
+                      Data.schema.create,
+                      Datadependencies.schema.create)).onComplete { _ => println("done recreating tables...") }
+    }
   }
 
   //matches += ("something", "matches something", "indicates something")   
