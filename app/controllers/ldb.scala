@@ -71,6 +71,6 @@ object Ldb extends Controller {
   import com.articlio.semantic.AppActorSystem
   def purge = Action { implicit request =>
     AppActorSystem.outDB ! "dropCreate"
-    Ok("purging some data... see the source code for details")
+    Ok("purging all data...") // fire and forget
   }
 }

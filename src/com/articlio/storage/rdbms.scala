@@ -9,6 +9,8 @@ import slick.jdbc.SimpleJdbcAction
 import scala.concurrent.duration.Duration
 import scala.concurrent._
 import slick.jdbc.JdbcBackend
+import scala.util.Success
+import scala.util.Failure
 
 trait Connection
 
@@ -52,7 +54,7 @@ class OutDB extends Actor {
     db.run(query) map { result => if (result.isEmpty) Matches.schema.create }
   }
   
-  private def dropCreate {
+  private def dropCreate: Unit = { // only called from fire-and-forget for now
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     println("about to recreate tables")
     db.run(DBIO.seq(Matches.schema.drop, 
@@ -60,8 +62,11 @@ class OutDB extends Actor {
                     Datadependencies.schema.drop)).onComplete { _ => 
       db.run(DBIO.seq(Matches.schema.create, 
                       Data.schema.create,
-                      Datadependencies.schema.create)).onComplete { _ => println("done recreating tables...") }
-    }
+                      Datadependencies.schema.create)).onComplete { 
+                        case Success(_) => println("done recreating tables") 
+                        case Failure(_) => println("failed recreating tables")
+                      }
+      }
   }
 
   //matches += ("something", "matches something", "indicates something")   

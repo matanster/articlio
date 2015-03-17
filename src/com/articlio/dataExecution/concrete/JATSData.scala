@@ -59,14 +59,14 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
     }
     
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    FinalData(eLifeJATSDep).accessOrError map { _ match {
+    FinalData(eLifeJATSDep).accessOrError flatMap { _ match {
       case access: Access => {
         ReadyJATS.fix()_
         registerDependency(this, eLifeJATSDep)
-        None
+        Future.successful(None)
       }
-      case error:  AccessError => 
-        FinalData(PDFDep).accessOrError match {
+      case error: AccessError => 
+        FinalData(PDFDep).accessOrError map { _ match {
           case access: Access => {
             com.articlio.util.Console.log("before pdf convertttttttttttttt", "green")
             Await.result(convertSingle(s"${config.config.getString("locations.pdf-source-input")}/$articleName"), 10.seconds) match {
@@ -75,9 +75,9 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
             }
           }
           case error:  AccessError => Some(CreateError(s"disjunctive dependency for creating JATS for $articleName has not been met.")) 
-        }  
+        }}
     }}
-  }; // val creator = create()_
+  }
   
   val access = JATSaccess(config.config.getString("locations.JATS")) // PathExists(s"${config.eLife}/$articleName.xml"))))) match {
 }
