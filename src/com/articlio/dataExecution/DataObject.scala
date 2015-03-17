@@ -33,11 +33,12 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
         }
   } 
   
-  // TODO: consider refining the time stamp values to sub-second granularity (see https://github.com/tototoshi/slick-joda-mapper if helpful)
+  // TODO: refine the time stamp values to sub-second granularity (see https://github.com/tototoshi/slick-joda-mapper if helpful)
   def create: Future[ReadyState] = { 
     println(s"in create for $this")
     def registerDependencies(data: DataObject): Unit = {
-      data.dependsOn.map(dependedOnData => { 
+      data.dependsOn.map(dependedOnData => {
+        println(s"dependency: $dependedOnData")
         val a = data.dataID.get
         val b = dependedOnData.dataID.get
         Datadependencies += DatadependenciesRow(data.dataID.get, dependedOnData.dataID.get)
@@ -122,16 +123,15 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
   } 
   
   def ReadyStateAny(): Future[ReadyState] = {
-    // TODO: collapse to just one call to the database
     //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    dbQuery(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) flatMap {
+    dbQuery(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) map {
       result => result.nonEmpty match {
-        case true => {
-          dbQuery(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) map { 
-            result => Ready(result.head.dataid) 
-          }
+        case true =>
+        {
+          dataID = Option(result.head.dataid)
+          Ready(dataID.get)
         }
-        case false => Future { new NotReady }
+        case false => new NotReady
       }
     }
   } 
@@ -183,17 +183,5 @@ trait Execute extends RecordException {
         case anyException : Throwable =>
           recordException(anyException)
           return None }
-  } 
-}
-
-@deprecated("to be removed","")
-trait oldResultWrapper extends Execute {
-  def resultWrapper(func: => Boolean): ReadyState = { // this form of prototype takes a function by name
-    execute(func) match {
-      case Some(bool) => bool match {
-        case true  => Ready(0L)
-        case false => new NotReady
-      } case None  => new NotReady
-    } 
   } 
 }
