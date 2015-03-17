@@ -31,9 +31,8 @@ trait DataExecution extends Connection {
     // recursively serialize the error/Ok status of the entire tree. 
     // Note: assumes children's future sequence is already completed when being called
     private def doSerialize(executionTree: ExecutedData): String = {
-      implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext   
       
-      val children = executionTree.children.value.get.get // extract the sequence from the (assumed completed) Future
+      val children = executionTree.children.value.get.get // extract the sequence from the (assumed to be completed) Future
       
       // maybe a bit ugly string composition, comprising nested formatting strings.
       s"${executionTree.accessOrError match {
