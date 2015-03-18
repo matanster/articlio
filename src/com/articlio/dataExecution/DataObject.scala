@@ -163,6 +163,7 @@ case class FinalData(data: DataObject) extends DataExecution {
         case dataAccessDetail : Access => s"$dataType for $dataTopic is ready."
         case error: CreateError        => s"$dataType for $dataTopic failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
         case error: DataIDNotFound     => s"$dataType for $dataTopic with requested data ID ${data.requestedDataID}, does not exist."
+        case error: DepsError          => s"$dataType for $dataTopic failed to create because one or more dependencies were not met: ${error.errorDetail}"
         case unexpectedErrorType : AccessError => s"unexpected access error type while tyring to get $this: $unexpectedErrorType"
         case _ => s"error: unexpected match type ${accessOrError.getClass}"
       }

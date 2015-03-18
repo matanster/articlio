@@ -1,3 +1,4 @@
+package com.articlio.spray
 /*
  * 
  * This spray code is now dead code - been migrated to the play routes.. to be deleted soon 

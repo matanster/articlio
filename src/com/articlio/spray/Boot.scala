@@ -1,4 +1,4 @@
-package com.articlio.semantic
+package com.articlio.actors
 
 import akka.actor.ActorSystem
 import com.articlio.config

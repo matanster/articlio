@@ -74,7 +74,7 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
               case Some(error) => Some(CreateError(s"failed to convert pdf to JATS - response from http service was: ${error.errorDetail}"))
             }
           }
-          case error:  AccessError => Some(CreateError(s"disjunctive dependency for creating JATS for $articleName has not been met.")) 
+          case error: AccessError => Some(CreateError(s"disjunctive dependency for creating JATS for $articleName has not been met.")) 
         }}
     }}
   }

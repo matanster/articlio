@@ -39,7 +39,7 @@ object SemanticExtractor extends Controller {
     Ok("Not (re-)implemented")
   }
 
-  import com.articlio.semantic.BulkFromDirectory
+  import com.articlio.BulkFromDirectory
   def all = Action { implicit request =>
     val bulk = new BulkFromDirectory((new runID).id)
     bulk.all
@@ -68,7 +68,7 @@ object SemanticExtractor extends Controller {
     Ok("Done producing analytic result CSVs")
   }
 
-  import com.articlio.semantic.AppActorSystem
+  import com.articlio.AppActorSystem
   def purge = Action { implicit request =>
     AppActorSystem.outDB ! "dropCreate"
     Ok("purging all data...") // fire and forget

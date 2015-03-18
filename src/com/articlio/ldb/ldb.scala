@@ -2,7 +2,7 @@ package com.articlio.ldb
 
 import com.articlio.logger._
 import com.articlio.util.text._
-import com.articlio.semantic.AppActorSystem
+import com.articlio.AppActorSystem
 import com.articlio.LanguageModel._
 
 //

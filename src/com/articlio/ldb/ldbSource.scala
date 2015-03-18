@@ -2,7 +2,7 @@ package com.articlio.ldb
 import com.articlio.config
 import com.articlio.util._
 import com.articlio.util.text._
-import com.articlio.semantic.AppActorSystem
+import com.articlio.AppActorSystem
 import scala.io.Source
 import org.ahocorasick.trie._
 import scala.collection.JavaConverters._

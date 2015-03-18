@@ -1,4 +1,4 @@
-package com.articlio.semantic
+package com.articlio.ldb
 
 import java.io.File
 import com.articlio.util.runID

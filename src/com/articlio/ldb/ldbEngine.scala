@@ -5,7 +5,7 @@ import com.articlio.util._
 import com.articlio.util.text._
 import com.articlio.LanguageModel._
 import com.articlio.SelfMonitor
-import com.articlio.semantic.AppActorSystem
+import com.articlio.AppActorSystem
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.Await

@@ -19,7 +19,8 @@ case class SemanticData(articleName: String,
                         ldbFile: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv",
                         ReQDataID: Option[Long] = None) // followed by a second parameter list that initializes its defaults from the former
                            (JATS: JATSData = JATSDataDisjunctiveSourced(articleName),
-                            LDB: LDBData = LDBData(ldbFile)) extends DataObject(ReQDataID) {
+                            LDB: LDBData = LDBData(ldbFile)) 
+                               extends DataObject(ReQDataID) {
 
   val dataTopic = articleName
   

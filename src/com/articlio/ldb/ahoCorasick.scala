@@ -3,7 +3,7 @@ import org.ahocorasick.trie._
 import com.articlio.util._
 import com.articlio.util.text._
 import scala.collection.JavaConverters._
-import com.articlio.semantic.AppActorSystem
+import com.articlio.AppActorSystem
 import akka.actor.Actor
 import akka.event.Logging
 import com.articlio.logger._

@@ -10,7 +10,7 @@ import scala.concurrent.duration._
 import scala.concurrent.Await
 import com.articlio.SelfMonitor
 import akka.actor.ActorSystem
-import com.articlio.semantic.AppActorSystem
+import com.articlio.AppActorSystem
 import com.articlio.logger._
 import slick.driver.MySQLDriver.simple._
 import slick.jdbc.meta._

@@ -19,11 +19,11 @@ abstract class Raw(articleName: String, externalSourceDirectory: Option[String] 
   
   val expectedFileExtension: String
   
-  val fileName = s"$articleName.$expectedFileExtension"
+  lazy val fileName = s"$articleName.$expectedFileExtension"
   
   val directory: String
   
-  val fullPath = s"$directory/.$fileName"
+  lazy val fullPath = s"$directory/$fileName"
 
   // check if file is already sitting in the managed directory. if not, try to import from the import-from directory if supplied.  
   // a file with the exact same name as one already in the managed directory, will not be imported.
@@ -48,8 +48,8 @@ abstract class Raw(articleName: String, externalSourceDirectory: Option[String] 
 
 case class RawPDF(articleName: String, externalSourceDirectory: Option[String] = None) extends Raw(articleName, externalSourceDirectory) 
 {
-  val expectedFileExtension = "pdf"
-  val directory = config.config.getString("locations.pdf-source-input")
+  override val expectedFileExtension = "pdf"
+  override val directory = config.config.getString("locations.pdf-source-input")
 }
 
 case class RaweLifeJATS(articleName: String, externalSourceDirectory: Option[String] = None) extends Raw(articleName, externalSourceDirectory) 

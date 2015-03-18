@@ -1,4 +1,5 @@
-package com.articlio.semantic
+package com.articlio
+
 import akka.actor.ActorSystem
 import akka.actor.Props
 import com.articlio.util.Timelog

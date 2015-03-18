@@ -11,7 +11,7 @@ import slick.driver.MySQLDriver.api._
 import slick.jdbc.meta._
 import com.articlio.storage.slickDb._
 import slick.util.CloseableIterator
-import com.articlio.semantic.AppActorSystem
+import com.articlio.AppActorSystem
 import models.Tables._
 import com.articlio.logger.SimpleLogger
 import scala.concurrent.Await
