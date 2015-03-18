@@ -10,7 +10,7 @@ import play.api.http.MimeTypes
 import com.articlio.dataExecution._
 import com.articlio.dataExecution.concrete._
     
-object Ldb extends Controller {
+object SemanticExtractor extends Controller {
 
   import com.articlio.ldb
   import com.articlio.util.runID
@@ -19,24 +19,24 @@ object Ldb extends Controller {
   
   val pdb = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"
   
-  def semanticFromArticle(articleName: String, pdb: String) = Action.async { 
+  def fromArticle(articleName: String, pdb: String) = Action.async { 
     implicit request =>
       implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
       FinalData(SemanticData(articleName, pdb)()).humanAccessMessage map { message => Ok(message) } 
   }
   
-  def semanticFromTextFile(articleName: String, pdb: String) = Action.async {
+  def fromTextFile(articleName: String, pdb: String) = Action.async {
     implicit request => 
       implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
       FinalData(SemanticData(articleName, pdb)(JATS = JATSDataFromTxtFile(articleName)())).humanAccessMessage map { message => Ok(message) } 
   }
 
-  def singleeLifeSourced(articleName: String,
+  def fromElife(articleName: String,
                          pdb: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv") = Action { implicit request =>
     // TODO: fix or merge
     //pdb.go("SingleFileRun" + "-" + (new runID).id, new JATS(s"${config.eLife}/articleName"))
     //Ok("Done processing file")
-    Ok("Not re-implemented")
+    Ok("Not (re-)implemented")
   }
 
   import com.articlio.semantic.BulkFromDirectory

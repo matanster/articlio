@@ -68,8 +68,6 @@ object Application extends Controller {
             
   def adminPage = Action { implicit request => Ok(views.html.adminPage()) }
   
-  def playground = Action { implicit request => Ok(s"nothing here...") }
-  
   def index = Action { implicit request => Ok(s"app is up, got request [$request]") }
   
   /*

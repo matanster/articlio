@@ -26,6 +26,7 @@ abstract class Raw(articleName: String, externalSourceDirectory: Option[String] 
   val fullPath = s"$directory/.$fileName"
 
   // check if file is already sitting in the managed directory. if not, try to import from the import-from directory if supplied.  
+  // a file with the exact same name as one already in the managed directory, will not be imported.
   def creator(dataID: Long, dataType:String, fileName: String) : Future[Option[CreateError]] = {
     filePathExists(fullPath) match {
       case true  => Future.successful(None)
@@ -79,10 +80,10 @@ object Importer { // not for Windows OS...
     }
   }
   
-  def bulkImportRaw(path: String): Seq[FinalData] = { // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files
-                                      //       to avoid bloated data groups, and reduce statistic skew from duplicates
-                                      // TODO: check if files with the same name are already there to avoid data garbling 
-                                      // TODO: do this more asynchronously if it becomes a key process - as per http://docs.oracle.com/javase/7/docs/api/java/nio/file/DirectoryStream.html or other
+  def bulkImportRaw(path: String): Seq[FinalData] = { 
+    // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files
+    //       to avoid bloated data groups, thus also reducing statistic skew from duplicates
+    // TODO: do this more asynchronously if it becomes a key process - as per http://docs.oracle.com/javase/7/docs/api/java/nio/file/DirectoryStream.html or other
     import com.articlio.pipe.util.copy
     import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
