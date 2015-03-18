@@ -17,12 +17,10 @@ case class SemanticAccess() extends Access
 
 case class SemanticData(articleName: String, 
                         ldbFile: String = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv",
-                        ReQDataID: Option[Long] = None)
-                       (JATS: JATSData = JATSDataDisjunctiveSourced(articleName),
-                        LDB: LDBData = LDBData(ldbFile)) extends DataObject(ReQDataID) {
+                        ReQDataID: Option[Long] = None) // followed by a second parameter list that initializes its defaults from the former
+                           (JATS: JATSData = JATSDataDisjunctiveSourced(articleName),
+                            LDB: LDBData = LDBData(ldbFile)) extends DataObject(ReQDataID) {
 
-  //val dataType = "semantic"
-  
   val dataTopic = articleName
   
   val dependsOn = Seq(JATS,LDB)
@@ -32,6 +30,6 @@ case class SemanticData(articleName: String,
     Future { ldbEngine(ldbFile).process(JATS.access)(runID, dataType, fileName) }
   }
   
-  val access = SemanticAccess()                          // no refined access details for now
+  val access = SemanticAccess() // no refined access details for now
 }
 

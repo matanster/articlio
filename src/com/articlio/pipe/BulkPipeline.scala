@@ -29,7 +29,7 @@ package object util {
     Files.write(Paths.get(outDir + "/" + fileName), fileText.getBytes(StandardCharsets.UTF_8))
   }
 
-  def based(dir: String) = /* "../data" + "/" + */ dir
+  def based(dir: String) = dir
 
   def copy(patternOrFile: String, to: String) {
      Seq("bash", "-c", s"cp $patternOrFile ${based(to)}").!! // bash is needed for expanding the * before calling ls, ls alone doesn't do it.

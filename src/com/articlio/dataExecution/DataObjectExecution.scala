@@ -36,11 +36,11 @@ trait DataExecution extends Connection {
       
       // maybe a bit ugly string composition, comprising nested formatting strings.
       s"${executionTree.accessOrError match {
-          case access:      Access      => "created Ok - "
+          case access:      Access      => "created Ok, "
           case accessError: AccessError => accessError.errorDetail + " "
          }}${children.isEmpty match { 
-              case true  => "had no dependencies"
-              case false => s"dependencies' details: ${children.map(child =>
+              case true  => "(had no dependencies)."
+              case false => s"data dependencies were: ${children.map(child =>
                            s"\ndependency ${child.data} - ${doSerialize(child)}")}"
             }
       }"

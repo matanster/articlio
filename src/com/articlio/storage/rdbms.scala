@@ -15,12 +15,17 @@ import scala.util.Failure
 trait Connection
 
 object slickDb extends {
-  val db = Database.forConfig("slickdb")
-  def dbQuery[T1, T2](query: Query[T1, T2, Seq]) = db.run(query.result)
   
-  import scala.concurrent.ExecutionContext.Implicits.global
-  val getAutoCommit = SimpleDBIO[Boolean](_.connection.getAutoCommit)
-  println(s"autocommit is: ${Await.result(db.run(getAutoCommit), Duration.Inf)}")
+  val db = Database.forConfig("slickdb") // exposes the slick database handle. automatically connection pooled unless disabled in application.conf.
+  
+  def dbQuery[T1, T2](query: Query[T1, T2, Seq]) = db.run(query.result) // convenience function for query SQL
+
+  // example function for inquiring JDBC configuration
+  def printJDBCconfig = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val getAutoCommit = SimpleDBIO[Boolean](_.connection.getAutoCommit); 
+    println(s"autocommit is: ${Await.result(db.run(getAutoCommit), Duration.Inf)}")
+  }
 }
 
 class OutDB extends Actor {
@@ -30,7 +35,7 @@ class OutDB extends Actor {
     println
     println(s"writing ${data.length} records to database")
     println
-    Matches ++= data
+    db.run(Matches ++= data)
     println(s"done writing ${data.length} records to database")    
   }
   
@@ -44,14 +49,11 @@ class OutDB extends Actor {
   
   def addToBuffer (data: Seq[MatchesRow]) = buffer ++= data
   
-  private def += (data: MatchesRow) = Matches += data
-  
-  private def ++= (data: Seq[String]) = println("stringgggggggggggggg")
+  private def += (data: MatchesRow) = db.run(Matches += data)
   
   private def createIfNeeded {
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    val query: BasicStreamingAction[Effect.Read, Vector[MTable], MTable] = slick.jdbc.meta.MTable.getTables("Matches")
-    db.run(query) map { result => if (result.isEmpty) Matches.schema.create }
+    db.run(slick.jdbc.meta.MTable.getTables("Matches")) map { result => if (result.isEmpty) Matches.schema.create }
   }
   
   private def dropCreate: Unit = { // only called from fire-and-forget for now
@@ -69,17 +71,16 @@ class OutDB extends Actor {
       }
   }
 
-  //matches += ("something", "matches something", "indicates something")   
-  //matches ++= Seq(("something new", "matches something new", "indicates something"),
-  //                ("something new", "matches something new", "indicates something"))
-  
   def receive = { 
     case "dropCreate" => dropCreate
+    
     case "createIfNeeded" => createIfNeeded
+    
     //case s: Seq[Match @unchecked] => write(s) // annotating to avoid compilation warning about type erasure here
-    case s: Seq[MatchesRow @unchecked] => addToBuffer(s) // annotating to avoid compilation warning about type erasure here,
-                                                         // maybe no longer necessary?
+    case s: Seq[MatchesRow @unchecked] => addToBuffer(s) // annotating to avoid compilation warning about type erasure here, maybe no longer necessary?
+    
     case "flushToDB" => flushToDB
+    
     case _ => throw new Exception("unexpected actor message type received")
   }
 }

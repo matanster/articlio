@@ -38,10 +38,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None) extends Reco
     println(s"in create for $this")
     def registerDependencies(data: DataObject): Unit = {
       data.dependsOn.map(dependedOnData => {
-        println(s"dependency: $dependedOnData")
-        val a = data.dataID.get
-        val b = dependedOnData.dataID.get
-        Datadependencies += DatadependenciesRow(data.dataID.get, dependedOnData.dataID.get)
+        db.run(Datadependencies += DatadependenciesRow(data.dataID.get, dependedOnData.dataID.get))
         registerDependencies(dependedOnData)
       })
     }

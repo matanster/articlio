@@ -17,7 +17,7 @@ object Boot extends App {
   //
   // val i = Indels
   
-  AppActorSystem.outDB ! "createIfNeeded"
+  //AppActorSystem.outDB ! "createIfNeeded"
   
   //ldb.ldb.init
 

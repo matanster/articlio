@@ -127,7 +127,7 @@ case class JATSDataFromTxtFile(articleName: String)(rawTxt: RawTxtFile = RawTxtF
         }
       }
     }
-  }; //val creator = create()_
+  }
   
   val access = JATSaccess(config.config.getString("locations.JATS")) // PathExists(s"${config.eLife}/$articleName.xml"))))) match {
 }
