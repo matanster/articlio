@@ -4,21 +4,26 @@ import models.Tables._
 import slick.driver.MySQLDriver.api._
 import slick.profile.BasicStreamingAction
 import slick.jdbc.meta._
-import com.articlio.storage.slickDb._
 import slick.jdbc.SimpleJdbcAction
+import slick.jdbc.JdbcBackend
+import com.articlio.storage.slickDb._
 import scala.concurrent.duration.Duration
 import scala.concurrent._
-import slick.jdbc.JdbcBackend
 import scala.util.Success
 import scala.util.Failure
 
 trait Connection
 
+//
+// Database connection object
+//
+
 object slickDb extends {
   
-  val db = Database.forConfig("slickdb") // exposes the slick database handle. automatically connection pooled unless disabled in application.conf.
+  val db = Database.forConfig("slickdb") // exposes the slick database handle. 
+                                         // automatically connection pooled unless disabled in application.conf.
   
-  def dbQuery[T1, T2](query: Query[T1, T2, Seq]) = db.run(query.result) // convenience function for query SQL
+  def dbQuery[T1, T2](query: Query[T1, T2, Seq]) = db.run(query.result) // convenience function for async query SQL execution
 
   // example function for inquiring JDBC configuration
   def printJDBCconfig = {
@@ -30,7 +35,10 @@ object slickDb extends {
 
 class OutDB extends Actor {
 
+  //
   // Table write functions
+  //
+  
   private def write (data: Seq[MatchesRow]) = {
     println
     println(s"writing ${data.length} records to database")
@@ -40,35 +48,41 @@ class OutDB extends Actor {
   }
   
   var buffer = Seq.empty[MatchesRow]
-  
+  def addToBuffer (data: Seq[MatchesRow]) = buffer ++= data
   def flushToDB = {
     println("Flushing bulk run's results to database")
       write(buffer)
       buffer = Seq.empty[MatchesRow]
   }
+ 
+  private def += (data: MatchesRow) = db.run(Matches += data) // writes just one row
   
-  def addToBuffer (data: Seq[MatchesRow]) = buffer ++= data
+  //
+  // Schema handling functions
+  //
+
+  val tables = Seq(Matches, Data, Datadependencies)
   
-  private def += (data: MatchesRow) = db.run(Matches += data)
+  private def create = {
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    db.run(DBIO.sequence(tables.map(table => table.schema.create))) 
+  }
+  
+  private def dropCreate: Unit = { // only called as fire-and-forget for now
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    println("about to recreate tables")
+    db.run(DBIO.sequence(tables.map(table => table.schema.drop))).onComplete { _ => 
+                            create.onComplete { 
+                              case Success(_) => println("done recreating tables") 
+                              case Failure(_) => println("failed recreating tables")
+                            }
+      }
+  }
   
   private def createIfNeeded {
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    db.run(slick.jdbc.meta.MTable.getTables("Matches")) map { result => if (result.isEmpty) Matches.schema.create }
-  }
-  
-  private def dropCreate: Unit = { // only called from fire-and-forget for now
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    println("about to recreate tables")
-    db.run(DBIO.seq(Matches.schema.drop, 
-                    Data.schema.drop,
-                    Datadependencies.schema.drop)).onComplete { _ => 
-      db.run(DBIO.seq(Matches.schema.create, 
-                      Data.schema.create,
-                      Datadependencies.schema.create)).onComplete { 
-                        case Success(_) => println("done recreating tables") 
-                        case Failure(_) => println("failed recreating tables")
-                      }
-      }
+      db.run(DBIO.sequence(tables.map(table => slick.jdbc.meta.MTable.getTables(table.baseTableRow.tableName) map { 
+        result => if (result.isEmpty) db.run(table.schema.create) })))
   }
 
   def receive = { 
