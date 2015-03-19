@@ -2,7 +2,6 @@ package com.articlio.dataExecution.concrete
 import com.articlio.dataExecution._
 import util._
 import com.articlio.config
-import com.articlio.pipe.pipelines.ReadyJATS
 import com.articlio.ldb.ldbEngine
 import com.articlio.util.runID
 import com.articlio.dataExecution._

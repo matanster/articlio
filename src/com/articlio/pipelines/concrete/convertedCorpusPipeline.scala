@@ -1,10 +1,8 @@
-package com.articlio.pipe.pipelines
+package com.articlio.pipelines.concrete
 import com.articlio.config
-import com.articlio.pipe.util.writeOutputFile
+import com.articlio.pipelines._
 import java.io.{File}
 import sys.process._
-import com.articlio.pipe.BulkPipeline
-import com.articlio.pipe.Step
 import scala.io.Source
 
 // TODO: refactor to use one function that runs a modifier function and writes its output to file
@@ -37,7 +35,7 @@ class ConvertedCorpusPipeline {
   
   def writer(sourceDirName: String, targetDirName: String, fileName: String, f: String => String) {
     import scala.io.Source
-    writeOutputFile(f(Source.fromFile(s"$sourceDirName/$fileName").mkString), targetDirName, fileName)
+    util.writeOutputFile(f(Source.fromFile(s"$sourceDirName/$fileName").mkString), targetDirName, fileName)
   }
       
  def HTMLescape(sourceDirName: String, targetDirName: String, fileName: String) {

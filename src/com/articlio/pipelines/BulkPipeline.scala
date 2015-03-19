@@ -1,4 +1,4 @@
-package com.articlio.pipe
+package com.articlio.pipelines
 
 //
 // Some mix and match of file IO utility functions here
@@ -17,25 +17,6 @@ import sys.process._ // for being able to issue OS commands
 // while making every step traceable - as each transformation's output has its own directory
 // and the file name remains the same across all directories.
 //
-
-package object util {  
-
-  def copyFile(fileText: String, outDir: String, fileName: String) {
-    Files.write(Paths.get(outDir + "/" + fileName), fileText.getBytes(StandardCharsets.UTF_8))
-  }
-
-  
-  def writeOutputFile(fileText: String, outDir: String, fileName: String) {
-    Files.write(Paths.get(outDir + "/" + fileName), fileText.getBytes(StandardCharsets.UTF_8))
-  }
-
-  def based(dir: String) = dir
-
-  def copy(patternOrFile: String, to: String) {
-     Seq("bash", "-c", s"cp $patternOrFile ${based(to)}").!! // bash is needed for expanding the * before calling ls, ls alone doesn't do it.
-  }
-
-}
 
 case class Step(from: String, 
                 to: String, 

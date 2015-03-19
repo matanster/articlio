@@ -1,6 +1,6 @@
 package com.articlio.ldb
 
-import com.articlio.input._
+import com.articlio.JATSprocessing._
 import com.articlio.util._
 import com.articlio.util.text._
 import com.articlio.LanguageModel._

@@ -1,6 +1,5 @@
 package com.articlio
 import java.io.File
-import com.articlio.config
 import com.articlio.dataExecution._
 import com.articlio.dataExecution.concrete._
 

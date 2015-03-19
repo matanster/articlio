@@ -1,4 +1,4 @@
-package com.articlio.pipe
+package com.articlio.pipelines
 import com.articlio.util.{Console}
 
 //

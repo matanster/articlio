@@ -14,7 +14,7 @@ object SemanticExtractor extends Controller {
 
   import com.articlio.ldb
   import com.articlio.util.runID
-  import com.articlio.input.JATS
+  //import com.articlio.input.JATS
   import com.articlio.config
   
   val pdb = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"

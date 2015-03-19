@@ -1,4 +1,4 @@
-package com.articlio.pipe
+package com.articlio.pipelines.concrete
 //import com.articlio.util.runID
 
 //
@@ -14,8 +14,6 @@ import spray.routing._
 import spray.http._
 import MediaTypes._
 import scala.concurrent.duration._
-import com.articlio.pipe.pipelines._
-import com.articlio.pipe._
 
 class MyServiceActor extends Actor with MyService {
 

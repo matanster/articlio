@@ -1,4 +1,4 @@
-package com.articlio.pipe.services
+package com.articlio
 import edu.arizona.sista.processors._
 import edu.arizona.sista.processors.corenlp.CoreNLPProcessor
 import edu.arizona.sista.struct.DirectedGraphEdgeIterator

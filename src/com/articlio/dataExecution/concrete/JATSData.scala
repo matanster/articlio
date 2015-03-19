@@ -2,7 +2,7 @@ package com.articlio.dataExecution.concrete
 import com.articlio.dataExecution._
 import util._
 import com.articlio.config
-import com.articlio.pipe.pipelines.ReadyJATS
+import com.articlio.pipelines.concrete.ReadyJATS
 import scala.concurrent.Await
 import scala.concurrent.Promise
 import scala.concurrent.Future

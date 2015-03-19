@@ -1,11 +1,10 @@
-package com.articlio.pipe.pipelines
+package com.articlio.pipelines.concrete
 
-import com.articlio.pipe.util.{copy, writeOutputFile}
+import com.articlio.pipelines.util._
 import com.articlio.config
 import java.io.{File}
 import sys.process._
-import com.articlio.pipe.BulkPipeline
-import com.articlio.pipe.Step
+import com.articlio.pipelines._
 import scala.io.Source
 import com.articlio.dataExecution.CreateError
 

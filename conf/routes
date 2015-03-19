@@ -36,8 +36,6 @@ GET  /semantic/all/eLife                      controllers.SemanticExtractor.alle
 GET  /export                                  controllers.SemanticExtractor.export
 GET  /export/analytic                         controllers.SemanticExtractor.exportAnalytic
 
-GET  /pipe                                    controllers.pipe.pipe
-
 GET  /pdf/convert/all                         controllers.PdfConvert.convertAll
 GET  /pdf/convert/single/:location            controllers.PdfConvert.convertSingle(location: String)
 

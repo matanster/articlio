@@ -2,7 +2,7 @@ package com.articlio.ldb
 
 import java.io.File
 import com.articlio.util.runID
-import com.articlio.input.JATS
+import com.articlio.JATSprocessing
 import com.articlio.ldb
 import com.articlio.config
 import com.articlio.dataExecution._

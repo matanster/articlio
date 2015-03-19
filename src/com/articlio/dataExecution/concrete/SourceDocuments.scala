@@ -35,7 +35,7 @@ abstract class Raw(articleName: String, externalSourceDirectory: Option[String] 
           case None => Future.successful(Some(CreateError(s"file $fileName was not found in $directory.")))
           case Some(externalSourceDirectory) => filePathExists(s"$externalSourceDirectory/$fileName") match {
             case true => {
-              com.articlio.pipe.util.copy(s""""$externalSourceDirectory/$fileName"""", directory)
+              com.articlio.pipelines.util.copy(s""""$externalSourceDirectory/$fileName"""", directory)
               Future.successful(None) }
             case false =>
               Future.successful(Some(CreateError(s"file $fileName was not found in $externalSourceDirectory.")))
@@ -84,7 +84,7 @@ object Importer { // not for Windows OS...
     // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files
     //       to avoid bloated data groups, thus also reducing statistic skew from duplicates
     // TODO: do this more asynchronously if it becomes a key process - as per http://docs.oracle.com/javase/7/docs/api/java/nio/file/DirectoryStream.html or other
-    import com.articlio.pipe.util.copy
+    import com.articlio.pipelines.util.copy
     import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
     val files = new java.io.File(path).listFiles.filter(file => (file.isFile)).map(file => file.getName).toSeq

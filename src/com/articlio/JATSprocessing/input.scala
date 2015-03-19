@@ -1,8 +1,9 @@
-package com.articlio.input
+package com.articlio.JATSprocessing
 import scala.io.Source
 import scala.xml.Utility.{ trim }
 import scala.xml.{ Node, NodeSeq }
 
+@deprecated("not in use I think", "")
 object Input {
 
   def get: Iterator[String] = {
@@ -21,7 +22,7 @@ case class Paragraph(sentences: Seq[AnnotatedText])
 case class JATSsection(sectionType: String, paragraphs: Seq[Paragraph])
 
 
-object JATSloader{
+object JATSloader {
   // to follow this XML api, see:
   //    the tests at https://github.com/scala/scala-xml/blob/master/src/test/scala/scala/xml/XMLTest.scala
   //    http://alvinalexander.com/scala/how-to-extract-data-from-xml-nodes-in-scala

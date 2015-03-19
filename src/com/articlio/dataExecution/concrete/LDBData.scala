@@ -2,7 +2,6 @@ package com.articlio.dataExecution.concrete
 import com.articlio.dataExecution._
 import util._
 import com.articlio.config
-import com.articlio.pipe.pipelines.ReadyJATS
 import scala.concurrent.Future
 
 case class LDBaccess(dirPath: String) extends Access
