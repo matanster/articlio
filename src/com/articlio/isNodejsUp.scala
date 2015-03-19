@@ -11,7 +11,6 @@ import play.api.Play.current
 import play.api.libs.ws._
 import play.api.libs.ws.ning.NingAsyncHttpClientConfigBuilder
 import scala.concurrent.Future
-import com.articlio.config
 import scala.util.{Success, Failure}
 
 object nodejsControl {
@@ -35,13 +34,14 @@ object nodejsControl {
       case true  => println("node.js service is already up")
       case false => {
         println("starting the node.js service...")
-        Future { Process("./" + config.config.getString("http-services.pdf-sourceExtractor.startScript"), 
-                         new File(config.config.getString("http-services.pdf-sourceExtractor.startDirectory"))).! } 
-                         .onComplete {
-                           case Failure(f) => println(s"failed starting the node.js service: $f")
-                           case Success(exitCode) => println(s"the node.js service exited with code $exitCode")
-                         }
-        //isUp 
+        val nodejsStarter = Future { Process("./" + config.config.getString("http-services.pdf-sourceExtractor.startScript"), 
+                                             new File(config.config.getString("http-services.pdf-sourceExtractor.startDirectory"))).! } 
+                                             .onComplete {
+                                               case Failure(f) => println(s"failed starting the node.js service: $f")
+                                               case Success(exitCode) => println(s"the node.js service exited with code $exitCode")
+                                             }
+
+        // need to ultimately poll or await ready message from node.js via http or stdout, before allowing actions that rely on it. deferred. 
       }
     }}
   }
