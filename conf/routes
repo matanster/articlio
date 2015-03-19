@@ -2,16 +2,16 @@
 # This file defines all application routes (Higher priority routes first)
 
 # Home page - just say app is running
-GET  /                                        controllers.Application.index
+GET  /                                        controllers.index.go
 
 # Map static resources from the /public folder to the /assets URL path
 GET  /assets/*file                            controllers.Assets.at(path="/public", file)
 
 # Import Raw Documents of Any Supported Raw Type 
-GET  /bulkImportRaw/:dirPath                  controllers.Application.bulkImportRaw(dirPath: String)
+GET  /bulkImportRaw/:dirPath                  controllers.bulkImportRaw.go(dirPath: String)
 
 # Show Article Extract
-GET  /showExtract/:articleName                controllers.Application.showExtract(articleName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", runID: Option[Long])
+GET  /showExtract/:articleName                controllers.showExtract.go(articleName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", runID: Option[Long])
 
 # Generate Semantic Data for Input PDF
 GET  /semantic/single/pdf/:inputFileName      controllers.SemanticExtractor.fromArticle(inputFileName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")
@@ -26,7 +26,7 @@ GET  /purge                                   controllers.SemanticExtractor.purg
 #########################################################
 # not tested or lacking in implementation (or obsolete) 
 
-GET  /showOriginal/:article                   controllers.Application.showOriginal(article: String)
+GET  /showOriginal/:article                   controllers.showOriginal.go(article: String)
 
 GET  /semantic/single/eLife/:inputFileName    controllers.SemanticExtractor.fromElife(inputFileName: String, pdb: String)
 GET  /semantic/all/                           controllers.SemanticExtractor.all
@@ -40,7 +40,7 @@ GET  /pdf/convert/all                         controllers.PdfConvert.convertAll
 GET  /pdf/convert/single/:location            controllers.PdfConvert.convertSingle(location: String)
 
 # Show admin page - not entirely implemented
-GET  /admin/                                  controllers.Application.adminPage
+GET  /admin/                                  controllers.adminPage.go
 
 # Map the JS resource paths - is this really still relevant?!
 # GET  /*file                                 controllers.Assets.versioned(path="/public", file: Asset)

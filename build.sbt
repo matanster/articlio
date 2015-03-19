@@ -209,3 +209,9 @@ libraryDependencies ++= Seq("org.apache.jclouds.driver" % "jclouds-slf4j" % "1.8
 "org.apache.jclouds.provider" % "rackspace-cloudloadbalancers-uk" % "1.8.1",
 "org.apache.jclouds.provider" % "rackspace-clouddns-uk" % "1.8.1"
 )
+
+//
+// testing 
+//
+libraryDependencies += "com.h2database" % "h2" % "1.4.186"
+

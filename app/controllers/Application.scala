@@ -17,9 +17,9 @@ import com.articlio.dataExecution.Access
 //import slick.driver.H2Driver.api._
 //import slick.lifted.{ProvenShape, ForeignKeyQuery}
 
-object Application extends Controller {
+object bulkImportRaw extends Controller {
 
-  def bulkImportRaw(path: String) = Action.async { implicit request =>
+  def go(path: String) = Action.async { implicit request =>
     val data: Seq[FinalData]  = com.articlio.dataExecution.concrete.Importer.bulkImportRaw(path)
     val simplifiedAggregateDataStatus: Future[Boolean] = Future.sequence(data.map(_.accessOrError)) map { _.forall(_.isInstanceOf[Access]) }
     simplifiedAggregateDataStatus map { _ match {
@@ -27,8 +27,10 @@ object Application extends Controller {
       case false => Ok("Import failed")
     }}
   }
+}
 
-  def showExtract(articleName: String,
+object showExtract extends Controller {
+  def go(articleName: String,
                   pdb: String,
                   dataID: Option[Long]) = Action.async { implicit request =>
 
@@ -53,8 +55,10 @@ object Application extends Controller {
       }
     } 
   }
-  
-  def showOriginal(article: String) = Action { implicit request =>
+}
+
+object showOriginal extends Controller {
+  def go(article: String) = Action { implicit request =>
     if (!article.startsWith("elife")){
       val original = s"../data/pdf/0-input/${article}.pdf" 
       println(s"serving $original")
@@ -65,10 +69,15 @@ object Application extends Controller {
       Redirect(s"http://ubuntu.local:8000/${article}.xml") // assuming path ../data/eLife-JATS/2-styled is being web served
                                                            // e.g. by "python -m SimpleHTTPServer"
   }
-            
-  def adminPage = Action { implicit request => Ok(views.html.adminPage()) }
+}   
   
-  def index = Action { implicit request => Ok(s"app is up, got request [$request]") }
+object adminPage extends Controller {
+  def go = Action { implicit request => Ok(views.html.adminPage()) }
+}  
+
+object index extends Controller {
+  def go = Action { implicit request => Ok(s"app is up, got request [$request]") }
+}
   
   /*
   import play.api.mvc._
@@ -89,4 +98,4 @@ object Application extends Controller {
     MyWebSocketActor.props(out)
   }
 */  
-}
+
