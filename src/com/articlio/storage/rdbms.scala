@@ -76,8 +76,8 @@ class OutDB extends Actor {
     
     case "createIfNeeded" => createIfNeeded
     
-    //case s: Seq[Match @unchecked] => write(s) // annotating to avoid compilation warning about type erasure here
-    case s: Seq[MatchesRow @unchecked] => addToBuffer(s) // annotating to avoid compilation warning about type erasure here, maybe no longer necessary?
+    case s: Seq[MatchesRow @unchecked] => write(s) // annotating to avoid compilation warning about type erasure here
+    //case s: Seq[MatchesRow @unchecked] => addToBuffer(s) // annotating to avoid compilation warning about type erasure here, maybe no longer necessary?
     
     case "flushToDB" => flushToDB
     
