@@ -25,5 +25,7 @@ object config {
   val JATSstyled = config.getString("locations.JATS-input.styled")
   val JATSout = config.getString("locations.JATS")
   
+  val nodejsServerUrl = s"http://${config.getString("http-services.pdf-sourceExtractor.host")}:${config.getString("http-services.pdf-sourceExtractor.port")}"
+  
   //val pdfSourceDir = config.getString("locations.pdf-source-input")
 }

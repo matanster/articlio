@@ -59,12 +59,12 @@ object SemanticExtractor extends Controller {
   }
 
   def export = Action { implicit request =>
-    com.articlio.storage.createCSV.go(0L) // TODO: need to get parameter, can't be parameter-less 
+    com.articlio.analyze.createCSV.go(0L) // TODO: need to get parameter, can't be parameter-less 
     Ok("Done producing result CSVs")
   }
 
   def exportAnalytic = Action { implicit request =>
-    com.articlio.storage.createAnalyticSummary.go
+    com.articlio.analyze.createAnalyticSummary.go
     Ok("Done producing analytic result CSVs")
   }
 

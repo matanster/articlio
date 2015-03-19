@@ -3,7 +3,7 @@ package controllers
 import models._
 import play.api._
 import play.api.mvc._
-//import play.api.db.slick._ play slick plugin is not yet interoperable with Slick 3.0.0
+//import play.api.db.slick._ play slick plugin is not yet interoperable with Slick 3.0.0, slick is wired in without it
 import slick.driver.MySQLDriver.simple._
 import slick.jdbc.meta._
 import play.api.http.MimeTypes
@@ -16,16 +16,18 @@ import scala.util.{Success, Failure}
 
 object PdfConvert extends Controller {
   
+  //val nodejsServerUrl = s"http://${config.config.getString("http-services.pdf-sourceExtractor.host")}:${config.config.getString("http-services.pdf-sourceExtractor.port")}"
+  
   def convertAll = Action.async { 
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-        WS.url("http://localhost:3000/all").get().map { response => 
+        WS.url(s"${config.nodejsServerUrl}/all").get().map { response => 
         Ok(response.body)
     }   
   }
   
   def convertSingle(articleName: String) = Action.async { implicit request => 
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    WS.url("http://localhost:3000/handleInputFile").withQueryString("localLocation" -> articleName).withRequestTimeout(6000).get.map(response => 
+    WS.url(s"${config.nodejsServerUrl}/handleInputFile").withQueryString("localLocation" -> articleName).withRequestTimeout(6000).get.map(response => 
       response.status match {
         case 200 => Ok("successfully converted pdf to JATS")
         case _ => InternalServerError("failed converting pdf to JATS")
