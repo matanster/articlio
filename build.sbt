@@ -153,33 +153,33 @@ dummytask := {
 
 //
 // sbt task that auto-generates Slick classes for a given existing database. Usage: sbt slickGenerate
-// This doesn't work yet - see http://stackoverflow.com/questions/28511698/adding-task-to-sbt-13-x-build-sbt.
-// so the script slickGenerate.sh takes care of this instead (relying on a sibling repo)
 //
 
-//libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "2.1.0"
 libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.0.0-RC1"
 
 lazy val slickGenerate = taskKey[Seq[File]]("slick code generation from existing external database")
 
 slickGenerate := {
+  import java.io.File
   val dbName = "articlio"
   val userName = "articlio"
-  val password = ""
+  val password = "" // no password for this user
   val url = s"jdbc:mysql://localhost:3306/$dbName" 
   val jdbcDriver = "com.mysql.jdbc.Driver"
-  val slickDriver = "scala.slick.driver.MySQLDriver"
+  val slickDriver = "slick.driver.MySQLDriver"
+  val resultDir = "app"
   val targetPackageName = "models"
-  val outputDir = ((sourceManaged in Compile).value / dbName).getPath // place generated files in sbt's managed sources folder
-  val fname = outputDir + s"/$targetPackageName/Tables.scala"
-  println(s"\nauto-generating slick source for database schema at $url...")
-  println(s"output path: file://$fname\n")
-  (runner in Compile).value.run("scala.slick.codegen.SourceCodeGenerator", (dependencyClasspath in Compile).value.files, Array(slickDriver, jdbcDriver, url, outputDir, targetPackageName, userName, password), streams.value.log)
-  Seq(file(fname))
+  val resultFilePath = s"$resultDir/$targetPackageName/Tables.scala"
+  val backupFilePath = s"$resultDir/$targetPackageName/Tables.auto-backup.scala"
+  println(s"Backing up existing slick mappings source to: file://${baseDirectory.value}/$backupFilePath")
+  println(s"About to auto-generate slick mappings source from database schema at $url...")
+  sbt.IO.copyFile(new File(resultFilePath), new File(backupFilePath))
+  (runner in Compile).value.run("slick.codegen.SourceCodeGenerator", (dependencyClasspath in Compile).value.files, Array(slickDriver, jdbcDriver, url, resultDir, targetPackageName, userName, password), streams.value.log)
+  println(s"\nResult: file://${baseDirectory.value}/$resultFilePath\n")
+  Seq(file(resultFilePath))
 }
 
-//
-// workaround / fix for http://stackoverflow.com/questions/28104968/scala-ide-4-0-0-thinks-theres-errors-in-an-out-of-the-box-play-framework-2-3-7/28550840#28550840 (tentatively related: https://github.com/typesafehub/sbteclipse/pull/242)
+// workaround/fix for http://stackoverflow.com/questions/28104968/scala-ide-4-0-0-thinks-theres-errors-in-an-out-of-the-box-play-framework-2-3-7/28550840#28550840 (tentatively related: https://github.com/typesafehub/sbteclipse/pull/242)
 //
 //EclipseKeys.createSrc := EclipseCreateSrc.All
 
@@ -207,7 +207,7 @@ libraryDependencies ++= Seq("org.apache.jclouds.driver" % "jclouds-slf4j" % "1.8
 )
 
 //
-// testing 
+// testing memory database
 //
 libraryDependencies += "com.h2database" % "h2" % "1.4.186"
 
