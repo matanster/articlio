@@ -171,7 +171,6 @@ slickGenerate := {
   val targetPackageName = "models"
   val resultFilePath = s"$resultRelativeDir/$targetPackageName/Tables.scala"
   val backupFilePath = s"$resultRelativeDir/$targetPackageName/Tables.auto-backup.scala"
-  val diffFilePath   = s"$resultRelativeDir/$targetPackageName/diff.out"
   val format = scala.Console.BLUE + scala.Console.BOLD
   println(format + s"Backing up existing slick mappings source to: file://${baseDirectory.value}/$backupFilePath")
   println(format + s"About to auto-generate slick mappings source from database schema at $url...")
