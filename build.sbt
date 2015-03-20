@@ -167,15 +167,19 @@ slickGenerate := {
   val url = s"jdbc:mysql://localhost:3306/$dbName" 
   val jdbcDriver = "com.mysql.jdbc.Driver"
   val slickDriver = "slick.driver.MySQLDriver"
-  val resultDir = "app"
+  val resultRelativeDir = "app"
   val targetPackageName = "models"
-  val resultFilePath = s"$resultDir/$targetPackageName/Tables.scala"
-  val backupFilePath = s"$resultDir/$targetPackageName/Tables.auto-backup.scala"
-  println(s"Backing up existing slick mappings source to: file://${baseDirectory.value}/$backupFilePath")
-  println(s"About to auto-generate slick mappings source from database schema at $url...")
+  val resultFilePath = s"$resultRelativeDir/$targetPackageName/Tables.scala"
+  val backupFilePath = s"$resultRelativeDir/$targetPackageName/Tables.auto-backup.scala"
+  val diffFilePath   = s"$resultRelativeDir/$targetPackageName/diff.out"
+  val format = scala.Console.BLUE + scala.Console.BOLD
+  println(format + s"Backing up existing slick mappings source to: file://${baseDirectory.value}/$backupFilePath")
+  println(format + s"About to auto-generate slick mappings source from database schema at $url...")
   sbt.IO.copyFile(new File(resultFilePath), new File(backupFilePath))
-  (runner in Compile).value.run("slick.codegen.SourceCodeGenerator", (dependencyClasspath in Compile).value.files, Array(slickDriver, jdbcDriver, url, resultDir, targetPackageName, userName, password), streams.value.log)
-  println(s"\nResult: file://${baseDirectory.value}/$resultFilePath\n")
+  (runner in Compile).value.run("slick.codegen.SourceCodeGenerator", (dependencyClasspath in Compile).value.files, Array(slickDriver, jdbcDriver, url, resultRelativeDir, targetPackageName, userName, password), streams.value.log)
+  println(format + s"Result: file://${baseDirectory.value}/$resultFilePath" + scala.Console.RESET)
+  val diff = (s"diff -u $resultFilePath $backupFilePath" #| "colordiff").!!
+  println(scala.Console.BLUE + s"Changes compared to previous mappings saved as backup, follow, if any.\n\n $diff") 
   Seq(file(resultFilePath))
 }
 
