@@ -34,8 +34,8 @@ object nodejsControl {
       case true  => println("node.js service is already up")
       case false => {
         println("starting the node.js service...")
-        val nodejsStarter = Future { Process("./" + config.config.getString("http-services.pdf-sourceExtractor.startScript"), 
-                                             new File(config.config.getString("http-services.pdf-sourceExtractor.startDirectory"))).! } 
+        val nodejsStarter = Future { (Process("./" + config.config.getString("http-services.pdf-sourceExtractor.startScript"), 
+                                             new File(config.config.getString("http-services.pdf-sourceExtractor.startDirectory"))) #>> new File("../logs/nodejs.out")).! } 
                                              .onComplete {
                                                case Failure(f) => println(s"failed starting the node.js service: $f")
                                                case Success(exitCode) => println(s"the node.js service exited with code $exitCode")
