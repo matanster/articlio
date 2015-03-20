@@ -15,6 +15,9 @@ import scala.util.{Success, Failure}
 
 object nodejsControl {
   
+  //
+  // is node.js responding?
+  //
   def isUp: Future[Boolean] = {
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     WS.url(s"${config.nodejsServerUrl}/").withRequestTimeout(6000).get.map { response => 
@@ -23,9 +26,11 @@ object nodejsControl {
         case _ => false
       }}.recover { case e: Exception => false }
     }
-  
+
+  //
+  // start node.js on a thread (via a future), if it isn't already responding
+  //
   def startIfDown = {
-    
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     import sys.process._ // for OS commands
     import java.io.File
