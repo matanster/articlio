@@ -2,7 +2,7 @@ package com.articlio.ldb
 
 import com.articlio.logger._
 import com.articlio.util.text._
-import com.articlio.AppActorSystem
+import com.articlio.Globals.appActorSystem
 import com.articlio.LanguageModel._
 
 //
@@ -19,7 +19,7 @@ class LDB(inputRules: Seq[RuleInput], logger: SimpleLogger) {
   //
   def expand(rules: Seq[SimpleRule]) : Seq[ExpandedRule] = {
     
-    AppActorSystem.timelog ! "exapanding patterns containing article-self-references into all their combinations"  
+    appActorSystem.timelog ! "exapanding patterns containing article-self-references into all their combinations"  
     
     val ASRRules : Seq[ExpandedRule] = rules.filter(rule => rule.pattern.containsSlice("{asr")) map ExpandedRule
     println(ASRRules)
@@ -47,7 +47,7 @@ class LDB(inputRules: Seq[RuleInput], logger: SimpleLogger) {
   println(ASRRules.length)
   //println(expansion.length)
   
-  AppActorSystem.timelog ! "exapanding patterns containing article-self-references into all their combinations"  
+  appActorSystem.timelog ! "exapanding patterns containing article-self-references into all their combinations"  
   return ASRRules
   }
   
@@ -69,7 +69,7 @@ class LDB(inputRules: Seq[RuleInput], logger: SimpleLogger) {
     }
   }
   
-  AppActorSystem.timelog ! "patterns representation building"
+  appActorSystem.timelog ! "patterns representation building"
   
   //inputRules map (r => println(r.properties.get.filter(property => property.isInstanceOf[LocationProperty])))
   
@@ -116,7 +116,7 @@ class LDB(inputRules: Seq[RuleInput], logger: SimpleLogger) {
               // uses a Set to avoid duplicate strings
               val allFragmentsDistinct : Set[String] = rules.map(rule => rule.fragments).flatten.toSet
               
-              AppActorSystem.timelog ! "patterns representation building"
+              appActorSystem.timelog ! "patterns representation building"
               // TODO: uncomment SelfMonitor.logUsage("after patterns representation building is")
               logger.write(allFragmentsDistinct.mkString("\n"), "db-distinct-fragments")
               logger.write(patterns2fragments.mkString("\n"), "db-rule-fragments")

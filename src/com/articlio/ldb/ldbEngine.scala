@@ -5,7 +5,7 @@ import com.articlio.util._
 import com.articlio.util.text._
 import com.articlio.LanguageModel._
 import com.articlio.SelfMonitor
-import com.articlio.AppActorSystem
+import com.articlio.Globals.appActorSystem
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.Await
@@ -56,7 +56,7 @@ object ldbEnginePooling {
     //
     // Start actors ensemble, actors being initialized with it
     //
-    val ahoCorasickPool = AppActorSystem.system.actorOf(AhoCorasickActor.props(ldb)
+    val ahoCorasickPool = appActorSystem.system.actorOf(AhoCorasickActor.props(ldb)
                                     .withRouter(BalancingPool(nrOfInstances = concurrencyPerActorPool)), 
                                      name = s"aho-corasick-tree-pool-${inputCSVfileName.replace(" ","-")}")
                                      // val ahoCorasick = new Array[AhoCorasickActor](concurrency)
@@ -370,7 +370,7 @@ case class ldbEngine(inputCSVfileName: String) extends Connection {
       
       new Descriptive(sentenceMatchCount, "Fragments match count per sentence").all
 
-      AppActorSystem.outDB ! rdbmsData.result
+      appActorSystem.outDB ! rdbmsData.result
       rdbmsData.result    
     }    
     //return s"Done processing ${document.name}"

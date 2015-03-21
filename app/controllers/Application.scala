@@ -3,7 +3,7 @@ package controllers
 import play.api.{db => _, _}
 import play.api.mvc._
 import models.Tables._
-import com.articlio.storage.slickDb._
+//import com.articlio.storage.slickDb._
 import slick.driver.MySQLDriver.api._
 import play.api.http.MimeTypes
 import models.Tables
@@ -38,8 +38,11 @@ object showExtract extends Controller {
     import com.articlio.dataExecution._
     import com.articlio.dataExecution.concrete._
     
-    def show(dataID: Long, allApplicableDataIDs: List[Long]): Future[Result] = {
-      dbQuery(Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)) map { 
+    // TODO: this method should probably be someplace else
+    def show(dataID: Long, allApplicableDataIDs: List[Long]): Future[Result] = { 
+      import com.articlio.storage.SlickDB
+      import com.articlio.storage.DefaultDB.db
+      db.dbQuery(Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)) map { 
         contentResult => Ok(views.html.showExtract(allApplicableDataIDs, dataID, pdb, articleName, contentResult.toList))
       }
     }

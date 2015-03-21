@@ -3,6 +3,7 @@ import com.articlio.dataExecution._
 import util._
 import com.articlio.config
 import scala.concurrent.Future
+import com.articlio.storage.DefaultDB.db
 
 case class LDBaccess(dirPath: String) extends Access
 

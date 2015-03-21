@@ -10,21 +10,21 @@ import scala.concurrent.duration._
 import scala.concurrent.Await
 import com.articlio.SelfMonitor
 import akka.actor.ActorSystem
-import com.articlio.AppActorSystem
+import com.articlio.Globals.appActorSystem
 import com.articlio.logger._
 import slick.driver.MySQLDriver.simple._
 import slick.jdbc.meta._
 import com.articlio.config
 import com.articlio.nodejsControl
 
+
 object Global extends GlobalSettings {
 
   play.api.Logger.info("Global object started")
   println("Global object started")
 
-  val db = com.articlio.storage.slickDb.db // start the slick database connection, don't wait for first use
-    
-  AppActorSystem.outDB ! "createIfNeeded"
+  //val db = com.articlio.storage.slickDb.db // start the slick database connection, don't wait for first use
+  appActorSystem.outDB ! "createIfNeeded"
   
   
   //SelfMonitor
@@ -39,7 +39,7 @@ object Global extends GlobalSettings {
   override def onStop(app: Application) {
     println("Global object stopping non-Play stuff...")
     play.api.Logger.info("Global object stopping non-Play stuff...")
-    AppActorSystem.shutdown
+    appActorSystem.shutdown
     //SelfMonitor.shutdown
 
     // TODO: is it necessary to close connection pools to keep the database happy? or does that already happen.... 

@@ -12,9 +12,10 @@ import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import com.articlio.storage.SlickDB
 
 // Data Object That Needs to be Attempted
-abstract class DataObject(val requestedDataID: Option[Long] = None) extends RecordException 
+abstract class DataObject(val requestedDataID: Option[Long] = None)(implicit db: SlickDB) extends RecordException 
                                                                     with DataExecution { 
   
   //

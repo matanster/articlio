@@ -6,7 +6,6 @@ import slick.profile.BasicStreamingAction
 import slick.jdbc.meta._
 import slick.jdbc.SimpleJdbcAction
 import slick.jdbc.JdbcBackend
-import com.articlio.storage.slickDb._
 import models.Tables._
 import scala.concurrent.duration.Duration
 import scala.concurrent._
@@ -14,15 +13,16 @@ import scala.util.Success
 import scala.util.Failure
 
 //
-// Database connection object
+// Database connection abstract type
 //
-
-object slickDb extends {
-  val db = Database.forConfig("slickdb") // exposes the slick database handle. 
-                                         // automatically connection pooled unless disabled in application.conf.
+trait SlickDB {
+  val db: slick.driver.MySQLDriver.backend.Database // exposes the slick database handle. 
+                                                    // automatically connection pooled unless disabled in application.conf.
+  
+  def run[R](a: DBIOAction[R, NoStream, Nothing]): Future[R] = db.run(a)
   
   def dbQuery[T1, T2](query: Query[T1, T2, Seq]) = db.run(query.result) // convenience function for async query SQL execution
-
+  
   // example function for inquiring JDBC configuration
   def printJDBCconfig = {
     import scala.concurrent.ExecutionContext.Implicits.global
@@ -31,7 +31,16 @@ object slickDb extends {
   }
 }
 
-class OutDB extends Actor {
+object slickDb extends SlickDB {
+  val db = Database.forConfig("slickdb") // exposes the slick database handle. 
+                                         // automatically connection pooled unless disabled in application.conf.
+}
+
+object DefaultDB {
+  implicit val db = slickDb
+}
+
+class OutDB(implicit dbHandle: SlickDB) extends Actor {
 
   //
   // Table write functions
@@ -41,7 +50,7 @@ class OutDB extends Actor {
     println
     println(s"writing ${data.length} records to database")
     println
-    db.run(Matches ++= data)
+    dbHandle.run(Matches ++= data)
     println(s"done writing ${data.length} records to database")    
   }
   
@@ -53,7 +62,7 @@ class OutDB extends Actor {
       buffer = Seq.empty[MatchesRow]
   }
  
-  private def += (data: MatchesRow) = db.run(Matches += data) // writes just one row
+  private def += (data: MatchesRow) = dbHandle.run(Matches += data) // writes just one row
   
   //
   // Schema handling functions
@@ -63,13 +72,13 @@ class OutDB extends Actor {
   
   private def create = {
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    db.run(DBIO.sequence(tables.map(table => table.schema.create))) 
+    dbHandle.run(DBIO.sequence(tables.map(table => table.schema.create))) 
   }
   
   private def dropCreate: Unit = { // only called as fire-and-forget for now
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     println("about to recreate tables")
-    db.run(DBIO.sequence(tables.map(table => table.schema.drop))).onComplete { _ => 
+    dbHandle.run(DBIO.sequence(tables.map(table => table.schema.drop))).onComplete { _ => 
                             create.onComplete { 
                               case Success(_) => println("done recreating tables") 
                               case Failure(_) => println("failed recreating tables")
@@ -79,13 +88,17 @@ class OutDB extends Actor {
   
   private def createIfNeeded {
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-      db.run(DBIO.sequence(tables.map(table => slick.jdbc.meta.MTable.getTables(table.baseTableRow.tableName) map { 
+      dbHandle.run(DBIO.sequence(tables.map(table => slick.jdbc.meta.MTable.getTables(table.baseTableRow.tableName) map { 
         result => if (result.isEmpty) {
           println(s"creating table ${table.baseTableRow.tableName}")
-          db.run(table.schema.create) 
+          dbHandle.run(table.schema.create) 
         }})))
   }
 
+  /*
+   * Actor interface (we don't really need an actor actually) 
+   */
+  
   def receive = { 
     case "dropCreate" => dropCreate
     

@@ -9,9 +9,10 @@ package com.articlio.analyze
 import com.articlio.storage.{Connection}
 import slick.driver.MySQLDriver.api._
 import slick.jdbc.meta._
-import com.articlio.storage.slickDb._
+import com.articlio.storage.SlickDB
+import com.articlio.storage.DefaultDB.db
 import slick.util.CloseableIterator
-import com.articlio.AppActorSystem
+import com.articlio.Globals.AppActorSystem
 import models.Tables._
 import com.articlio.logger.SimpleLogger
 import scala.concurrent.Await
@@ -23,13 +24,13 @@ import scala.concurrent.duration.Duration
  *        see http://slick.typesafe.com/doc/3.0.0-RC1/database.html#streaming for streams api adaptation.
  */
 
-object Indels extends Connection {
+case class Indels(implicit val db: SlickDB) extends Connection {
 
   val changeAnalyticsLogger= new SimpleLogger("global-change-analytics")
   
   implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-  val newResults = Await.result(dbQuery(Matches.filter(_.dataid === 111L).sortBy(_.sentence)), Duration.Inf).iterator
-  val oldResults = Await.result(dbQuery(Matches.filter(_.dataid === 222L)), Duration.Inf).iterator
+  val newResults = Await.result(db.dbQuery(Matches.filter(_.dataid === 111L).sortBy(_.sentence)), Duration.Inf).iterator
+  val oldResults = Await.result(db.dbQuery(Matches.filter(_.dataid === 222L)), Duration.Inf).iterator
   
   val dropped = Seq.newBuilder[MatchesRow]
   val added = Seq.newBuilder[MatchesRow]
@@ -64,9 +65,7 @@ object Indels extends Connection {
     }
   }
   
-  AppActorSystem.timelog ! "analyzing"
   go(myNext(newResults), myNext(oldResults))
-  AppActorSystem.timelog ! "analyzing"
   
   println(dropped.result.length)
   println(added.result.length)

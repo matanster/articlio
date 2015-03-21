@@ -101,6 +101,8 @@ lazy val play = (project in file(".")).enablePlugins(PlayScala)
 
 unmanagedSourceDirectories in Compile += baseDirectory.value / "src"
 
+unmanagedSourceDirectories in Compile += baseDirectory.value / "tests"
+
 //
 // enable multiple routes files - this wasn't enough though, attempt abandoned
 //
@@ -170,7 +172,7 @@ slickGenerate := {
   val resultRelativeDir = "app"
   val targetPackageName = "models"
   val resultFilePath = s"$resultRelativeDir/$targetPackageName/Tables.scala"
-  val backupFilePath = s"$resultRelativeDir/$targetPackageName/Tables.auto-backup.scala"
+  val backupFilePath = s"$resultRelativeDir/$targetPackageName/Tables.scala.auto-backup"
   val format = scala.Console.BLUE + scala.Console.BOLD
   println(format + s"Backing up existing slick mappings source to: file://${baseDirectory.value}/$backupFilePath")
   println(format + s"About to auto-generate slick mappings source from database schema at $url...")

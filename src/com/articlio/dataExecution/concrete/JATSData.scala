@@ -7,6 +7,7 @@ import scala.concurrent.Await
 import scala.concurrent.Promise
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import com.articlio.storage.DefaultDB.db
 
 /*
  *  Classes for creating JATS from various raw inputs 
