@@ -10,7 +10,7 @@ import com.articlio.storage.{Connection}
 import slick.driver.MySQLDriver.api._
 import slick.jdbc.meta._
 import com.articlio.storage.SlickDB
-import com.articlio.storage.DefaultDB.db
+import com.articlio.Globals.db
 import slick.util.CloseableIterator
 import com.articlio.Globals.AppActorSystem
 import models.Tables._
@@ -29,8 +29,8 @@ case class Indels(implicit val db: SlickDB) extends Connection {
   val changeAnalyticsLogger= new SimpleLogger("global-change-analytics")
   
   implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-  val newResults = Await.result(db.dbQuery(Matches.filter(_.dataid === 111L).sortBy(_.sentence)), Duration.Inf).iterator
-  val oldResults = Await.result(db.dbQuery(Matches.filter(_.dataid === 222L)), Duration.Inf).iterator
+  val newResults = Await.result(db.query(Matches.filter(_.dataid === 111L).sortBy(_.sentence)), Duration.Inf).iterator
+  val oldResults = Await.result(db.query(Matches.filter(_.dataid === 222L)), Duration.Inf).iterator
   
   val dropped = Seq.newBuilder[MatchesRow]
   val added = Seq.newBuilder[MatchesRow]

@@ -3,7 +3,7 @@ import com.articlio.dataExecution._
 import util._
 import com.articlio.config
 import scala.concurrent.Future
-import com.articlio.storage.DefaultDB.db
+import com.articlio.Globals.db
 
 /* 
  *  These data classes effectively just "import" a file from a file system type -

@@ -21,7 +21,7 @@ trait SlickDB {
   
   def run[R](a: DBIOAction[R, NoStream, Nothing]): Future[R] = db.run(a)
   
-  def dbQuery[T1, T2](query: Query[T1, T2, Seq]) = db.run(query.result) // convenience function for async query SQL execution
+  def query[T1, T2](query: Query[T1, T2, Seq]) = db.run(query.result) // convenience function for async query SQL execution
   
   // example function for inquiring JDBC configuration
   def printJDBCconfig = {
@@ -33,11 +33,12 @@ trait SlickDB {
 
 object slickDb extends SlickDB {
   val db = Database.forConfig("slickdb") // exposes the slick database handle. 
-                                         // automatically connection pooled unless disabled in application.conf.
+      // automatically connection pooled unless disabled in application.conf.
 }
 
-object DefaultDB {
-  implicit val db = slickDb
+object slickTestDb extends SlickDB {
+  val db = Database.forConfig("slicktestdb") // exposes the slick database handle. 
+                                             // automatically connection pooled unless disabled in application.conf.
 }
 
 class OutDB(implicit dbHandle: SlickDB) extends Actor {

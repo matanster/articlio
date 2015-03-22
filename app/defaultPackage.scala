@@ -22,18 +22,17 @@ object Global extends GlobalSettings {
 
   play.api.Logger.info("Global object started")
   println("Global object started")
-
-  //val db = com.articlio.storage.slickDb.db // start the slick database connection, don't wait for first use
-  appActorSystem.outDB ! "createIfNeeded"
-  
   
   //SelfMonitor
   
   override def onStart(app: Application) {
     println("Global object starting non-Play stuff...")
-    play.api.Logger.info("Global object starting non-Play stuff...")
-    nodejsControl.startIfDown
     val logger = com.articlio.logger.LogManager
+    play.api.Logger.info("Global object starting non-Play stuff...")
+
+    nodejsControl.startIfDown
+    
+    appActorSystem.outDB ! "createIfNeeded"
   }  
 
   override def onStop(app: Application) {

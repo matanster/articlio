@@ -2,7 +2,8 @@ package com.articlio.dataExecution
 
 //import play.api.db.slick._ play slick plugin is not yet interoperable with Slick 3.0.0
 import slick.driver.MySQLDriver.api._
-import com.articlio.storage.slickDb._
+import com.articlio.Globals.db
+import com.articlio.storage.SlickDB
 import slick.jdbc.meta._
 import models.Tables._
 import models.Tables.{Data => DataRecord}
@@ -12,7 +13,6 @@ import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import com.articlio.storage.SlickDB
 
 // Data Object That Needs to be Attempted
 abstract class DataObject(val requestedDataID: Option[Long] = None)(implicit db: SlickDB) extends RecordException 
@@ -105,7 +105,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)(implicit db:
   
   def ReadyStateSpecific(suppliedRunID: Long): Future[ReadyState] = {
     //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    dbQuery(DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) map { 
+    db.query(DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) map { 
       result => result.nonEmpty match {
         case true => { 
           // TODO: these two lines showcase redundancy and therefore bug potential:
@@ -122,7 +122,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)(implicit db:
   
   def ReadyStateAny(): Future[ReadyState] = {
     //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    dbQuery(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) map {
+    db.query(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) map {
       result => result.nonEmpty match {
         case true =>
         {

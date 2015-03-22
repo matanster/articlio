@@ -10,8 +10,8 @@ import com.articlio.dataExecution.concrete._
 import slick.driver.MySQLDriver.api._
 import slick.jdbc.meta._
 import models.Tables._
-import com.articlio.storage.slickDb._
 import com.articlio.storage.Connection
+import com.articlio.Globals.db
 
 //
 // Re-create all data belonging to given bulk id
@@ -21,7 +21,7 @@ object BulkSemanticRecreate extends Connection {
     val ldb = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"  
 
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    dbQuery(for {
+    db.query(for {
       bulkGroup <- Bulkdatagroups if bulkGroup.bulkid === bulkID
       data <- Data if data.dataid === bulkGroup.dataid 
     } yield data.datatopic) map { articleNames =>

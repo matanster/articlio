@@ -1,6 +1,6 @@
 package com.articlio.analyze
 import slick.driver.MySQLDriver.api._
-import com.articlio.storage.slickDb._
+import com.articlio.Globals.db
 import models.Tables._
 
 trait googleSpreadsheetCreator {
@@ -23,7 +23,7 @@ object createCSV extends googleSpreadsheetCreator {
     val writer = CSVWriter.open(outFile)
 
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    dbQuery(Matches.filter(m => m.dataid === dataID)) map { filteredData => 
+    db.query(Matches.filter(m => m.dataid === dataID)) map { filteredData => 
       filteredData.map(m => 
         List(m.docname, 
              withHyperlink("showOriginal/" + m.dataid.toString.dropRight(4),"view original"),          

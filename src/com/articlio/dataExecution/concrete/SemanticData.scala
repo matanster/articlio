@@ -11,7 +11,7 @@ import slick.driver.MySQLDriver.simple._
 import slick.jdbc.meta._
 import models.Tables.{Data => DataRecord}
 import scala.concurrent.Future
-import com.articlio.storage.DefaultDB.db
+import com.articlio.Globals.db
 
 case class SemanticAccess() extends Access
 

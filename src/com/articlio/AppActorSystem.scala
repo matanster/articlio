@@ -24,6 +24,11 @@ object Globals {
     }
   }
   
-  import com.articlio.storage.DefaultDB.db
+  implicit val db = play.api.Play.current.configuration.getString("mode") match {
+    case Some("real") | None => com.articlio.storage.slickDb 
+    case Some("test")        => com.articlio.storage.slickTestDb
+    case Some(other)         => throw new Throwable("Invalid mode parameter: $other")
+  }
+  
   val appActorSystem = new AppActorSystem
 }
