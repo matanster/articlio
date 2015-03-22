@@ -30,9 +30,17 @@ object Global extends GlobalSettings {
     val logger = com.articlio.logger.LogManager
     play.api.Logger.info("Global object starting non-Play stuff...")
 
-    nodejsControl.startIfDown
-    
     appActorSystem.outDB ! "createIfNeeded"
+   
+    nodejsControl.startIfDown
+
+    play.api.Play.current.configuration.getString("mode") match { 
+      case Some("test") => {
+        println(s"${Console.BOLD}${Console.GREEN}\n--- starting in test mode ---\n${Console.RESET}") 
+        com.articlio.test.TestsRunner.go 
+      }
+      case _ =>
+    }
   }  
 
   override def onStop(app: Application) {
@@ -43,6 +51,17 @@ object Global extends GlobalSettings {
 
     // TODO: is it necessary to close connection pools to keep the database happy? or does that already happen.... 
   }  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   /*
   import sorm._
