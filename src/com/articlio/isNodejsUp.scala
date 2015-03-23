@@ -31,6 +31,7 @@ object nodejsControl {
   // start node.js on a thread (via a future), if it isn't already responding
   //
   def startIfDown = {
+    println("starting node?")
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     import sys.process._ // for OS commands
     import java.io.File

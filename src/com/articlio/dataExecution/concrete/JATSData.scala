@@ -7,7 +7,8 @@ import scala.concurrent.Await
 import scala.concurrent.Promise
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import com.articlio.Globals.db
+import com.articlio.Globals.{db, dataFilesRoot}
+import com.articlio.storage.ManagedDataFiles._
 
 /*
  *  Classes for creating JATS from various raw inputs 
@@ -70,7 +71,7 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
         FinalData(PDFDep).accessOrError map { _ match {
           case access: Access => {
             com.articlio.util.Console.log("before pdf convertttttttttttttt", "green")
-            Await.result(convertSingle(s"${config.config.getString("locations.pdf-source-input")}/$articleName"), 10.seconds) match {
+            Await.result(convertSingle(dataFilesRoot + s"${config.config.getString("locations.pdf-source-input")}/$articleName".rooted), 10.seconds) match {
               case None => registerDependency(this, PDFDep); None
               case Some(error) => Some(CreateError(s"failed to convert pdf to JATS - response from http service was: ${error.errorDetail}"))
             }
@@ -80,7 +81,7 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
     }}
   }
   
-  val access = JATSaccess(config.config.getString("locations.JATS")) // PathExists(s"${config.eLife}/$articleName.xml"))))) match {
+  val access = JATSaccess(dataFilesRoot + config.config.getString("locations.JATS").rooted) // PathExists(s"${config.eLife}/$articleName.xml"))))) match {
 }
 
 //
@@ -107,8 +108,8 @@ case class JATSDataFromTxtFile(articleName: String)(rawTxt: RawTxtFile = RawTxtF
       text.replace("&","&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;")
     }
 
-    val fullSourcePath = s"${config.config.getString("locations.txtFile-source-input")}/$articleName.txt"
-    val targetPath = s"${config.config.getString("locations.JATS")}"
+    val fullSourcePath = s"${config.config.getString("locations.txtFile-source-input")}/$articleName.txt".rooted
+    val targetPath = s"${config.config.getString("locations.JATS")}".rooted
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     Future { // non-blocking with java.nio is rather complex, this dispatched future will block
       filePathExists(fullSourcePath) match {
@@ -130,6 +131,6 @@ case class JATSDataFromTxtFile(articleName: String)(rawTxt: RawTxtFile = RawTxtF
     }
   }
   
-  val access = JATSaccess(config.config.getString("locations.JATS")) // PathExists(s"${config.eLife}/$articleName.xml"))))) match {
+  val access = JATSaccess(config.config.getString("locations.JATS").rooted) // PathExists(s"${config.eLife}/$articleName.xml"))))) match {
 }
 

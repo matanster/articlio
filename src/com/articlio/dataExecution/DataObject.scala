@@ -15,8 +15,9 @@ import scala.concurrent.duration.Duration
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 // Data Object That Needs to be Attempted
-abstract class DataObject(val requestedDataID: Option[Long] = None)(implicit db: SlickDB) extends RecordException 
-                                                                    with DataExecution { 
+abstract class DataObject(val requestedDataID: Option[Long] = None)
+                         (implicit db: SlickDB) extends RecordException 
+                          with DataExecution { 
   
   //
   // tries a function, and collapses its exception into application type 

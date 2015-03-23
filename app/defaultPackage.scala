@@ -33,7 +33,7 @@ object Global extends GlobalSettings {
     appActorSystem.outDB ! "createIfNeeded"
    
     nodejsControl.startIfDown
-
+    
     play.api.Play.current.configuration.getString("mode") match { 
       case Some("test") => {
         println(s"${Console.BOLD}${Console.GREEN}\n--- starting in test mode ---\n${Console.RESET}") 

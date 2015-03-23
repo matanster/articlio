@@ -24,11 +24,21 @@ object Globals {
     }
   }
   
-  implicit val db = play.api.Play.current.configuration.getString("mode") match {
+  val mode = play.api.Play.current.configuration.getString("mode")
+
+  implicit val db = mode match {
     case Some("real") | None => com.articlio.storage.slickDb 
     case Some("test")        => com.articlio.storage.slickTestDb
     case Some(other)         => throw new Throwable("Invalid mode parameter: $other")
   }
   
+  implicit val dataFilesRoot = mode match {
+    case Some("real") | None => "../data/" 
+    case Some("test")        => "../test/data/"
+    case Some(other)         => throw new Throwable("Invalid mode parameter: $other")
+  }
+
   val appActorSystem = new AppActorSystem
+  
+  println("Initialized")
 }

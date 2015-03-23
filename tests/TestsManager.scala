@@ -27,10 +27,7 @@ object TestsRunner {
   val tests: Seq[Test] = Seq(new Test1, 
                              new Test2)
   def go {
-    tests.map(test => {
-        test.run
-      }
-    )
+    val results = tests.map(test => test.run)
   }
 }
 
@@ -45,8 +42,6 @@ class Test2 extends Test {
     new Success
   }
 }
-
-
 
 object EndToEnd {
   def playWS {

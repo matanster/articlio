@@ -24,6 +24,9 @@ case class SemanticData(articleName: String,
 
   val dataTopic = articleName
   
+  println("semantic data startedddddddddd")
+  
+  
   val dependsOn = Seq(JATS,LDB)
   
   def creator(runID: Long, dataType: String, fileName: String) : Future[Option[CreateError]] = {

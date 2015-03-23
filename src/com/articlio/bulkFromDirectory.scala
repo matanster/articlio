@@ -2,12 +2,13 @@ package com.articlio
 import java.io.File
 import com.articlio.dataExecution._
 import com.articlio.dataExecution.concrete._
+import com.articlio.storage.ManagedDataFiles._
 
 @deprecated("should be deprecated soon, in favor of proper import laden flow starting from using SourceDocuments.scala's importer", "")
 class BulkFromDirectory(runID: String) { 
 
-  def allPDF = processAll(runID, config.pdf, Some("pdf-converted"))
-  def alleLife = processAll(runID, config.eLife)
+  def allPDF = processAll(runID, config.pdf.rooted, Some("pdf-converted"))
+  def alleLife = processAll(runID, config.eLife.rooted)
   
   def all {
     allPDF

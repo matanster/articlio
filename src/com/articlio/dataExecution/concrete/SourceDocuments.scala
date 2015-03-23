@@ -4,6 +4,7 @@ import util._
 import com.articlio.config
 import scala.concurrent.Future
 import com.articlio.Globals.db
+import com.articlio.storage.ManagedDataFiles._
 
 /* 
  *  These data classes effectively just "import" a file from a file system type -
@@ -24,7 +25,7 @@ abstract class Raw(articleName: String, externalSourceDirectory: Option[String] 
   
   val directory: String
   
-  lazy val fullPath = s"$directory/$fileName"
+  lazy val fullPath = s"$directory/$fileName".rooted
 
   // check if file is already sitting in the managed directory. if not, try to import from the import-from directory if supplied.  
   // a file with the exact same name as one already in the managed directory, will not be imported.
@@ -50,19 +51,19 @@ abstract class Raw(articleName: String, externalSourceDirectory: Option[String] 
 case class RawPDF(articleName: String, externalSourceDirectory: Option[String] = None) extends Raw(articleName, externalSourceDirectory) 
 {
   override val expectedFileExtension = "pdf"
-  override val directory = config.config.getString("locations.pdf-source-input")
+  override val directory = config.config.getString("locations.pdf-source-input").rooted
 }
 
 case class RaweLifeJATS(articleName: String, externalSourceDirectory: Option[String] = None) extends Raw(articleName, externalSourceDirectory) 
 {
   val expectedFileExtension = "xml"
-  val directory = config.config.getString("locations.JATS-input.input")
+  val directory = config.config.getString("locations.JATS-input.input").rooted
 }
 
 case class RawTxtFile(articleName: String, externalSourceDirectory: Option[String] = None) extends Raw(articleName, externalSourceDirectory) 
 {
   val expectedFileExtension = "txt"
-  val directory = config.config.getString("locations.txtFile-source-input")
+  val directory = config.config.getString("locations.txtFile-source-input").rooted
 }
 
 object Importer { // not for Windows OS...

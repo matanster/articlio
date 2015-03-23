@@ -4,6 +4,7 @@ import util._
 import com.articlio.config
 import scala.concurrent.Future
 import com.articlio.Globals.db
+import com.articlio.storage.ManagedDataFiles._
 
 case class LDBaccess(dirPath: String) extends Access
 
@@ -13,7 +14,7 @@ case class LDBData(csvFileName: String) extends DataObject
   
   val dependsOn = Seq()
   
-  val fullPath = s"${config.ldb}/$csvFileName"
+  val fullPath = s"${config.ldb}/$csvFileName".rooted
   
   // just tests that the ldb file is there (maybe later, try to fetch it from distributed storage instead)
   def creator(runID: Long, dataType: String, fileName: String) : Future[Option[CreateError]] = {
@@ -26,5 +27,5 @@ case class LDBData(csvFileName: String) extends DataObject
     }
   }
   
-  val access = LDBaccess(config.JATSout)
+  val access = LDBaccess(config.JATSout.rooted)
 }

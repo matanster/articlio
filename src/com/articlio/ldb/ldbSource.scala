@@ -9,6 +9,7 @@ import scala.collection.JavaConverters._
 import com.github.tototoshi.csv._
 import com.github.verbalexpressions.VerbalExpression._
 import com.articlio.logger._
+import com.articlio.storage.ManagedDataFiles._
 
 //
 // structure for input CSV representation
@@ -47,7 +48,7 @@ object CSV {
     //val reader = CSVReader.open("ldb/July 24 2014 database - Markers - filtered.csv")
     //val reader = CSVReader.open("ldb/Normalized from July 24 2014 database - Markers - filtered - take 1.csv")
     //ldb/Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv
-    val reader = CSVReader.open(config.ldb + "/" + csvFile)
+    val reader = CSVReader.open(s"${config.ldb}/$csvFile")
     val iterator = reader.iterator
     iterator.next // skip first row assumed to be headers
 
