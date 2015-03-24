@@ -38,9 +38,9 @@ object nodejsControl {
     isUp map { _ match {
       case true  => println("node.js service is already up")
       case false => {
-        println("starting the node.js service...")
-        val startParam = s"""--dataFilesRoot="${com.articlio.Globals.dataFilesRoot}""""
-        println(startParam)
+        //println("starting the node.js service...")
+        val startParam = s"""--dataFilesRoot=${com.articlio.Globals.dataFilesRoot}"""
+        println(s"passing node.js start param: $startParam")
         val nodejsStarter = Future { (Process(Seq("./" + config.config.getString("http-services.pdf-sourceExtractor.startScript"), startParam), 
                                              new File(config.config.getString("http-services.pdf-sourceExtractor.startDirectory"))) #>> new File("../logs/nodejs.out")).! } 
                                              .onComplete {
