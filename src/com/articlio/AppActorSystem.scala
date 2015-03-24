@@ -34,7 +34,7 @@ object Globals {
   
   implicit val dataFilesRoot = mode match {
     case Some("real") | None => "../data/" 
-    case Some("test")        => "../test/data/"
+    case Some("test")        => "../test-data/"
     case Some(other)         => throw new Throwable("Invalid mode parameter: $other")
   }
 

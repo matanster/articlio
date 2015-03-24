@@ -14,7 +14,7 @@ case class LDBData(csvFileName: String) extends DataObject
   
   val dependsOn = Seq()
   
-  val fullPath = s"${config.ldb}/$csvFileName".rooted
+  val fullPath = s"${config.ldb}/$csvFileName"
   
   // just tests that the ldb file is there (maybe later, try to fetch it from distributed storage instead)
   def creator(runID: Long, dataType: String, fileName: String) : Future[Option[CreateError]] = {
@@ -22,7 +22,7 @@ case class LDBData(csvFileName: String) extends DataObject
     Future {
       filePathExists(fullPath) match {
         case true  => None 
-        case false => Some(CreateError("ldb file $fileName was not found, so it could not be imported.")) 
+        case false => Some(CreateError(s"ldb file $fileName was not found, so it could not be imported.")) 
       }
     }
   }

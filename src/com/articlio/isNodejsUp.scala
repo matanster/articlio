@@ -31,7 +31,6 @@ object nodejsControl {
   // start node.js on a thread (via a future), if it isn't already responding
   //
   def startIfDown = {
-    println("starting node?")
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     import sys.process._ // for OS commands
     import java.io.File
@@ -40,7 +39,9 @@ object nodejsControl {
       case true  => println("node.js service is already up")
       case false => {
         println("starting the node.js service...")
-        val nodejsStarter = Future { (Process("./" + config.config.getString("http-services.pdf-sourceExtractor.startScript"), 
+        val startParam = s"""--dataFilesRoot="${com.articlio.Globals.dataFilesRoot}""""
+        println(startParam)
+        val nodejsStarter = Future { (Process(Seq("./" + config.config.getString("http-services.pdf-sourceExtractor.startScript"), startParam), 
                                              new File(config.config.getString("http-services.pdf-sourceExtractor.startDirectory"))) #>> new File("../logs/nodejs.out")).! } 
                                              .onComplete {
                                                case Failure(f) => println(s"failed starting the node.js service: $f")

@@ -3,7 +3,6 @@ package controllers
 import play.api.{db => _, _}
 import play.api.mvc._
 import models.Tables._
-//import com.articlio.storage.slickDb._
 import com.articlio.Globals.db
 import slick.driver.MySQLDriver.api._
 import play.api.http.MimeTypes
@@ -14,6 +13,8 @@ import scala.concurrent.duration.Duration
 import com.articlio.dataExecution.FinalData
 import com.articlio.dataExecution.AccessOrError
 import com.articlio.dataExecution.Access
+import com.articlio.config
+import com.articlio.storage.ManagedDataFiles._
 //import slick.backend.DatabasePublisher
 //import slick.driver.H2Driver.api._
 //import slick.lifted.{ProvenShape, ForeignKeyQuery}
@@ -63,8 +64,8 @@ object showExtract extends Controller {
 
 object showOriginal extends Controller {
   def go(article: String) = Action { implicit request =>
-    if (!article.startsWith("elife")){
-      val original = s"../data/pdf/0-input/${article}.pdf" 
+    if (!article.startsWith("elife")) {
+      val original = s"${config.config.getString("locations.pdf-source-input")}/$article.pdf".rooted
       println(s"serving $original")
       Ok.sendFile(content = new java.io.File(original),
                   inline = true) // as per https://www.playframework.com/documentation/2.1.3/ScalaStream
