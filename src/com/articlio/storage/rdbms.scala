@@ -9,8 +9,7 @@ import slick.jdbc.JdbcBackend
 import models.Tables._
 import scala.concurrent.duration.Duration
 import scala.concurrent._
-import scala.util.Success
-import scala.util.Failure
+import scala.util.{Success, Failure}
 
 //
 // Database connection abstract type
@@ -76,13 +75,13 @@ class OutDB(implicit dbHandle: SlickDB) extends Actor {
     dbHandle.run(DBIO.sequence(tables.map(table => table.schema.create))) 
   }
   
-  private def dropCreate: Unit = { // only called as fire-and-forget for now
+  private def dropCreate = { // only called as fire-and-forget for now
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     println("about to recreate tables")
     dbHandle.run(DBIO.sequence(tables.map(table => table.schema.drop))).onComplete { _ => 
                             create.onComplete { 
-                              case Success(_) => println("done recreating tables") 
-                              case Failure(_) => println("failed recreating tables")
+                              case Success(s) => println("done recreating tables"); Success(s)  
+                              case Failure(f) => println(s"failed recreating tables: $f"); Failure(f)
                             }
       }
   }

@@ -16,12 +16,27 @@ import slick.driver.MySQLDriver.simple._
 import slick.jdbc.meta._
 import com.articlio.config
 import com.articlio.nodejsControl
-
+import scala.concurrent.Future
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import scala.concurrent.blocking
+import play.api.mvc._
 
 object Global extends GlobalSettings {
 
   play.api.Logger.info("Global object started")
   println("Global object started")
+  
+  override def onRouteRequest(request: RequestHeader): Option[Handler] = {
+    //do our own path matching first - otherwise pass it onto play.
+    println(request.path)
+    request.path match {
+      case "/override" => println("intercepted"); Some(controllers.index.go)
+      case _ => Play.maybeApplication.flatMap(_.routes.flatMap {
+        router => router.handlerFor(request)
+      })
+  }}
+
   
   //SelfMonitor
   
@@ -36,8 +51,14 @@ object Global extends GlobalSettings {
     
     play.api.Play.current.configuration.getString("mode") match { 
       case Some("test") => {
-        println(s"${Console.BOLD}${Console.GREEN}\n--- starting in test mode ---\n${Console.RESET}") 
-        com.articlio.test.TestsRunner.go 
+        println(s"${Console.BOLD}${Console.GREEN}\n--- starting in test mode ---\n${Console.RESET}")
+        
+        // now dispatch the tests for after play has been given time to initialize (otherwise fail)
+        implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+        Future { blocking {
+          Thread.sleep(1000L)
+          com.articlio.test.TestsRunner.go
+        } }
       }
       case _ =>
     }

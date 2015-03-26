@@ -29,5 +29,10 @@ object config {
   
   val nodejsServerUrl = s"http://${config.getString("http-services.pdf-sourceExtractor.host")}:${config.getString("http-services.pdf-sourceExtractor.port")}"
   
-  //val pdfSourceDir = config.getString("locations.pdf-source-input")
+  val host       = config.getString("http-services.scala-main.host")
+  val port       = config.getString("http-services.scala-main.port")
+  val ownRootUrl = s"http://$host:$port"
+    
+    
+    
 }

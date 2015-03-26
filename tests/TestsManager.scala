@@ -27,12 +27,14 @@ object TestsRunner {
   val tests: Seq[Test] = Seq(new Test1, 
                              new Test2)
   def go {
+    println("running tests...")
     val results = tests.map(test => test.run)
   }
 }
 
 class Test1 extends Test {
   def run = {
+    HttpClient.awaitedGet("purge")
     new Success
   }
 }

@@ -52,7 +52,6 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
     def convertSingle(articleName: String) : Future[Option[CreateError]] = {
       import play.api.libs.ws.WS
       import play.api.Play.current
-      println(Console.GREEN + s"query parameter to node.js: $articleName")
       implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
       WS.url("http://localhost:3000/handleInputFile").withQueryString("localLocation" -> s"$articleName.pdf")
                                                                        .get.map(response =>
@@ -72,7 +71,7 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
       case error: AccessError => 
         FinalData(PDFDep).accessOrError map { _ match {
           case access: Access => {
-            com.articlio.util.Console.log("before pdf convertttttttttttttt", "green")
+            com.articlio.util.Console.log(s"delegating pdf conversion to node.js ($articleName)")
             Await.result(convertSingle(s"${config.config.getString("locations.pdf-source-input")}/$articleName".rooted), 10.seconds) match {
               case None => registerDependency(this, PDFDep); None
               case Some(error) => Some(CreateError(s"failed to convert pdf to JATS - response from http service was: ${error.errorDetail}"))
