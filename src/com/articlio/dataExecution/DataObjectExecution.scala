@@ -22,9 +22,10 @@ trait DataExecution extends Connection {
 
   //
   // tree structure for holding the status of a data dependency tree.
-  // this structure is "needed" since we don't memoize/cache the dependencies status, 
-  // so it is used to freeze the status as creation unfolds, for accurate 
-  // error reporting.
+  // this structure is "needed" since we don't memoize/cache the dependencies 
+  // status, so it is used to freeze the status as creation unfolds, for accurate 
+  // error reporting. On later review, may be unnecessary a class, if each
+  // dependency kept its error and remained available.
   //
   case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Future[Seq[ExecutedData]] = Future.successful(Seq())) {
 
@@ -103,6 +104,7 @@ trait DataExecution extends Connection {
         data.create map { _ match { 
           case Ready(createdDataID) => {
             logger.write(s"data for ${data.getClass} now ready (data id: $createdDataID)")
+            data.dataID = Some(createdDataID)
             ExecutedData(data, data.access, immediateDependencies) 
           }
           case NotReady(error) => {

@@ -150,15 +150,17 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
 }
 
 // Attempts to Execute a Data Object and Hold Outcome (hence Representing Final State)
+
 case class FinalData(data: DataObject) extends DataExecution {
   
-  val accessOrError: Future[AccessOrError] = get(data)
-
   // carry over all immutables of the original data object relevant to the finalized state
   val dataType: String = data.dataType
   val dataTopic: String = data.dataTopic
-  val dataID: Option[Long] = data.dataID
+      
+  val accessOrError: Future[AccessOrError] = get(data)
 
+  val dataID: Future[Long] = accessOrError map { _ => data.dataID.get } // ugly way of getting the data ID out of the system.
+  
   //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
   def humanAccessMessage: Future[String] = {
     accessOrError map { _ match { 
@@ -173,6 +175,31 @@ case class FinalData(data: DataObject) extends DataExecution {
   }
 }
 
+class FinalDataNew(data: DataObject, val accessOrError: AccessOrError) extends DataExecution {
+  
+  // carry over all immutables of the original data object relevant to the finalized state
+  val dataType: String = data.dataType
+  val dataTopic: String = data.dataTopic
+      
+  val dataID = data.dataID
+  
+  def humanAccessMessage = {
+    accessOrError match { 
+      case dataAccessDetail : Access => s"$dataType for $dataTopic is ready."
+      case error: CreateError        => s"$dataType for $dataTopic failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
+      case error: DataIDNotFound     => s"$dataType for $dataTopic with requested data ID ${data.requestedDataID}, does not exist."
+      case error: DepsError          => s"$dataType for $dataTopic failed to create because one or more dependencies were not met: ${error.errorDetail}"
+      case unexpectedErrorType : AccessError => s"unexpected access error type while tyring to get $this: $unexpectedErrorType"
+      case _ => s"error: unexpected match type ${accessOrError.getClass}"
+    }
+  }
+}
+
+object FinalDataNew extends DataExecution {
+  def apply(data: DataObject): Future[FinalDataNew] = {
+    get(data) map { accessOrError => new FinalDataNew(data, accessOrError) }
+  }
+}
 
 
 @deprecated("to be removed","")

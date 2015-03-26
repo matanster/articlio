@@ -34,29 +34,24 @@ object bulkImportRaw extends Controller {
 object showExtract extends Controller {
   def go(articleName: String,
                   pdb: String,
-                  dataID: Option[Long]) = Action.async { implicit request =>
+                  dataID: Option[Long] = None) = Action.async { implicit request =>
 
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     import com.articlio.dataExecution._
     import com.articlio.dataExecution.concrete._
+    import com.articlio.Globals.db
     
-    // TODO: this method should probably be someplace else
-    def show(dataID: Long, allApplicableDataIDs: List[Long]): Future[Result] = { 
-      //import com.articlio.storage.SlickDB
-      import com.articlio.Globals.db
-      db.query(Matches.filter(_.dataid === dataID).filter(_.docname === s"${articleName}.xml").filter(_.fullmatch)) map { 
-        contentResult => Ok(views.html.showExtract(allApplicableDataIDs, dataID, pdb, articleName, contentResult.toList))
-      }
-    }
-    
-    val allApplicableDataIDs = List() // TODO: find all data ID's for the same dataType and dataTopic
-                                      //       something in the style of the former models.Tables.Data.map(m => m.dataid).list.distinct.sorted(Ordering[Long].reverse)
-
-    val attemptedData = FinalData(SemanticData(articleName, pdb, dataID)())
-    
-    attemptedData.accessOrError flatMap { _ match {
-        case error:  AccessError => Future.successful(Ok(s"couldn't find or create data for request: ${attemptedData.humanAccessMessage}")) 
-        case access: Access =>      show(attemptedData.dataID.get, allApplicableDataIDs)
+    FinalDataNew(SemanticData(articleName, pdb, dataID)()) flatMap { data =>
+      data.accessOrError match {
+        case error:  AccessError => Future.successful(Ok(s"couldn't find or create data for request: ${data.humanAccessMessage}")) 
+        case access: Access => {
+          val dataID = data.dataID.get
+          db.query(Matches.filter(_.dataid === dataID).filter(_.docname === s"$articleName.xml").filter(_.fullmatch)) flatMap { 
+            contentResult => db.query(Data.filter(_.datatype === data.dataType).filter(_.datatopic === articleName).map(_.dataid)) map {
+              allApplicableDataIDs => Ok(views.html.showExtract(allApplicableDataIDs, dataID, pdb, articleName, contentResult.toList)) 
+            }
+          }
+        }
       }
     } 
   }
