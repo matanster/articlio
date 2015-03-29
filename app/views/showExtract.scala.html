@@ -11,7 +11,7 @@
     <span>You are viewing the output for run ID:</span>
 	    <span 
 	      @popover(popoverContent="you may also select a different run's results here, by clicking here and selecting a different run ID")>
-	      @dropDownButton(selectedRunID, runIDs.map {r => (routes.showExtract.go(article, pdb, Some(r)).toString, r) })
+	      @dropDownButton(selectedRunID, runIDs.map {r => (routes.showExtract.UI(article, pdb, Some(r)).toString, r) })
 		  </span>
 
     <!-- button for showing original article -->

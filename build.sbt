@@ -53,7 +53,7 @@ libraryDependencies += "com.github.tototoshi" %% "scala-csv" % "1.0.0"
 libraryDependencies += "com.google.code.findbugs" % "jsr305" % "2.0.2"
 
 libraryDependencies ++= Seq(
-  "com.typesafe.slick" %% "slick" % "3.0.0-RC1",
+  "com.typesafe.slick" %% "slick" % "3.0.0-RC2",
   "com.zaxxer" % "HikariCP-java6" % "2.0.1",
   "org.slf4j" % "slf4j-nop" % "1.6.4")
 
@@ -157,7 +157,7 @@ dummytask := {
 // sbt task that auto-generates Slick classes for a given existing database. Usage: sbt slickGenerate
 //
 
-libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.0.0-RC1"
+libraryDependencies += "com.typesafe.slick" %% "slick-codegen" % "3.0.0-RC2"
 
 lazy val slickGenerate = taskKey[Seq[File]]("slick code generation from existing external database")
 

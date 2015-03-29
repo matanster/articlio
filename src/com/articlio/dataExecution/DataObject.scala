@@ -14,6 +14,12 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
+object creationStatusDBtoken {
+  val STARTED = "started" 
+  val SUCCESS = "success"
+  val FAILED  = "failed" 
+}
+
 // Data Object That Needs to be Attempted
 abstract class DataObject(val requestedDataID: Option[Long] = None)
                          (implicit db: SlickDB) extends RecordException 
@@ -26,7 +32,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
                                                                                             // this is function passing "by name".
                                                                                             // the function supplied by caller is passed as is,
                                                                                             // so that this function can execute it.
-      try { return func } 
+      try { return func } // TODO: why is `return` used here with futures?!
         catch { 
           case anyException : Throwable =>
           recordException(anyException)
@@ -56,7 +62,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
       dataid                 = 0L, // will be auto-generated 
       datatype               = dataType, 
       datatopic              = dataTopic, 
-      creationstatus         = "started", 
+      creationstatus         = creationStatusDBtoken.STARTED, 
       creationerrordetail    = None,
       creatorserver          = ownHostName,
       creatorserverstarttime = Some(startTime),
@@ -73,8 +79,8 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
         datatype               = dataType, 
         datatopic              = dataTopic, 
         creationstatus         = creationError match {
-                                   case None => "success"
-                                   case Some(error) => "failed"}, 
+                                   case None => creationStatusDBtoken.SUCCESS
+                                   case Some(error) => creationStatusDBtoken.FAILED}, 
         creationerrordetail    = creationError match { // for now redundant, but if CreationError evolves... need to convert to string like so
                                    case None => None
                                    case Some(error) => Some(error.toString)},
@@ -106,7 +112,10 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
   
   def ReadyStateSpecific(suppliedRunID: Long): Future[ReadyState] = {
     //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    db.query(DataRecord.filter(_.dataid === suppliedRunID).filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) map { 
+    db.query(DataRecord.filter(_.dataid === suppliedRunID)
+                       .filter(_.datatype === this.getClass.getSimpleName)
+                       .filter(_.datatopic === dataTopic)
+                       .filter(_.creationstatus === creationStatusDBtoken.SUCCESS)) map { 
       result => result.nonEmpty match {
         case true => { 
           // TODO: these two lines showcase redundancy and therefore bug potential:
@@ -123,7 +132,9 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
   
   def ReadyStateAny(): Future[ReadyState] = {
     //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    db.query(DataRecord.filter(_.datatype === this.getClass.getSimpleName).filter(_.datatopic === dataTopic)) map {
+    db.query(DataRecord.filter(_.datatype === this.getClass.getSimpleName)
+                       .filter(_.datatopic === dataTopic)
+                       .filter(_.creationstatus === creationStatusDBtoken.SUCCESS)) map {
       result => result.nonEmpty match {
         case true =>
         {
@@ -183,6 +194,8 @@ class FinalDataNew(data: DataObject, val accessOrError: AccessOrError) extends D
       
   val dataID = data.dataID
   
+  println(s"In FinalDataNew class")
+  
   def humanAccessMessage = {
     accessOrError match { 
       case dataAccessDetail : Access => s"$dataType for $dataTopic is ready."
@@ -197,7 +210,9 @@ class FinalDataNew(data: DataObject, val accessOrError: AccessOrError) extends D
 
 object FinalDataNew extends DataExecution {
   def apply(data: DataObject): Future[FinalDataNew] = {
-    get(data) map { accessOrError => new FinalDataNew(data, accessOrError) }
+    get(data) map { accessOrError =>
+      println(s"In FinalDataNew: $accessOrError")
+      new FinalDataNew(data, accessOrError) }
   }
 }
 

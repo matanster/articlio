@@ -15,6 +15,9 @@ import com.articlio.dataExecution.AccessOrError
 import com.articlio.dataExecution.Access
 import com.articlio.config
 import com.articlio.storage.ManagedDataFiles._
+
+import com.articlio.test.{TestSpec, UnitTestable}
+import scala.util.{Success, Failure}
 //import slick.backend.DatabasePublisher
 //import slick.driver.H2Driver.api._
 //import slick.lifted.{ProvenShape, ForeignKeyQuery}
@@ -31,10 +34,95 @@ object bulkImportRaw extends Controller {
   }
 }
 
-object showExtract extends Controller {
-  def go(articleName: String,
-                  pdb: String,
-                  dataID: Option[Long] = None) = Action.async { implicit request =>
+//trait TestableController extends UnitTestable with Controller
+
+object showExtract extends Controller with UnitTestable {
+
+  def tests = Seq(new TestSpec(given = "a non-existent file", should = "generate an error when semantic data is requested for it", nonExistentArticle))
+  
+  def nonExistentArticle = {
+    //val articleName = "Eggers and Kaplan in Annals 2013 cognition and capabilities"
+    val articleName = "bla"
+    val pdb = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"
+    val dataID = None
+    generatesResults_?(articleName, pdb, dataID)     
+  }
+  
+  def generatesResults_?(articleName: String, pdb: String, dataID: Option[Long] = None) = {
+    println("in generatesResults_?")
+    api(articleName, pdb, dataID) map {
+    case (dataID, allApplicableDataIDs, contentResult) =>
+      println(contentResult.toList.length)
+      if (contentResult.toList.length == 0) {
+        println("error")
+        throw new Throwable("no results generated") 
+      }
+    }
+  }
+  
+  def ggeneratesResults_?(articleName: String, pdb: String, dataID: Option[Long] = None) = {
+    println("in generatesResults_?")
+    api(articleName, pdb, dataID) onComplete {
+        case Failure(t) => throw t
+        case Success(s) => { s match {
+          case (dataID, allApplicableDataIDs, contentResult) =>
+          println(contentResult.toList.length)
+          if (contentResult.toList.length == 0) {
+            println("error")
+            throw new Throwable("no results generated") 
+          }  
+        }
+      }
+    }
+  }
+  
+  def api(articleName: String, pdb: String, dataID: Option[Long] = None) = {
+    
+    import com.articlio.dataExecution._
+    import com.articlio.dataExecution.concrete._
+    import com.articlio.Globals.db
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    
+    FinalDataNew(SemanticData(articleName, pdb, dataID)()) flatMap { data =>
+      println("in processing created FinalDataNew")
+      data.accessOrError match {
+        case error:  AccessError => {
+          Future.failed(new Throwable(s"couldn't find or create data for request: ${data.humanAccessMessage}"))
+        }
+        case access: Access => {
+          val dataID = data.dataID.get
+          getData(dataID, data.dataType, articleName) map { case (allApplicableDataIDs, contentResult) =>
+            println(allApplicableDataIDs)
+            (dataID, allApplicableDataIDs, contentResult) }  
+        }
+      }
+    }
+  }
+  
+  def UI(articleName: String, pdb: String, dataID: Option[Long] = None) = Action.async { implicit request =>
+    
+    api(articleName, pdb, dataID) map { case (dataID, allApplicableDataIDs, contentResult) =>
+      println(s"result length: ${contentResult.toList.length}")
+      Ok(views.html.showExtract(allApplicableDataIDs, dataID, pdb, articleName, contentResult.toList))
+    } 
+  }
+  
+  private def allApplicableDataIDs(dataType: String, dataTopic: String) = 
+    db.query(Data.filter(_.datatype === dataType).filter(_.datatopic === dataTopic).map(_.dataid))
+    
+  private def getMatches(dataID: Long, articleName: String) = 
+    db.query(Matches.filter(_.dataid === dataID).filter(_.docname === s"$articleName.xml").filter(_.fullmatch))
+  
+  private def getData(dataID: Long, dataType: String, articleName: String) = 
+    getMatches(dataID, articleName) flatMap { 
+      contentResult => allApplicableDataIDs(dataType, articleName) map {
+        allApplicableDataIDs => (allApplicableDataIDs, contentResult.toList) 
+      }
+    }
+
+  def goOld(articleName: String,
+                pdb: String,
+                dataID: Option[Long] = None) = Action.async { implicit request =>
 
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     import com.articlio.dataExecution._

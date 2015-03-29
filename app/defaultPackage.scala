@@ -55,10 +55,9 @@ object Global extends GlobalSettings {
         
         // now dispatch the tests for after play has been given time to initialize (otherwise fail)
         implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-        Future { blocking {
-          Thread.sleep(1000L)
-          com.articlio.test.TestsRunner.go
-        } }
+        Await.result(Future(com.articlio.test.UnitTestsRunner.go), 30.seconds)
+        println("tests done")
+        //Future { blocking { Thread.sleep(1000L) } }
       }
       case _ =>
     }

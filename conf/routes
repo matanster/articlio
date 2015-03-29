@@ -11,7 +11,7 @@ GET  /assets/*file                            controllers.Assets.at(path="/publi
 GET  /bulkImportRaw/:dirPath                  controllers.bulkImportRaw.go(dirPath: String)
 
 # Show Article Extract
-GET  /showExtract/:articleName                controllers.showExtract.go(articleName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", runID: Option[Long])
+GET  /showExtract/:articleName                controllers.showExtract.UI(articleName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", runID: Option[Long])
 
 # Generate Semantic Data for Input PDF
 GET  /semantic/single/pdf/:inputFileName      controllers.SemanticExtractor.fromArticle(inputFileName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv")

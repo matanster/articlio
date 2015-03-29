@@ -3,7 +3,6 @@ package com.articlio.test
 import models._
 import play.api._
 import play.api.mvc._
-//import play.api.db.slick._ play slick plugin is not yet interoperable with Slick 3.0.0, slick is wired in without it
 import slick.driver.MySQLDriver.simple._
 import slick.jdbc.meta._
 import play.api.http.MimeTypes
@@ -12,46 +11,55 @@ import play.api.libs.ws._
 import play.api.libs.ws.ning.NingAsyncHttpClientConfigBuilder
 import scala.concurrent.Future
 import com.articlio.config
+import scala.util.Try
 
 abstract class Result
 case class Success() extends Result
 case class Fail() extends Result
 
+/*
 abstract class Test {
   def preps: Option[Seq[Any]] = None 
   def run: Result
 }
+*/
 
-object TestsRunner {
+class TestSpec(val given: String, val should: String, func: => Future[Unit]) { def attempt = func }
+trait UnitTestable { def tests: Seq[TestSpec] } 
 
-  val tests: Seq[Test] = Seq(new Test1, 
-                             new Test2)
-  def go {
+object UnitTestsRunner {
+  
+  val testables: Seq[UnitTestable] = Seq(controllers.showExtract)
+  
+  def go: Unit = {
     println("running tests...")
-    val results = tests.map(test => test.run)
+    //val results = testables.map(testable => testable.tests.map(test => test.attempt))
+    val results: Seq[Seq[Future[Unit]]] = testables.map(testable => testable.tests.map(test => test.attempt))
+    val flat = results.flatten
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    Future.sequence(flat).onComplete { println }
   }
 }
 
-class Test1 extends Test {
+
+
+
+@deprecated("http test will fail due to play lazy initialization in dev mode", "")
+class httpPurge {
   def run = {
     HttpClient.awaitedGet("purge")
     new Success
   }
 }
 
-class Test2 extends Test {
+@deprecated("http test will fail due to play lazy initialization in dev mode", "")
+class playUp {
   def run = {
-    new Success
-  }
-}
-
-object EndToEnd {
-  def playWS {
     println("Hello, world!")
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     WS.url(s"http://localhost:9000/").get().map { response => println("got response") }
+    new Success
   }
-  
 }
 
 
