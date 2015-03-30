@@ -17,6 +17,7 @@ import com.articlio.config
 import com.articlio.storage.ManagedDataFiles._
 
 import com.articlio.test.{TestSpec, UnitTestable}
+import com.articlio.test.FutureAdditions._
 import scala.util.{Success, Failure}
 //import slick.backend.DatabasePublisher
 //import slick.driver.H2Driver.api._
@@ -38,40 +39,52 @@ object bulkImportRaw extends Controller {
 
 object showExtract extends Controller with UnitTestable {
 
-  def tests = Seq(new TestSpec(given = "a non-existent file", should = "generate an error when semantic data is requested for it", nonExistentArticle))
+  def tests = Seq(
+      new TestSpec(given  = "a file non-existent in the data directory", 
+      should = "generate an error when semantic data is requested for it", 
+      TryNonExistentArticle),
+      new TestSpec(given  = "a file existing in the data directory",
+      should = "have content results",
+      tryExistingArticle)
+  )
+      
+      
+  def tests1 = Seq(new TestSpec(given  = "a file non-existent in the data directory", 
+                              should = "generate an error when semantic data is requested for it", 
+                              TryNonExistentArticle),
+                  new TestSpec(given  = "a file non-existent in the data directory", 
+                               should = "generate an error when semantic data is requested for it", 
+                               TryNonExistentArticle)                               
+              )
   
-  def nonExistentArticle = {
-    //val articleName = "Eggers and Kaplan in Annals 2013 cognition and capabilities"
-    val articleName = "bla"
+              
+              
+  val existingArticle = "bla"
+  val nonExistingArticle = "Eggers and Kaplan in Annals 2013 cognition and capabilities"
+                               
+  def tryExistingArticle = {
     val pdb = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"
     val dataID = None
-    generatesResults_?(articleName, pdb, dataID)     
+    generatedResultsHaveContent_?(existingArticle, pdb, dataID)
+  }
+  
+  def TryNonExistentArticle = {
+    val pdb = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"
+    val dataID = None
+    generatesResults_?(nonExistingArticle, pdb, dataID).reverse
   }
   
   def generatesResults_?(articleName: String, pdb: String, dataID: Option[Long] = None) = {
-    println("in generatesResults_?")
+    api(articleName, pdb, dataID)
+  }
+  
+  def generatedResultsHaveContent_?(articleName: String, pdb: String, dataID: Option[Long] = None) = {
     api(articleName, pdb, dataID) map {
     case (dataID, allApplicableDataIDs, contentResult) =>
       println(contentResult.toList.length)
       if (contentResult.toList.length == 0) {
         println("error")
         throw new Throwable("no results generated") 
-      }
-    }
-  }
-  
-  def ggeneratesResults_?(articleName: String, pdb: String, dataID: Option[Long] = None) = {
-    println("in generatesResults_?")
-    api(articleName, pdb, dataID) onComplete {
-        case Failure(t) => throw t
-        case Success(s) => { s match {
-          case (dataID, allApplicableDataIDs, contentResult) =>
-          println(contentResult.toList.length)
-          if (contentResult.toList.length == 0) {
-            println("error")
-            throw new Throwable("no results generated") 
-          }  
-        }
       }
     }
   }
