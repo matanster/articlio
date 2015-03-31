@@ -15,8 +15,9 @@ import scala.util.Try
 import scala.util.{Success, Failure, Try}
 import scala.concurrent.Awaitable
 
-class TestSpec(val given: String, val should: String, func: => Future[Unit]) { def attempt = func }
+class TestSpec (val given: String, val should: String, func: => Future[Unit]) { def attempt = func }
 trait UnitTestable { def tests: Seq[TestSpec] } 
+trait Testable     { val TestContainer: UnitTestable }
 
 object FutureAdditions {
   implicit class FutureAdditions[T](future: Future[T]) {
@@ -39,13 +40,12 @@ object UnitTestsRunner {
 
   implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
   
-  val testables: Seq[UnitTestable] = Seq(controllers.showExtract)
+  val testables = Seq(controllers.ShowExtract).map(_.TestContainer)
 
-  def lift(futures: Seq[Future[Unit]]): Seq[Future[Try[Unit]]] = 
-    futures.map(_.map { Success(_) }.recover { case t => Failure(t) }
-  )
+  private def lift(futures: Seq[Future[Unit]]): Seq[Future[Try[Unit]]] = 
+    futures.map(_.map { Success(_) }.recover { case t => Failure(t) })
   
-  def waitAll(futures: Seq[Future[Unit]]): Future[Seq[Try[Unit]]] =
+  private def waitAll(futures: Seq[Future[Unit]]): Future[Seq[Try[Unit]]] =
     Future.sequence(lift(futures))
   
   //
@@ -63,26 +63,25 @@ object UnitTestsRunner {
       // once complete, list the results
       val zipped: Seq[(Seq[Future[Unit]], UnitTestable)] = testablesResults zip testables
       (testablesResults zip testables).map { case(testableResults, testable) =>
-        println(Console.BOLD + s"--- testable ${testable.getClass.getName} ---" + Console.RESET)
-        testableResults zip testable.tests map { case(result, test) =>
-          println(result.isCompleted) 
-            val TestDesc = s"Given ${test.given}, should ${test.should}"
-            println(result.value match {
-                case Some(Success(_)) => Console.GREEN + Console.BOLD + "[Ok]: " + s"$TestDesc" + Console.RESET 
-                case Some(Failure(t)) => Console.RED + Console.BOLD + "[Failed]: " + Console.RESET + s"$TestDesc [${t.toString.take(70)}${if (t.toString.length > 70) "..."}]" 
-                case None => Console.RED + s"[UnitTestsRunner internal error:] test ${test.attempt} not complete: ${result.isCompleted}" + Console.RESET
-            })
+        println(Console.BOLD + s"---- testable ${testable.getClass.getName} ----" + Console.RESET)
+        testableResults zip testable.tests map { case(result, testSpec) =>
+          assert(result.isCompleted) 
+          val TestDesc = s"Given ${testSpec.given} => should ${testSpec.should}"
+          println(result.value match {
+              case Some(Success(_)) => Console.GREEN + Console.BOLD + "[Ok]:     " + Console.RESET + s"$TestDesc" 
+              case Some(Failure(t)) => Console.RED + Console.BOLD +   "[Failed]: " + Console.RESET + s"$TestDesc [${t.toString.take(70)}${if (t.toString.length > 70) "...." else "]"}" 
+              case None => Console.RED + s"[UnitTestsRunner internal error:] test ${testSpec.attempt} not complete: ${result.isCompleted}" + Console.RESET
+          })
         }
       }
-    //println("tests done")
+    println("...tests done")
     }
   }
 }
 
-import scala.concurrent._
-import ExecutionContext.Implicits.global
-import scala.util.{Success, Failure}
-import scala.concurrent.Awaitable
+
+
+
 
 @deprecated("http test will fail due to play lazy initialization in dev mode", "")
 class httpPurge {
