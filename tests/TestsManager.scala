@@ -63,12 +63,26 @@ object UnitTestsRunner {
   //
   def go: Unit = {
     println("running tests...")
-                                                 
-    //val a: Future[Int] = controllers.BulkImportRaw.TestContainer.failWithNonExistentLocation map {_ => 3}
     
+    import scala.Console._ // Hopefully this doesn't bite
+    val terminalWidth = jline.TerminalFactory.get().getWidth();
+        
+    def lineWrapForConsole(text: String) = {
+      val indentLength = 10
+      val rightSlack = 10
+      if (terminalWidth - indentLength - rightSlack < 10) throw new Throwable("Console width too small to print tests... tests not started")
+
+      val wrapped: List[String] = text.grouped(terminalWidth - indentLength - rightSlack).toList
+      val lines = wrapped.length
+      
+      val indent = List.fill(indentLength)(" ").mkString
+      
+      (List.fill(lines)(indent) zip wrapped map { case (i, w) => i + w + "\n" }).mkString 
+    } 
+                                                 
     val testablesResults: Seq[Seq[Future[MaybeRun]]] = testContainers.map(testable => testable.tests
                                                                  .map(test => test.maybeRun match {
-                                                                   case Run  => val a: Future[MaybeRun] = test.attempt map {_ => Run }; a
+                                                                   case Run  => test.attempt map {_ => Run } 
                                                                    case Skip => Future.successful(Skip)
                                                                  }))
     
@@ -76,15 +90,17 @@ object UnitTestsRunner {
       // once complete, list the results
       val zipped = testablesResults zip testContainers
       (testablesResults zip testContainers).map { case(testableResults, testable) =>
-        println(Console.BOLD + s"--------- ${testable.getClass.getName.dropRight(15)}" + Console.RESET)
+        println(WHITE_B + BLACK + BOLD + s"          ${testable.getClass.getName.dropRight(15)}".padTo(terminalWidth, ' ') + RESET)
         testableResults zip testable.tests map { case(result, testSpec) =>
           assert(result.isCompleted) 
-          val TestDesc = s"Given ${testSpec.given} => should ${testSpec.should}"
+          val TestDesc = s"given ${testSpec.given} <=> should ${testSpec.should}"
           println(result.value match {
-              case Some(Success(Run))  => Console.GREEN + Console.BOLD +   "[Ok]      " + Console.RESET + s"$TestDesc" 
-              case Some(Success(Skip)) => Console.YELLOW_B + Console.BOLD + "[Skipped]" + Console.RESET + " " + s"$TestDesc"
-              case Some(Failure(t))    => Console.RED + Console.BOLD +     "[Failed]  " + Console.RESET + s"$TestDesc [${t.toString.take(700)}${if (t.toString.length > 700) "...." else "]"}" 
-              case _ => Console.RED + s"[UnitTestsRunner internal error:] test ${testSpec.attempt} not complete: ${result.isCompleted}" + Console.RESET
+              case Some(Success(Run))  => GREEN + BOLD +   "[Ok]      " + RESET + TestDesc
+              case Some(Success(Skip)) => YELLOW_B + BOLD + "[Skipped]" + RESET + " " + TestDesc
+              case Some(Failure(t))    => RED + BOLD +     "[Failed]  " + RESET + TestDesc + 
+                                          RED + "\n" + lineWrapForConsole(t.getMessage) + RESET
+                                          // case Some(Failure(t))    => RED + BOLD +     "[Failed]  " + RESET + TestDesc + RED + "\n          ∗ " + t.getMessage.take(700) + (if (t.toString.length > 700) "...." else "") + RESET
+              case _ => Console.RED + s"[UnitTestsRunner internal error:] test ${testSpec.attempt} not complete: ${result.isCompleted}" + RESET
           })
         }
       }

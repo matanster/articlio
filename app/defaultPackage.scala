@@ -21,17 +21,27 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.concurrent.blocking
 import play.api.mvc._
+import play.api.{db => _, _}
+import play.api.mvc._
 
 object Global extends GlobalSettings {
 
   play.api.Logger.info("Global object started")
   println("Global object started")
   
+  case class DefaultResponder(message: String) extends Controller {
+    def go = Action { implicit request => Ok(message) }
+  }
+  
   override def onRouteRequest(request: RequestHeader): Option[Handler] = {
     //do our own path matching first - otherwise pass it onto play.
-    println(request.path)
+    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    println(s"received http request ${request.path}")
     request.path match {
       case "/override" => println("intercepted"); Some(controllers.index.go)
+      
+      case "/test"     => com.articlio.test.UnitTestsRunner.go; Some(DefaultResponder("starting tests...").go)
+      
       case _ => Play.maybeApplication.flatMap(_.routes.flatMap {
         router => router.handlerFor(request)
       })

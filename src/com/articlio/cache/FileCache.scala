@@ -1,3 +1,9 @@
+/*
+ *  stub code with the jcloud imports - disabled for now in build.sbt
+ */
+
+/*
+
 package com.articlio.cache
 
 import org.jclouds.rackspace.cloudfiles.v1._
@@ -32,3 +38,5 @@ class FileCache {
     }
   }
 }
+
+*/

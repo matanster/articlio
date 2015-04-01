@@ -123,6 +123,8 @@ libraryDependencies ++= {
       "edu.arizona.sista" % "processors" % version classifier "models")
 }
 
+libraryDependencies += "jline" % "jline" % "2.12"
+
 //
 // enable play http client calls
 //
@@ -132,7 +134,7 @@ libraryDependencies ++= Seq(
 )
 
 //
-// avoid the play auto refresh plugin opening a browser window on startup 
+// play auto refresh plugin based on websocket, (and avoid it opening a browser window on startup)
 //
 
 com.jamesward.play.BrowserNotifierKeys.shouldOpenBrowser := false
@@ -192,27 +194,26 @@ slickGenerate := {
 // rackspace api
 //
 
-libraryDependencies ++= Seq("org.apache.jclouds.driver" % "jclouds-slf4j" % "1.8.1",
-"org.apache.jclouds.driver" % "jclouds-sshj" % "1.8.1",
-"org.apache.jclouds.provider" % "rackspace-cloudservers-us" % "1.8.1",
-"org.apache.jclouds.labs" % "rackspace-cloudfiles-us" % "1.8.1",
-"org.apache.jclouds.provider" % "rackspace-cloudblockstorage-us" % "1.8.1",
-"org.apache.jclouds.provider" % "rackspace-clouddatabases-us" % "1.8.1",
-"org.apache.jclouds.labs" % "rackspace-cloudqueues-us" % "1.8.1",
-"org.apache.jclouds.provider" % "rackspace-cloudloadbalancers-us" % "1.8.1",
-"org.apache.jclouds.provider" % "rackspace-clouddns-us" % "1.8.1",
-"org.apache.jclouds.provider" % "rackspace-cloudservers-uk" % "1.8.1",
-"org.apache.jclouds.labs" % "rackspace-cloudfiles-uk" % "1.8.1",
-"org.apache.jclouds.provider" % "rackspace-cloudblockstorage-uk" % "1.8.1",
-"org.apache.jclouds.provider" % "rackspace-clouddatabases-uk" % "1.8.1",
-"org.apache.jclouds.labs" % "rackspace-cloudqueues-uk" % "1.8.1",
-"org.apache.jclouds.labs" % "rackspace-autoscale-us" % "1.8.1",
-"org.apache.jclouds.provider" % "rackspace-cloudloadbalancers-uk" % "1.8.1",
-"org.apache.jclouds.provider" % "rackspace-clouddns-uk" % "1.8.1"
-)
+// libraryDependencies ++= Seq("org.apache.jclouds.driver" % "jclouds-slf4j" % "1.8.1",
+// "org.apache.jclouds.driver" % "jclouds-sshj" % "1.8.1",
+// "org.apache.jclouds.provider" % "rackspace-cloudservers-us" % "1.8.1",
+// "org.apache.jclouds.labs" % "rackspace-cloudfiles-us" % "1.8.1",
+// "org.apache.jclouds.provider" % "rackspace-cloudblockstorage-us" % "1.8.1",
+// "org.apache.jclouds.provider" % "rackspace-clouddatabases-us" % "1.8.1",
+// "org.apache.jclouds.labs" % "rackspace-cloudqueues-us" % "1.8.1",
+// "org.apache.jclouds.provider" % "rackspace-cloudloadbalancers-us" % "1.8.1",
+// "org.apache.jclouds.provider" % "rackspace-clouddns-us" % "1.8.1",
+// "org.apache.jclouds.provider" % "rackspace-cloudservers-uk" % "1.8.1",
+// "org.apache.jclouds.labs" % "rackspace-cloudfiles-uk" % "1.8.1",
+// "org.apache.jclouds.provider" % "rackspace-cloudblockstorage-uk" % "1.8.1",
+// "org.apache.jclouds.provider" % "rackspace-clouddatabases-uk" % "1.8.1",
+// "org.apache.jclouds.labs" % "rackspace-cloudqueues-uk" % "1.8.1",
+// "org.apache.jclouds.labs" % "rackspace-autoscale-us" % "1.8.1",
+// "org.apache.jclouds.provider" % "rackspace-cloudloadbalancers-uk" % "1.8.1",
+// "org.apache.jclouds.provider" % "rackspace-clouddns-uk" % "1.8.1"
+// )
 
 //
-// testing memory database
+// testing memory database - not in use
 //
-libraryDependencies += "com.h2database" % "h2" % "1.4.186"
-
+//libraryDependencies += "com.h2database" % "h2" % "1.4.186"

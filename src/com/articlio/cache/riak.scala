@@ -6,6 +6,17 @@ package com.articlio.cache
  *  for a long while.
  */
 
+
+trait ExceptionDetail {
+  def getExceptionDetail(exception: Throwable) {
+    println(s"exception message: ${exception.getMessage}")
+    println(s"exception cause  : ${exception.getCause}")
+    println(s"exception class  : ${exception.getClass}")
+    println(s"exception stack trace:\n ${exception.getStackTrace.toList.mkString("\n")}")
+  }
+}
+  
+
 @deprecated("see comment in source file", "not recommended for large files")
 object ScalaRiakClient extends ExceptionDetail {
   import com.basho.riak.client

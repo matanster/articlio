@@ -34,12 +34,12 @@ object BulkImportRaw extends Controller with Testable {
                 )
     
     def succeedWithTestResources: Future[Unit] = 
-      api("test-resources") map { result => if (result == false) throw new Throwable("import failed"); 4 }
+      api("test-resources") map { result => if (!result) throw new Throwable("import failed") }
 
     def failWithNonExistentLocation: Future[Unit] = 
       api("bla bla foo") map { _ match {
+        case false => Unit 
         case true  => throw new Throwable("should have failed")
-        case false => Unit
         }
       }
   }
