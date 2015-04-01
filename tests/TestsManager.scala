@@ -62,15 +62,16 @@ object UnitTestsRunner {
   // Dispatch all tests, list all results once they are over
   //
   def go: Unit = {
-    println("running tests...")
-    
     import scala.Console._ // Hopefully this doesn't bite
     val terminalWidth = jline.TerminalFactory.get().getWidth();
-        
+    
+    println("running tests...")
+
+    // line-wraps long string, including left indent and right margin fit
     def lineWrapForConsole(text: String) = {
       val indentLength = 10
       val rightSlack = 10
-      if (terminalWidth - indentLength - rightSlack < 10) throw new Throwable("Console width too small to print tests... tests not started")
+      if (terminalWidth - indentLength - rightSlack < 10) throw new Throwable("Console width too small to print tests results")
 
       val wrapped: List[String] = text.grouped(terminalWidth - indentLength - rightSlack).toList
       val lines = wrapped.length
@@ -95,16 +96,18 @@ object UnitTestsRunner {
           assert(result.isCompleted) 
           val TestDesc = s"given ${testSpec.given} <=> should ${testSpec.should}"
           println(result.value match {
-              case Some(Success(Run))  => GREEN + BOLD +   "[Ok]      " + RESET + TestDesc
-              case Some(Success(Skip)) => YELLOW_B + BOLD + "[Skipped]" + RESET + " " + TestDesc
-              case Some(Failure(t))    => RED + BOLD +     "[Failed]  " + RESET + TestDesc + 
+              case Some(Success(Run))  => GREEN + BOLD +  "[Ok]      " + RESET + TestDesc
+              case Some(Success(Skip)) => YELLOW + BOLD + "[Skip]    " + RESET + TestDesc
+              case Some(Failure(t))    => RED + BOLD +    "[Failed]  " + RESET + TestDesc + 
                                           RED + "\n" + lineWrapForConsole(t.getMessage) + RESET
-                                          // case Some(Failure(t))    => RED + BOLD +     "[Failed]  " + RESET + TestDesc + RED + "\n          ∗ " + t.getMessage.take(700) + (if (t.toString.length > 700) "...." else "") + RESET
+              // case Some(Failure(t))    => RED + BOLD +     "[Failed]  " + RESET + TestDesc + RED + "\n          ∗ " + t.getMessage.take(700) + (if (t.toString.length > 700) "...." else "") + RESET
               case _ => Console.RED + s"[UnitTestsRunner internal error:] test ${testSpec.attempt} not complete: ${result.isCompleted}" + RESET
           })
         }
       }
+      
     println("...tests done")
+    
     }
   }
 }
