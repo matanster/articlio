@@ -14,10 +14,16 @@ import com.articlio.config
 import scala.util.Try
 import scala.util.{Success, Failure, Try}
 import scala.concurrent.Awaitable
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
-class TestSpec (val given: String, val should: String, func: => Future[Unit]) { def attempt = func }
-trait UnitTestable { def tests: Seq[TestSpec] } 
-trait Testable     { val TestContainer: UnitTestable }
+abstract class MaybeRun
+object Run  extends MaybeRun 
+object Skip extends MaybeRun
+
+class TestSpec (val given: String, val should: String, func: => Future[Unit], val maybeRun: MaybeRun = Run) { def attempt = func }
+trait TestContainer { def tests: Seq[TestSpec] } 
+trait Testable      { def TestContainer: TestContainer }
 
 object FutureAdditions {
   implicit class FutureAdditions[T](future: Future[T]) {
@@ -40,37 +46,45 @@ object UnitTestsRunner {
 
   implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
   
-  val testables = Seq(controllers.ShowExtract).map(_.TestContainer)
-
-  private def lift(futures: Seq[Future[Unit]]): Seq[Future[Try[Unit]]] = 
-    futures.map(_.map { Success(_) }.recover { case t => Failure(t) })
+  val testables: Seq[Testable] = Seq(controllers.ShowExtract,
+                                     controllers.BulkImportRaw)
   
-  private def waitAll(futures: Seq[Future[Unit]]): Future[Seq[Try[Unit]]] =
+  val testContainers = testables.map(testable => testable.TestContainer)
+
+  // wait for entire sequence of futures to complete, even if some of them failed (unlike the standard library's .sequence), via lifting to Try objects.
+  private def waitAll[T](futures: Seq[Future[T]]): Future[Seq[Try[T]]] =
     Future.sequence(lift(futures))
   
+  private def lift[T](futures: Seq[Future[T]]): Seq[Future[Try[T]]] = 
+    futures.map(_.map { Success(_) }.recover { case t => Failure(t) })
+    
   //
   // Dispatch all tests, list all results once they are over
   //
   def go: Unit = {
     println("running tests...")
-    val testablesResults: Seq[Seq[Future[Unit]]] = testables.map(testable => testable.tests.map(test => test.attempt))
+                                                 
+    //val a: Future[Int] = controllers.BulkImportRaw.TestContainer.failWithNonExistentLocation map {_ => 3}
     
-    // wait for all tests to complete
-    val flat: Seq[Future[Unit]] = testablesResults.flatten
+    val testablesResults: Seq[Seq[Future[MaybeRun]]] = testContainers.map(testable => testable.tests
+                                                                 .map(test => test.maybeRun match {
+                                                                   case Run  => val a: Future[MaybeRun] = test.attempt map {_ => Run }; a
+                                                                   case Skip => Future.successful(Skip)
+                                                                 }))
     
-    waitAll(flat).map { _ => 
-
+    waitAll(testablesResults.flatten).map { _ => 
       // once complete, list the results
-      val zipped: Seq[(Seq[Future[Unit]], UnitTestable)] = testablesResults zip testables
-      (testablesResults zip testables).map { case(testableResults, testable) =>
-        println(Console.BOLD + s"---- testable ${testable.getClass.getName} ----" + Console.RESET)
+      val zipped = testablesResults zip testContainers
+      (testablesResults zip testContainers).map { case(testableResults, testable) =>
+        println(Console.BOLD + s"--------- ${testable.getClass.getName.dropRight(15)}" + Console.RESET)
         testableResults zip testable.tests map { case(result, testSpec) =>
           assert(result.isCompleted) 
           val TestDesc = s"Given ${testSpec.given} => should ${testSpec.should}"
           println(result.value match {
-              case Some(Success(_)) => Console.GREEN + Console.BOLD + "[Ok]:     " + Console.RESET + s"$TestDesc" 
-              case Some(Failure(t)) => Console.RED + Console.BOLD +   "[Failed]: " + Console.RESET + s"$TestDesc [${t.toString.take(70)}${if (t.toString.length > 70) "...." else "]"}" 
-              case None => Console.RED + s"[UnitTestsRunner internal error:] test ${testSpec.attempt} not complete: ${result.isCompleted}" + Console.RESET
+              case Some(Success(Run))  => Console.GREEN + Console.BOLD +   "[Ok]      " + Console.RESET + s"$TestDesc" 
+              case Some(Success(Skip)) => Console.YELLOW_B + Console.BOLD + "[Skipped]" + Console.RESET + " " + s"$TestDesc"
+              case Some(Failure(t))    => Console.RED + Console.BOLD +     "[Failed]  " + Console.RESET + s"$TestDesc [${t.toString.take(700)}${if (t.toString.length > 700) "...." else "]"}" 
+              case _ => Console.RED + s"[UnitTestsRunner internal error:] test ${testSpec.attempt} not complete: ${result.isCompleted}" + Console.RESET
           })
         }
       }

@@ -82,15 +82,21 @@ object Importer { // not for Windows OS...
     }
   }
   
-  def bulkImportRaw(path: String): Seq[FinalData] = { 
+  def bulkImportRaw(path: String): Seq[Future[FinalDataNew]] = { 
     // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files
     //       to avoid bloated data groups, thus also reducing statistic skew from duplicates
-    // TODO: do this more asynchronously if it becomes a key process - as per http://docs.oracle.com/javase/7/docs/api/java/nio/file/DirectoryStream.html or other
+    // TODO: do this more asynchronously if it becomes a key process (cf. http://docs.oracle.com/javase/7/docs/api/java/nio/file/DirectoryStream.html or other)
     import com.articlio.pipelines.util.copy
     import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-    val files = new java.io.File(path).listFiles.filter(file => (file.isFile)).map(file => file.getName).toSeq
-    files.map(fileName => importCreateData(fileName, path)).flatten // flatten only takes Somes into the result list
-                                                           .map(data => FinalData(data))                                                                       
+    val liftedPath = new java.io.File(path) 
+    liftedPath.exists match {
+      case false => throw new Throwable(s"Cannot import from non-existent directory: $path")
+      case true => {
+        val files = liftedPath.listFiles.filter(file => (file.isFile)).map(file => file.getName).toSeq
+        files.map(fileName => importCreateData(fileName, path)).flatten // flatten only takes Somes into the result list
+                                                           .map(data => FinalDataNew(data))
+      }
+    }
   }
 }

@@ -8,7 +8,7 @@ GET  /                                        controllers.index.go
 GET  /assets/*file                            controllers.Assets.at(path="/public", file)
 
 # Import Raw Documents of Any Supported Raw Type 
-GET  /bulkImportRaw/:dirPath                  controllers.bulkImportRaw.go(dirPath: String)
+GET  /bulkImportRaw/:dirPath                  controllers.BulkImportRaw.UI(dirPath: String)
 
 # Show Article Extract
 GET  /showExtract/:articleName                controllers.ShowExtract.UI(articleName: String, pdb: String ?= "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv", runID: Option[Long])

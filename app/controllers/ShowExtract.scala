@@ -16,13 +16,13 @@ import com.articlio.dataExecution.Access
 import com.articlio.config
 import com.articlio.storage.ManagedDataFiles._
 
-import com.articlio.test.{TestSpec, UnitTestable, Testable}
+import com.articlio.test.{TestSpec, TestContainer, Testable, Skip}
 import com.articlio.test.FutureAdditions._
 import scala.util.{Success, Failure}
 
 object ShowExtract extends Controller with Testable {
 
-  object TestContainer extends UnitTestable {
+  object TestContainer extends TestContainer {
     
     def tests = Seq(
         new TestSpec(given  = "a file non-existent in the data directory", 

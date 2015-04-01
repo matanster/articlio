@@ -10,24 +10,52 @@ import models.Tables
 import scala.concurrent.{Future, Await}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import com.articlio.dataExecution.FinalData
+import com.articlio.dataExecution._
 import com.articlio.dataExecution.AccessOrError
 import com.articlio.dataExecution.Access
 import com.articlio.config
 import com.articlio.storage.ManagedDataFiles._
+import scala.util.{Success, Failure, Try}
 
-import com.articlio.test.{TestSpec, UnitTestable, Testable}
+import com.articlio.test._
 import com.articlio.test.FutureAdditions._
 import scala.util.{Success, Failure}
 
-object bulkImportRaw extends Controller {
+object BulkImportRaw extends Controller with Testable {
+  
+  object TestContainer extends TestContainer {
+    
+    def tests = Seq(new TestSpec(given = "the test-resources directory containing pdf files",
+                                 should = "import them successfully into the system",
+                                 succeedWithTestResources),
+                    new TestSpec(given = "a non-existing directory",
+                                 should = "fail trying to import from it",
+                                 failWithNonExistentLocation)
+                )
+    
+    def succeedWithTestResources: Future[Unit] = 
+      api("test-resources") map { result => if (result == false) throw new Throwable("import failed"); 4 }
 
-  def go(path: String) = Action.async { implicit request =>
-    val data: Seq[FinalData]  = com.articlio.dataExecution.concrete.Importer.bulkImportRaw(path)
-    val simplifiedAggregateDataStatus: Future[Boolean] = Future.sequence(data.map(_.accessOrError)) map { _.forall(_.isInstanceOf[Access]) }
-    simplifiedAggregateDataStatus map { _ match {
+    def failWithNonExistentLocation: Future[Unit] = 
+      api("bla bla foo") map { _ match {
+        case true  => throw new Throwable("should have failed")
+        case false => Unit
+        }
+      }
+  }
+
+  def UI(path: String) = Action.async { implicit request =>
+    api(path) map { _ match {
       case true =>  Ok("Import successful")
       case false => Ok("Import failed")
     }}
+  }
+  
+  def api(path: String): Future[Boolean] = {
+    val data = Try(com.articlio.dataExecution.concrete.Importer.bulkImportRaw(path))
+    data match {
+      case Success(s) => Future.sequence(data.get.map(_ map { _.accessOrError })) map { _.forall(_.isInstanceOf[Access]) } 
+      case Failure(t) => Future.successful(false)
+    }
   }
 }
