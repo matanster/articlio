@@ -30,7 +30,7 @@ object BulkImportRaw extends Controller with Testable {
                                  succeedWithTestResources),
                     new TestSpec(given = "a non-existing directory",
                                  should = "fail trying to import from it",
-                                 failWithNonExistentLocation, Skip)
+                                 failWithNonExistentLocation)
                 )
     
     def succeedWithTestResources: Future[Unit] = 

@@ -18,10 +18,17 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 
 abstract class MaybeRun
-object Run  extends MaybeRun 
+object Run extends MaybeRun
 object Skip extends MaybeRun
 
-class TestSpec (val given: String, val should: String, func: => Future[Unit], val maybeRun: MaybeRun = Run) { def attempt = func }
+case class BeenRun(timeRun: Long) extends MaybeRun
+
+class TestSpec (val given: String, 
+                val should: String, 
+                func: => Future[Unit], 
+                val maybeRun: MaybeRun = Run, 
+                val timeLimit: Duration = 10.seconds) { def attempt = func }
+
 trait TestContainer { def tests: Seq[TestSpec] } 
 trait Testable      { def TestContainer: TestContainer }
 
@@ -57,7 +64,7 @@ object UnitTestsRunner {
   
   private def lift[T](futures: Seq[Future[T]]): Seq[Future[Try[T]]] = 
     futures.map(_.map { Success(_) }.recover { case t => Failure(t) })
-    
+
   //
   // Dispatch all tests, list all results once they are over
   //
@@ -83,7 +90,13 @@ object UnitTestsRunner {
                                                  
     val testablesResults: Seq[Seq[Future[MaybeRun]]] = testContainers.map(testable => testable.tests
                                                                  .map(test => test.maybeRun match {
-                                                                   case Run  => test.attempt map {_ => Run } 
+                                                                   case Run  => {
+                                                                     val time = System.currentTimeMillis
+                                                                     test.attempt map {_ => 
+                                                                       val elapsedTime = System.currentTimeMillis() - time 
+                                                                       BeenRun(elapsedTime)
+                                                                     }
+                                                                   }
                                                                    case Skip => Future.successful(Skip)
                                                                  }))
     
@@ -96,7 +109,7 @@ object UnitTestsRunner {
           assert(result.isCompleted) 
           val TestDesc = s"given ${testSpec.given} <=> should ${testSpec.should}"
           println(result.value match {
-              case Some(Success(Run))  => GREEN + BOLD +  "[Ok]      " + RESET + TestDesc
+              case Some(Success(BeenRun(time)))  => GREEN + BOLD +  "[Ok]      " + RESET + TestDesc + s"   ⌛ $time msec" //⌛⌚
               case Some(Success(Skip)) => YELLOW + BOLD + "[Skip]    " + RESET + TestDesc
               case Some(Failure(t))    => RED + BOLD +    "[Failed]  " + RESET + TestDesc + 
                                           RED + "\n" + lineWrapForConsole(t.getMessage) + RESET
