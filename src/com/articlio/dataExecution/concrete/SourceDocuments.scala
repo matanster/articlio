@@ -8,7 +8,7 @@ import com.articlio.storage.ManagedDataFiles._
 
 /* 
  *  These data classes effectively just "import" a file from a file system type -
- *  they register it in the Data DB, and thus make it available for processing. 
+ *  they register it in the Data DB, thus making it available for processing by higher-up data entities. 
  */
  
 abstract class Raw(articleName: String, externalSourceDirectory: Option[String] = None) extends DataObject 
@@ -27,20 +27,20 @@ abstract class Raw(articleName: String, externalSourceDirectory: Option[String] 
   
   lazy val fullPath = s"$directory/$fileName".rooted
 
-  // check if file is already sitting in the managed directory. if not, try to import from the import-from directory if supplied.  
+  // check if file is already sitting in the managed directory. if not, try to import it from the import-from directory argument, if supplied.  
   // a file with the exact same name as one already in the managed directory, will not be imported.
   def creator(dataID: Long, dataType:String, fileName: String) : Future[Option[CreateError]] = {
     filePathExists(fullPath) match {
       case true  => Future.successful(None)
       case false => 
         externalSourceDirectory match {
-          case None => Future.successful(Some(CreateError(s"file $fileName was not found in $directory.")))
+          case None => Future.successful(Some(CreateError(s"file $fileName was not found in $directory")))
           case Some(externalSourceDirectory) => filePathExists(s"$externalSourceDirectory/$fileName") match {
             case true => {
               com.articlio.pipelines.util.copy(s""""$externalSourceDirectory/$fileName"""", directory)
               Future.successful(None) }
             case false =>
-              Future.successful(Some(CreateError(s"file $fileName was not found in $externalSourceDirectory.")))
+              Future.successful(Some(CreateError(s"file $fileName was not found in $externalSourceDirectory")))
           }
         }
     }
@@ -72,7 +72,7 @@ object Importer { // not for Windows OS...
   
   // guessfully type raw input
   def importCreateData(fileName: String, path: String): Option[Raw] = {
-    println(fileName)
+    println(s"importing file $fileName")
     //val fileName = path.split("/").last 
     fileName match {
       case s: String if s.endsWith(".pdf") => Some(RawPDF(fileName, Some(path)))

@@ -51,14 +51,14 @@ trait DataExecution extends Connection {
   }
   
   def unconditionalCreate(data: DataObject): Future[AccessOrError] = { 
-    logger.write(s"=== handling unconditional top-level request for data ${data} ===") //
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    logger.write(s"=== handling unconditional top-level request for data ${data} ===") //
     // UI fit message: s"attempting to create data for ${data.getClass} regardless of whether such data is already available...")
     attemptCreate(data) map { _.accessOrError} 
   }
   
   def get(data: DataObject): Future[AccessOrError] = { 
-    logger.write(s"<<< handling top-level request for data ${data}") //
+    logger.write(Console.BLUE_B + s"<<< handling top-level request for data ${data}" + Console.RESET) //
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     data.ReadyState flatMap { _ match { 
         case Ready(dataID) => {
@@ -66,9 +66,14 @@ trait DataExecution extends Connection {
           Future { new Access } 
         }
         case NotReady(_) => {
-          getDataAccess(data) map { executedTree  => 
-          logger.write(s"Creating data ${data.getClass.getSimpleName} for ${data.dataTopic}: " + executedTree.serialize + " >>>") // log the entire execution tree 
-          executedTree.accessOrError
+          getDataAccess(data) map { executedTree => 
+            logger.write(s"Creating data ${data.getClass.getSimpleName} for ${data.dataTopic}: " + executedTree.serialize + " >>>") // log the entire execution tree 
+            executedTree.accessOrError match {
+              case access: Access => executedTree.accessOrError 
+              case error : DepsError => error.copy(errorDetail = executedTree.serialize)
+              case error : CreateError => error.copy(errorDetail = executedTree.serialize)
+              case _ => throw new Exception("internal err")
+            }
           }
         }
       }
@@ -95,9 +100,8 @@ trait DataExecution extends Connection {
     // is entire dependencies tree ready?
     immediateDependencies map { _.forall(dep => dep.accessOrError.isInstanceOf[Access])} flatMap { _ match {
       case false => {
-        //logger.write(s"some dependencies for ${data.getClass.getSimpleName} were not met")
         Future.successful( 
-          ExecutedData(data, DepsError(s"some dependencies were not met"), immediateDependencies) // TODO: log exact details of dependencies tree
+          ExecutedData(data, DepsError(s"some dependencies were not met"), immediateDependencies) 
         )
       }
       case true =>

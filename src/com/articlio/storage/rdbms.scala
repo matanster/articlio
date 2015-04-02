@@ -40,13 +40,13 @@ object slickTestDb extends SlickDB {
                                              // automatically connection pooled unless disabled in application.conf.
 }
 
-class OutDB(implicit dbHandle: SlickDB) extends Actor {
+case class OutDB(dbHandle: SlickDB) {
 
   //
   // Table write functions
   //
   
-  private def write (data: Seq[MatchesRow]) = {
+  def write (data: Seq[MatchesRow]) = {
     println
     println(s"writing ${data.length} records to database")
     println
@@ -70,12 +70,12 @@ class OutDB(implicit dbHandle: SlickDB) extends Actor {
 
   val tables = Seq(Matches, Data, Datadependencies)
   
-  private def create = {
+  def create = {
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     dbHandle.run(DBIO.sequence(tables.map(table => table.schema.create))) 
   }
   
-  private def dropCreate = { // only called as fire-and-forget for now
+  def dropCreate = { // only called as fire-and-forget for now
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     println("about to recreate tables")
     dbHandle.run(DBIO.sequence(tables.map(table => table.schema.drop))).onComplete { _ => 
@@ -86,7 +86,7 @@ class OutDB(implicit dbHandle: SlickDB) extends Actor {
       }
   }
   
-  private def createIfNeeded {
+  def createIfNeeded {
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
       dbHandle.run(DBIO.sequence(tables.map(table => slick.jdbc.meta.MTable.getTables(table.baseTableRow.tableName) map { 
         result => if (result.isEmpty) {
@@ -94,23 +94,7 @@ class OutDB(implicit dbHandle: SlickDB) extends Actor {
           dbHandle.run(table.schema.create) 
         }})))
   }
-
-  /*
-   * Actor interface (we don't really need an actor actually) 
-   */
-  
-  def receive = { 
-    case "dropCreate" => dropCreate
     
-    case "createIfNeeded" => createIfNeeded
-    
-    case s: Seq[MatchesRow @unchecked] => write(s) // annotating to avoid compilation warning about type erasure here
-    //case s: Seq[MatchesRow @unchecked] => addToBuffer(s) // annotating to avoid compilation warning about type erasure here, maybe no longer necessary?
-    
-    case "flushToDB" => flushToDB
-    
-    case _ => throw new Exception("unexpected actor message type received")
-  }
 }
 
 trait Connection // to be merged with object slickDb

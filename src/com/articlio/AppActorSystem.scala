@@ -17,7 +17,9 @@ object Globals {
     
     val timelog = system.actorOf(Props[Timelog], name = "timer-logging-service") // TODO: message passing may skew timing, pluck this out everywhere
                                                
-    val outDB = system.actorOf(Props(new OutDB), name = "out-DB-service")
+    // val outDB = system.actorOf(Props(new OutDB), name = "out-DB-service")
+    
+    val outDB = OutDB(db) /// no longer an actor, no longer needs to be in an actor system
     
     def shutdown {                                        
       system.shutdown

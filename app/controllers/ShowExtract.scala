@@ -16,7 +16,7 @@ import com.articlio.dataExecution.Access
 import com.articlio.config
 import com.articlio.storage.ManagedDataFiles._
 
-import com.articlio.test.{TestSpec, TestContainer, Testable, Skip}
+import com.articlio.test.{TestSpec, TestContainer, Testable, Skip, Only}
 import com.articlio.test.FutureAdditions._
 import scala.util.{Success, Failure}
 
@@ -25,15 +25,15 @@ object ShowExtract extends Controller with Testable {
   object TestContainer extends TestContainer {
     
     def tests = Seq(
-        new TestSpec(given  = "a file non-existent in the data directory", 
+        new TestSpec(given  = "an article file name non-existent in the data directory", 
                      should = "generate an error when semantic data is requested for it", 
                      TryNonExistentArticle),
-        new TestSpec(given  = "a file existing in the data directory",
-                     should = "have content results",
+        new TestSpec(given  = "an article file name",
+                     should = "have content results for it when semantic data is requested for it",
                      tryExistingArticle)
     )
         
-    val existingArticle = "Eggers and Kaplan in Annals 2013 cognition and capabilities"
+    val existingArticle = "Learning to Summarise Related Sentences"
     val nonExistingArticle = "bla"
                                  
     def tryExistingArticle = {
@@ -55,9 +55,7 @@ object ShowExtract extends Controller with Testable {
     def generatedResultsHaveContent_?(articleName: String, pdb: String, dataID: Option[Long] = None) = {
       api(articleName, pdb, dataID) map {
       case (dataID, allApplicableDataIDs, contentResult) =>
-        println(contentResult.toList.length)
         if (contentResult.toList.length == 0) {
-          println("error")
           throw new Throwable("no results generated") 
         }
       }
@@ -80,7 +78,6 @@ object ShowExtract extends Controller with Testable {
         case access: Access => {
           val dataID = data.dataID.get
           getData(dataID, data.dataType, articleName) map { case (allApplicableDataIDs, contentResult) =>
-            println(allApplicableDataIDs)
             (dataID, allApplicableDataIDs, contentResult) }  
         }
       }
@@ -90,7 +87,6 @@ object ShowExtract extends Controller with Testable {
   def UI(articleName: String, pdb: String, dataID: Option[Long] = None) = Action.async { implicit request =>
     
     api(articleName, pdb, dataID) map { case (dataID, allApplicableDataIDs, contentResult) =>
-      println(s"result length: ${contentResult.toList.length}")
       Ok(views.html.showExtract(allApplicableDataIDs, dataID, pdb, articleName, contentResult.toList))
     } 
   }

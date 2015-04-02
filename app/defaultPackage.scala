@@ -55,7 +55,7 @@ object Global extends GlobalSettings {
     val logger = com.articlio.logger.LogManager
     play.api.Logger.info("Global object starting non-Play stuff...")
 
-    appActorSystem.outDB ! "createIfNeeded"
+    appActorSystem.outDB.createIfNeeded
    
     nodejsControl.startIfDown
     

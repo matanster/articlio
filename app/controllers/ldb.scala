@@ -74,7 +74,7 @@ object SemanticExtractor extends Controller {
   }
 
   def purge = Action { implicit request =>
-    appActorSystem.outDB ! "dropCreate"
+    appActorSystem.outDB.dropCreate
     Ok("purging all data...") // fire and forget
   }
 }

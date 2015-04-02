@@ -370,7 +370,7 @@ case class ldbEngine(inputCSVfileName: String) extends Connection {
       
       new Descriptive(sentenceMatchCount, "Fragments match count per sentence").all
 
-      appActorSystem.outDB ! rdbmsData.result // TODO: this send-and-forget enables a concurrency bug, as no means of waiting for the write to commit is implemented
+      appActorSystem.outDB.write(rdbmsData.result)
       rdbmsData.result    
     }    
     //return s"Done processing ${document.name}"

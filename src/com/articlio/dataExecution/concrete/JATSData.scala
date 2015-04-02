@@ -68,7 +68,7 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
         registerDependency(this, eLifeJATSDep)
         Future.successful(None)
       }
-      case error: AccessError => 
+      case error: AccessError =>
         FinalData(PDFDep).accessOrError map { _ match {
           case access: Access => {
             com.articlio.util.Console.log(s"delegating pdf conversion to node.js ($articleName)")
@@ -77,7 +77,7 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
               case Some(error) => Some(CreateError(s"failed to convert pdf to JATS - response from http service was: ${error.errorDetail}"))
             }
           }
-          case error: AccessError => Some(CreateError(s"disjunctive dependency for creating JATS for $articleName has not been met.")) 
+          case error: AccessError => Some(CreateError(s"disjunctive dependency for creating JATS for $articleName has not been met")) 
         }}
     }}
   }

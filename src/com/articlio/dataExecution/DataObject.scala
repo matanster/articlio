@@ -69,8 +69,6 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
       creatorserverendtime   = None,
       softwareversion = com.articlio.Version.id)), Duration.Inf))
 
-    //println(s"got back data ID $dataID")
-
     // now try this data's creation function
     safeRunCreator(creator(dataID.get, dataType, dataTopic)) map { creationError => 
       // now record the outcome - was the data successfully created by this run?
@@ -160,8 +158,9 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
   
 }
 
+//
 // Attempts to Execute a Data Object and Hold Outcome (hence Representing Final State)
-
+//
 case class FinalData(data: DataObject) extends DataExecution {
   
   // carry over all immutables of the original data object relevant to the finalized state
@@ -172,7 +171,6 @@ case class FinalData(data: DataObject) extends DataExecution {
 
   val dataID: Future[Long] = accessOrError map { _ => data.dataID.get } // ugly way of getting the data ID out of the system.
   
-  //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
   def humanAccessMessage: Future[String] = {
     accessOrError map { _ match { 
         case dataAccessDetail : Access => s"$dataType for $dataTopic is ready."

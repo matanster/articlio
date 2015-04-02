@@ -20,6 +20,7 @@ import scala.concurrent.duration._
 abstract class MaybeRun
 object Run extends MaybeRun
 object Skip extends MaybeRun
+object Only extends MaybeRun // a bit of a hack, for allowing to quickly mark one test as the only one to run
 
 case class BeenRun(timeRun: Long) extends MaybeRun
 
@@ -37,7 +38,6 @@ object FutureAdditions {
     import scala.concurrent.ExecutionContext
     import scala.concurrent._
     def reverse[S](implicit executor: ExecutionContext): Future[Unit] = {
-      println("in reverse")
       val p = Promise[Unit]()
       future.onComplete {
         // reverse the result of the future
@@ -65,14 +65,23 @@ object UnitTestsRunner {
   private def lift[T](futures: Seq[Future[T]]): Seq[Future[Try[T]]] = 
     futures.map(_.map { Success(_) }.recover { case t => Failure(t) })
 
+  @volatile var running = false
+  def go: Unit = {
+    println(Console.BLUE_B + running + Console.RESET)
+    running match {
+      case true  => println("tests already running - request ignore")
+      case false => running = true; doGo; running = false 
+    }
+  }
+    
   //
   // Dispatch all tests, list all results once they are over
   //
-  def go: Unit = {
+  def doGo: Unit = {
     import scala.Console._ // Hopefully this doesn't bite
     val terminalWidth = jline.TerminalFactory.get().getWidth();
     
-    println("running tests...")
+    println(BOLD + "running tests..." + RESET)
 
     // line-wraps long string, including left indent and right margin fit
     def lineWrapForConsole(text: String) = {
@@ -87,19 +96,36 @@ object UnitTestsRunner {
       
       (List.fill(lines)(indent) zip wrapped map { case (i, w) => i + w + "\n" }).mkString 
     } 
-                                                 
-    val testablesResults: Seq[Seq[Future[MaybeRun]]] = testContainers.map(testable => testable.tests
-                                                                 .map(test => test.maybeRun match {
-                                                                   case Run  => {
-                                                                     val time = System.currentTimeMillis
-                                                                     test.attempt map {_ => 
-                                                                       val elapsedTime = System.currentTimeMillis() - time 
-                                                                       BeenRun(elapsedTime)
-                                                                     }
-                                                                   }
-                                                                   case Skip => Future.successful(Skip)
-                                                                 }))
+
+    def timedAttempt(test: TestSpec) = {
+      val time = System.currentTimeMillis
+      test.attempt map {_ => 
+        val elapsedTime = System.currentTimeMillis() - time 
+        BeenRun(elapsedTime)
+      }
+    }
     
+    val testMarkedAsOnly = testContainers.map(testable => testable.tests
+                                             .map(test => test.maybeRun == Only)).flatten.filter(_ == true)
+
+    val testablesResults: Seq[Seq[Future[MaybeRun]]] = (testMarkedAsOnly.isEmpty) match {
+      case true  => testContainers.map(testable => testable.tests
+                                                           .map(test => test.maybeRun match {
+                                                             case Run  => timedAttempt(test)
+                                                             case Skip => Future.successful(Skip)
+                                                           }))
+
+      case false => {
+        println(YELLOW + BOLD + """One or more tests are flagged as "Only" - running only those tests and skipping all others""" + RESET)
+        testContainers.map(testable => testable.tests
+                      .map(test => test.maybeRun match {
+                        case Only       => timedAttempt(test)
+                        case Run | Skip => Future.successful(Skip)
+                      }))
+      }
+    }                                         
+
+                                                                 
     waitAll(testablesResults.flatten).map { _ => 
       // once complete, list the results
       val zipped = testablesResults zip testContainers
@@ -119,7 +145,7 @@ object UnitTestsRunner {
         }
       }
       
-    println("...tests done")
+    println(BOLD + "...tests done" + RESET)
     
     }
   }
