@@ -25,6 +25,7 @@ import slick.driver.MySQLDriver.simple._
 import slick.jdbc.meta._
 import com.articlio.dataExecution.CreateError 
 import com.articlio.logger._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /*
  *  provide caching & pooling of the heavy initialization of aho-corasick tries 
@@ -95,7 +96,8 @@ case class ldbEngine(inputCSVfileName: String) extends Connection {
   //
   // Public interface to process a document 
   //                                        
-  def process(cleanJATSaccess: com.articlio.dataExecution.concrete.JATSaccess)(dataID: Long, dataType: String, articleName: String) : Option[CreateError] = {
+  def process(cleanJATSaccess: com.articlio.dataExecution.concrete.JATSaccess)
+             (dataID: Long, dataType: String, articleName: String) : Future[Option[CreateError]] = {
 
     val document = new JATS(s"${cleanJATSaccess.dirPath}/$articleName.xml")
     
@@ -106,7 +108,7 @@ case class ldbEngine(inputCSVfileName: String) extends Connection {
     //
     val sections : Seq[JATSsection] = document.sections // elife04395, elife-articles(XML)/elife00425styled.xml
     //if (sections.isEmpty) return s"${document.name} appears to have no sections and was not processed"  
-    if (sections.isEmpty) return Some(CreateError("no sections detected in JATS input - cannot extract")) // Seq.empty[Matches]  
+    if (sections.isEmpty) return Future.successful(Some(CreateError("no sections detected in JATS input - cannot extract"))) // Seq.empty[Matches]  
     
     //
     // Enriching the string type with custom method. TODO: separate into util package object?
@@ -185,7 +187,6 @@ case class ldbEngine(inputCSVfileName: String) extends Connection {
     def sentenceSplitter (toSplit: LocatedText) : Seq[LocatedText] = {
 
       logger.write(toSplit.text, "JATS-paragraphs")
-      //println(toSplit.text)
       val sentences = sentenceSplit(toSplit.text)
       logger.write(sentences.mkString("\n"), "JATS-sentences")
       return sentences map (sentence => LocatedText(sentence, toSplit.section))
@@ -205,7 +206,7 @@ case class ldbEngine(inputCSVfileName: String) extends Connection {
     //
     // matches rules per sentence    
     //
-    def processSentences (sentences : Seq[LocatedText]) = {
+    def processSentences (sentences : Seq[LocatedText]): Future[Option[Int]] = {
   
       val sentenceMatchCount = scala.collection.mutable.ArrayBuffer.empty[Integer] 
       var rdbmsData = Seq.newBuilder[MatchesRow]
@@ -371,14 +372,9 @@ case class ldbEngine(inputCSVfileName: String) extends Connection {
       new Descriptive(sentenceMatchCount, "Fragments match count per sentence").all
 
       appActorSystem.outDB.write(rdbmsData.result)
-      rdbmsData.result    
+      //rdbmsData.result    
     }    
-    //return s"Done processing ${document.name}"
     
-    //AppActorSystem.timelog ! "matching"
-    //AppActorSystem.timelog ! "matching"
-    processSentences(sentences)
-    
-    None // if we got here - return no error    
+    processSentences(sentences) map {_=> None } // signal no error, to be refined to flow that propagates exceptions
   }                                                                             
 }

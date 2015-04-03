@@ -38,6 +38,7 @@ object Global extends GlobalSettings {
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     println(s"received http request ${request.path}")
     request.path match {
+      
       case "/override" => println("intercepted"); Some(controllers.index.go)
       
       case "/test"     => com.articlio.test.UnitTestsRunner.go; Some(DefaultResponder("starting tests...").go)

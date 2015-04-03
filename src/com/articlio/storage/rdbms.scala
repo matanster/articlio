@@ -10,6 +10,7 @@ import models.Tables._
 import scala.concurrent.duration.Duration
 import scala.concurrent._
 import scala.util.{Success, Failure}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 //
 // Database connection abstract type
@@ -24,7 +25,6 @@ trait SlickDB {
   
   // example function for inquiring JDBC configuration
   def printJDBCconfig = {
-    import scala.concurrent.ExecutionContext.Implicits.global
     val getAutoCommit = SimpleDBIO[Boolean](_.connection.getAutoCommit); 
     println(s"autocommit is: ${Await.result(db.run(getAutoCommit), Duration.Inf)}")
   }
@@ -40,6 +40,9 @@ object slickTestDb extends SlickDB {
                                              // automatically connection pooled unless disabled in application.conf.
 }
 
+//
+// database write functions - all returning a future so caller can track their completion as appropriate
+//
 case class OutDB(dbHandle: SlickDB) {
 
   //
@@ -51,18 +54,18 @@ case class OutDB(dbHandle: SlickDB) {
     println(s"writing ${data.length} records to database")
     println
     dbHandle.run(Matches ++= data)
-    println(s"done writing ${data.length} records to database")    
   }
+  
+  private def += (data: MatchesRow) = dbHandle.run(Matches += data) // writes just one row
   
   var buffer = Seq.empty[MatchesRow]
   def addToBuffer (data: Seq[MatchesRow]) = buffer ++= data
   def flushToDB = {
     println("Flushing bulk run's results to database")
-      write(buffer)
+    write(buffer) map { _ => 
       buffer = Seq.empty[MatchesRow]
+    }
   }
- 
-  private def += (data: MatchesRow) = dbHandle.run(Matches += data) // writes just one row
   
   //
   // Schema handling functions
@@ -75,7 +78,7 @@ case class OutDB(dbHandle: SlickDB) {
     dbHandle.run(DBIO.sequence(tables.map(table => table.schema.create))) 
   }
   
-  def dropCreate = { // only called as fire-and-forget for now
+  def dropCreate = { 
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     println("about to recreate tables")
     dbHandle.run(DBIO.sequence(tables.map(table => table.schema.drop))).onComplete { _ => 
