@@ -17,6 +17,8 @@ object Globals {
     
     val timelog = system.actorOf(Props[Timelog], name = "timer-logging-service") // TODO: message passing may skew timing, pluck this out everywhere
                                                
+    val deduplicator = system.actorOf(Props(new com.articlio.dataExecution.Deduplicator), name="deduplicator")
+    
     // val outDB = system.actorOf(Props(new OutDB), name = "out-DB-service")
     
     val outDB = OutDB(db) /// no longer an actor, no longer needs to be in an actor system

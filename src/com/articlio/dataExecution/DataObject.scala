@@ -129,17 +129,39 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
   } 
   
   def ReadyStateAny(): Future[ReadyState] = {
-    //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    db.query(DataRecord.filter(_.datatype === this.getClass.getSimpleName)
-                       .filter(_.datatopic === dataTopic)
-                       .filter(_.creationstatus === creationStatusDBtoken.SUCCESS)) map {
-      result => result.nonEmpty match {
+    
+    // this code is really more complicated than it could be, because it makes 
+    // effort to address the database only once and then work with the result from memory 
+    
+    def query = 
+      DataRecord.filter(_.datatype === this.getClass.getSimpleName)
+                .filter(_.datatopic === dataTopic)
+                .filter(data => data.creationstatus === creationStatusDBtoken.SUCCESS || data.creationstatus === creationStatusDBtoken.STARTED)
+    
+    val data = db.query(query)
+    
+    def get(status: String) =
+      data map { result => result.filter(data => data.creationstatus == status) } 
+    
+    get(creationStatusDBtoken.SUCCESS) flatMap { result => 
+      result.nonEmpty match {
         case true =>
         {
           dataID = Option(result.head.dataid)
-          Ready(dataID.get)
+          Future.successful(Ready(dataID.get))
         }
-        case false => new NotReady
+        case false =>
+          get(creationStatusDBtoken.STARTED) map { result =>
+                      result.isEmpty match {
+                        case true => new NotReady
+                        case false => {
+                          println(s"data creation already in progress for $this - waiting for it...")
+                          
+                          dataID = Option(result.head.dataid)
+                          Ready(dataID.get)
+                        }
+                      }
+                   }
       }
     }
   } 

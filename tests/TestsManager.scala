@@ -54,7 +54,8 @@ object UnitTestsRunner {
   implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
   
   val testables: Seq[Testable] = Seq(controllers.ShowExtract,
-                                     controllers.BulkImportRaw)
+                                     controllers.BulkImportRaw,
+                                     com.articlio.dataExecution.DeduplicatorTest)
   
   val testContainers = testables.map(testable => testable.TestContainer)
 

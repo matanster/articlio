@@ -11,6 +11,38 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext
 import scala.util.Success
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import akka.util.Timeout
+  
+//
+// tree structure for holding the status of a data dependency tree.
+// this structure is "needed" since we don't memoize/cache the dependencies 
+// status, so it is used to freeze the status as creation unfolds, for accurate 
+// error reporting. On later review, may be unnecessary a class, if each
+// dependency kept its error and remained available.
+//
+case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Future[Seq[ExecutedData]] = Future.successful(Seq())) {
+
+  // recursively serialize the error/Ok status of the entire tree. 
+  // Note: assumes children's future sequence is already completed when being called
+  private def doSerialize(executionTree: ExecutedData): String = {
+    
+    val children = executionTree.children.value.get.get // extract the sequence from the (assumed to be completed) Future
+    
+    // maybe a bit ugly string composition, comprising nested formatting strings.
+    s"${executionTree.accessOrError match {
+        case access:      Access      => "created Ok, "
+        case accessError: AccessError => accessError.errorDetail 
+       }}${children.isEmpty match { 
+            case true  => " (had no dependencies)."
+            case false => s". data dependencies were: ${children.map(child =>
+                         s"\ndependency ${child.data} - ${doSerialize(child)}")}"
+          }
+    }"
+  }
+  
+  def serialize = doSerialize(this)
+}
 
 /*
  * Executes data preparation by dependencies. 
@@ -20,38 +52,7 @@ trait DataExecution extends Connection {
 
   val logger = new SimplestLogger("DataExecutionManager")
 
-  //
-  // tree structure for holding the status of a data dependency tree.
-  // this structure is "needed" since we don't memoize/cache the dependencies 
-  // status, so it is used to freeze the status as creation unfolds, for accurate 
-  // error reporting. On later review, may be unnecessary a class, if each
-  // dependency kept its error and remained available.
-  //
-  case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Future[Seq[ExecutedData]] = Future.successful(Seq())) {
-
-    // recursively serialize the error/Ok status of the entire tree. 
-    // Note: assumes children's future sequence is already completed when being called
-    private def doSerialize(executionTree: ExecutedData): String = {
-      
-      val children = executionTree.children.value.get.get // extract the sequence from the (assumed to be completed) Future
-      
-      // maybe a bit ugly string composition, comprising nested formatting strings.
-      s"${executionTree.accessOrError match {
-          case access:      Access      => "created Ok, "
-          case accessError: AccessError => accessError.errorDetail 
-         }}${children.isEmpty match { 
-              case true  => " (had no dependencies)."
-              case false => s". data dependencies were: ${children.map(child =>
-                           s"\ndependency ${child.data} - ${doSerialize(child)}")}"
-            }
-      }"
-    }
-    
-    def serialize = doSerialize(this)
-  }
-  
   def unconditionalCreate(data: DataObject): Future[AccessOrError] = { 
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     logger.write(s"=== handling unconditional top-level request for data ${data} ===") //
     // UI fit message: s"attempting to create data for ${data.getClass} regardless of whether such data is already available...")
     attemptCreate(data) map { _.accessOrError} 
@@ -59,7 +60,6 @@ trait DataExecution extends Connection {
   
   def get(data: DataObject): Future[AccessOrError] = { 
     logger.write(Console.BLUE_B + s"<<< handling top-level request for data ${data}" + Console.RESET) //
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     data.ReadyState flatMap { _ match { 
         case Ready(dataID) => {
           logger.write(s"Data ${data.getClass.getSimpleName} for ${data.dataTopic} is already ready" + " >>>") 
@@ -84,16 +84,25 @@ trait DataExecution extends Connection {
   // chooses between two forms of processing this function
   //
   private def getDataAccess(data: DataObject): Future[ExecutedData] = { // TODO: rename?
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     data.requestedDataID match {
       case None                => getDataAccessAnyID(data) 
       case Some(suppliedRunID) => getDataAccessSpecificID(data, suppliedRunID) map { id => ExecutedData(data, id) } 
     }
   }
   
-  private def attemptCreate(data: DataObject): Future[ExecutedData] = {
+  private def createOrWait(data: DataObject): Future[ExecutedData] = {
+    
+    import akka.pattern.ask
+    import akka.util.Timeout
+    import scala.concurrent.duration._
+    
+    ask(com.articlio.Globals.appActorSystem.deduplicator, Get(data))(Timeout(1000.days)) map { case e: ExecutedData => e } 
+
+  }
+  
+  def attemptCreate(data: DataObject): Future[ExecutedData] = {
     println(s"in attemptCreate for $data")
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+    
     // recurse for own dependencies
     val immediateDependencies = Future.sequence(data.dependsOn.map(dep => getDataAccess(dep)))
     
@@ -122,7 +131,6 @@ trait DataExecution extends Connection {
   // checks whether data already exists. if data doesn't exist yet, attempts to create it.
   // returns: access details for ready data, or None cannot be readied
   private def getDataAccessAnyID(data: DataObject): Future[ExecutedData] = {
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     println(s"in getDataAccessAnyID for $data")
     data.ReadyState flatMap { _ match {
         case Ready(dataID) => {  
@@ -140,7 +148,7 @@ trait DataExecution extends Connection {
   
   // checks whether data with specific ID already exists, but doesn't attempt to create it.
   // returns: access details for ready data, or None if data is not ready
-  private def getDataAccessSpecificID(data: DataObject, suppliedRunID: Long)(implicit ec: ExecutionContext): Future[AccessOrError] = {
+  private def getDataAccessSpecificID(data: DataObject, suppliedRunID: Long): Future[AccessOrError] = {
     data.ReadyState map { _ match {
         case Ready(dataID) => {  
           logger.write(s"data for ${data.getClass} with id ${suppliedRunID} is ready")
