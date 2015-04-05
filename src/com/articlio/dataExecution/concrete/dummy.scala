@@ -12,6 +12,10 @@ import scala.concurrent.Future
 import com.articlio.Globals.db
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
  
+/*
+ *  dummy data type for tests
+ */
+
 case class DummyWithDuration(dataTopic: String, duration: Long) extends DataObject {
 
   val dependsOn = Seq()

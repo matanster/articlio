@@ -55,7 +55,7 @@ object UnitTestsRunner {
   
   val testables: Seq[Testable] = Seq(controllers.ShowExtract,
                                      controllers.BulkImportRaw,
-                                     com.articlio.dataExecution.DeduplicatorTest)
+                                     com.articlio.dataExecution.Deduplicator)
   
   val testContainers = testables.map(testable => testable.TestContainer)
 
@@ -66,7 +66,8 @@ object UnitTestsRunner {
   private def lift[T](futures: Seq[Future[T]]): Seq[Future[Try[T]]] = 
     futures.map(_.map { Success(_) }.recover { case t => Failure(t) })
 
-  @volatile var running = false
+  @volatile var running = false // avoid inadvertant concurrent run
+  
   def go: Unit = {
     println(Console.BLUE_B + running + Console.RESET)
     running match {

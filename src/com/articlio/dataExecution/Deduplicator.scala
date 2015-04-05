@@ -10,9 +10,6 @@ import com.articlio.test.{TestSpec, TestContainer, Testable, Skip, Only}
 
 import com.articlio.dataExecution.concrete._
 
-// actor message type 
-final case class Get(data: DataObject)
-
 /*
  * 
  * Actor class that makes sure that a "same" data creation attempt is only handled once, then notified of to all awaiting callers.
@@ -46,7 +43,10 @@ class Deduplicator extends Actor with DataExecution {
   }
 }
 
-object DeduplicatorTest extends Testable {
+// actor message type 
+final case class Get(data: DataObject)
+
+object Deduplicator extends Testable { // companion object for tests 
   object TestContainer extends TestContainer {
     import com.articlio.Globals.db
     import models.Tables._
@@ -66,12 +66,11 @@ object DeduplicatorTest extends Testable {
     def identicalDataDeduplicate = {
       
       val testDataTopic = "deduplicator-dummy-test-data"
-      println(s"data topicccccccccccccc: ${DummyWithDuration.getClass.getSimpleName.filter(_ == '$')}")
       
       val slowData = DummyWithDuration(testDataTopic, 1000)
       
       val future1 = FinalDataNew(slowData) // request a test data once 
-      val future2 = FinalDataNew(slowData) // request it twice while first request is still in progress
+      val future2 = FinalDataNew(slowData) // request it again while first request is surely still in progress
       
       Future.sequence(Seq(future1, future2)) flatMap {_ => 
         allApplicableDataIDs(DummyWithDuration.getClass.getSimpleName.filter(_ != '$'), testDataTopic) map { 
