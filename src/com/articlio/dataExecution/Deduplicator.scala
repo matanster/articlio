@@ -7,8 +7,8 @@ import scala.concurrent.Future
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.util.{Success,Failure}
 import com.articlio.test.{TestSpec, TestContainer, Testable, Skip, Only}
-
 import com.articlio.dataExecution.concrete._
+import scala.util.Try
 
 /*
  * 
@@ -27,20 +27,29 @@ class Deduplicator extends Actor with DataExecution {
   
   def hash(data: DataObject) = data.dataType + data.dataTopic 
   
-  def receive = {
-    case Get(data) => {
-      val dataHash = hash(data)  
-      started.get(dataHash) match {
-        case Some(future) => println(Console.BLUE_B + "info: multiple requests waiting on single data creation" + Console.RESET); sender ! future
-        case None   => {
-          println(Console.RED_B + s"none yet started for $data.dataType" + Console.RESET)
-          val future = attemptCreate(data)
-          started + ((dataHash, future))            
-          sender ! future
-          future.onComplete { _ => started.remove(dataHash) }
-        }
-      }
+  private def processGet(data: DataObject) = {
+    val dataHash = hash(data)  
+    started.get(dataHash) match {
+      case Some(future) => {
+        println(Console.BLUE_B + "info: multiple requests waiting on single data creation" + Console.RESET)
+        future
+      } 
+      case None   => {
+        println(Console.RED_B + s"none yet started for $data.dataType" + Console.RESET)
+        val future = attemptCreate(data)
+        started + ((dataHash, future))            
+        future.onComplete { _ => started.remove(dataHash) }
+        future
+      }    
     }
+  }
+  
+  def receive = {
+    case Get(data) =>
+      Try(processGet(data)) match {
+        case Success(future) => sender ! future 
+        case Failure(failure) => sender ! akka.actor.Status.Failure(failure.getCause)
+      }
   }
 }
 
