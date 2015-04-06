@@ -56,7 +56,7 @@ object Deduplicator extends Testable { // companion object for tests
     def tests = Seq(
         new TestSpec(given  = "a request for data that is already in process of creation", 
                      should = "only create data once",
-                     identicalDataDeduplicate, Only)
+                     identicalDataDeduplicate)
     )
   
     def allApplicableDataIDs(dataType: String, dataTopic: String) = // TODO: collapse and relocate with same function in ShowExtract.scala
