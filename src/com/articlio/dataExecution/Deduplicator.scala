@@ -31,13 +31,13 @@ class Deduplicator extends Actor with DataExecution {
     val dataHash = hash(data)  
     started.get(dataHash) match {
       case Some(future) => {
-        println(Console.BLUE_B + "info: multiple requests waiting on single data creation" + Console.RESET)
+        println(Console.BLUE_B + s"info: multiple requests waiting on creation of $data" + Console.RESET)
         future
       } 
       case None   => {
-        println(Console.RED_B + s"none yet started for $data.dataType" + Console.RESET)
+        println(Console.RED_B + s"none yet started for $data" + Console.RESET)
         val future = attemptCreate(data)
-        started + ((dataHash, future))            
+        started += ((dataHash, future))            
         future.onComplete { _ => started.remove(dataHash) }
         future
       }    
