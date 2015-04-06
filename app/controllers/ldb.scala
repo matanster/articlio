@@ -27,13 +27,13 @@ object SemanticExtractor extends Controller {
   def fromArticle(articleName: String, pdb: String) = Action.async { 
     implicit request =>
       implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-      FinalData(SemanticData(articleName, pdb)()).humanAccessMessage map { message => Ok(message) } 
+      FinalData(SemanticData(articleName, pdb)()) map { data => Ok(data.humanAccessMessage) }  
   }
   
   def fromTextFile(articleName: String, pdb: String) = Action.async {
     implicit request => 
       implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-      FinalData(SemanticData(articleName, pdb)(JATS = JATSDataFromTxtFile(articleName)())).humanAccessMessage map { message => Ok(message) } 
+      FinalData(SemanticData(articleName, pdb)(JATS = JATSDataFromTxtFile(articleName)())) map { data => Ok(data.humanAccessMessage) } 
   }
 
   def fromElife(articleName: String,
@@ -44,12 +44,13 @@ object SemanticExtractor extends Controller {
     Ok("Not (re-)implemented")
   }
 
+  /* 
   import com.articlio.BulkFromDirectory
   def all = Action { implicit request =>
     val bulk = new BulkFromDirectory((new runID).id)
     bulk.all
     Ok("Done processing all files... but you probably timed out by now")
-  }
+  } 
 
   def allPdf = Action { implicit request =>
     val bulk = new BulkFromDirectory((new runID).id)
@@ -62,7 +63,8 @@ object SemanticExtractor extends Controller {
     bulk.alleLife
     Ok("Done processing all files... but you probably timed out by now")
   }
-
+  */
+  
   def export = Action { implicit request =>
     com.articlio.analyze.createCSV.go(0L) // TODO: need to get parameter, can't be parameter-less 
     Ok("Done producing result CSVs")

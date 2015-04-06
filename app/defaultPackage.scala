@@ -36,7 +36,7 @@ object Global extends GlobalSettings {
   override def onRouteRequest(request: RequestHeader): Option[Handler] = {
     //do our own path matching first - otherwise pass it onto play.
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    println(s"received http request ${request.path}")
+    println(Console.BLUE_B + s"got http request ${request.path}" + Console.RESET)
     request.path match {
       
       case "/override" => println("intercepted"); Some(controllers.index.go)
@@ -64,14 +64,9 @@ object Global extends GlobalSettings {
       case Some("test") => {
         println(s"${Console.BOLD}${Console.GREEN}\n--- starting in test mode ---\n${Console.RESET}")
         
-        // now dispatch the tests for after play has been given time to initialize (otherwise fail)
-        implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+        import play.api.libs.concurrent.Execution.Implicits.defaultContext
         // com.articlio.test.UnitTestsRunner.go
-        // Future { 
-        //   Thread.sleep(20000L)
-        //   Await.result(Future(com.articlio.test.UnitTestsRunner.go), 30.seconds)
-        // }
-        // Future { blocking { Thread.sleep(1000L) } }
+        // Future { Thread.sleep(1000L); com.articlio.test.UnitTestsRunner.go }
       }
       case _ =>
     }

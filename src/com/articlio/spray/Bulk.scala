@@ -12,6 +12,8 @@ import slick.jdbc.meta._
 import models.Tables._
 import com.articlio.storage.Connection
 import com.articlio.Globals.db
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.concurrent.Future
 
 //
 // Re-create all data belonging to given bulk id
@@ -20,7 +22,6 @@ object BulkSemanticRecreate extends Connection {
   def buildRequest(bulkID: Long) {
     val ldb = "Normalized from July 24 2014 database - Dec 30 - plus Jan tentative addition.csv"  
 
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     db.query(for {
       bulkGroup <- Bulkdatagroups if bulkGroup.bulkid === bulkID
       data <- Data if data.dataid === bulkGroup.dataid 
@@ -56,9 +57,12 @@ object BulkSemanticArbitrary {
 // Shared dependencies are provided by the caller.
 //
 class BulkExecutionManager(dataSeq: Seq[DataObject], sharedDeps: Seq[DataObject]) extends Connection {
-  sharedDeps.map(sharedDep => FinalData(sharedDep)).forall(_.accessOrError.isInstanceOf[Access]) match {
-    case false => DepsError("bulk run aborted as one or more shared dependencies failed.")
-    case true  => dataSeq.par.map(data => FinalData(data))
+  Future.sequence(sharedDeps.map(sharedDep => FinalData(sharedDep) // TODO: latest refactor, to be confirmed
+    map { _.accessOrError.isInstanceOf[Access] })) 
+    .map {_.forall(_ == true) match {
+      case false => DepsError("bulk run aborted as one or more shared dependencies failed.")
+      case true  => dataSeq.par.map(data => FinalData(data))
+    }
   }
 }
 

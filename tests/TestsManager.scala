@@ -69,17 +69,16 @@ object UnitTestsRunner {
   @volatile var running = false // avoid inadvertant concurrent run
   
   def go: Unit = {
-    println(Console.BLUE_B + running + Console.RESET)
     running match {
-      case true  => println("tests already running - request ignore")
-      case false => running = true; doGo; running = false 
+      case true  => println(Console.BLUE_B + "tests already running - request ignore" + Console.RESET)
+      case false => running = true; goDo map {_ => running = false }
     }
   }
     
   //
   // Dispatch all tests, list all results once they are over
   //
-  private def doGo: Unit = {
+  private def goDo: Future[Any] = {
     import scala.Console._ // Hopefully this doesn't bite
     val terminalWidth = jline.TerminalFactory.get().getWidth();
     
@@ -131,6 +130,14 @@ object UnitTestsRunner {
       }
     }                                         
 
+    def getStackTraceString(t: Throwable) = {
+      val w = new java.io.StringWriter
+      val p = new java.io.PrintWriter(w)
+      t.printStackTrace(p)
+      w.toString
+    }
+    
+    
     waitAll(testablesResults.flatten).map { _ => 
       // once complete, list the results
       val zipped = testablesResults zip testContainers
@@ -141,17 +148,15 @@ object UnitTestsRunner {
           val TestDesc = s"given ${testSpec.given} <=> should ${testSpec.should}"
           println(result.value match {
               case Some(Success(BeenRun(time)))  => GREEN + BOLD +  "[Ok]      " + RESET + TestDesc + s"   ⌛ $time msec" //⌛⌚
-              case Some(Success(Skip)) => YELLOW + BOLD + "[Skip]    " + RESET + TestDesc
-              case Some(Failure(t))    => RED + BOLD +    "[Failed]  " + RESET + TestDesc + 
-                                          RED + "\n" + lineWrapForConsole(t.getMessage) + RESET
+              case Some(Success(Skip))           => YELLOW + BOLD + "[Skip]    " + RESET + TestDesc
+              case Some(Failure(t))              => RED + BOLD +    "[Failed]  " + RESET + TestDesc + 
+                                                    RED + "\n" + lineWrapForConsole(getStackTraceString(t)) + RESET
               // case Some(Failure(t))    => RED + BOLD +     "[Failed]  " + RESET + TestDesc + RED + "\n          ∗ " + t.getMessage.take(700) + (if (t.toString.length > 700) "...." else "") + RESET
               case _ => Console.RED + s"[UnitTestsRunner internal error:] test ${testSpec.attempt} not complete: ${result.isCompleted}" + RESET
-          })
+          })    
+          println(BOLD + "...tests done" + RESET)
         }
       }
-      
-    println(BOLD + "...tests done" + RESET)
-    
     }
   }
 }

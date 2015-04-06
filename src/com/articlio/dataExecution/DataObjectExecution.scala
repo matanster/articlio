@@ -58,7 +58,7 @@ trait DataExecution extends Connection {
     createOrWait(data) map { _.accessOrError} 
   }
   
-  def get(data: DataObject): Future[AccessOrError] = { 
+  def targetDataGet(data: DataObject): Future[AccessOrError] = { 
     logger.write(Console.BLUE_B + s"<<< handling top-level request for data ${data}" + Console.RESET) //
     data.ReadyState flatMap { _ match { 
         case Ready(dataID) => {
@@ -96,7 +96,7 @@ trait DataExecution extends Connection {
     import akka.util.Timeout
     import scala.concurrent.duration._
 
-    // jumping through a hoop to get ask's future reply and flatten it
+    // jumping through a hoop to get ask's future reply, itself a future (flattening it into "just" a future)
     val untyped: Future[Any] = ask(com.articlio.Globals.appActorSystem.deduplicator, Get(data))(Timeout(21474835.seconds)) // future for actor's reply
     val retyped: Future[Future[ExecutedData]] = untyped.mapTo[Future[ExecutedData]]                                        // actor's reply is a future of an ExecutedData 
     retyped flatMap(identity)                                                                                              // flatten the future of future

@@ -29,9 +29,6 @@ GET  /purge                                   controllers.SemanticExtractor.purg
 GET  /showOriginal/:article                   controllers.showOriginal.go(article: String)
 
 GET  /semantic/single/eLife/:inputFileName    controllers.SemanticExtractor.fromElife(inputFileName: String, pdb: String)
-GET  /semantic/all/                           controllers.SemanticExtractor.all
-GET  /semantic/all/pdf                        controllers.SemanticExtractor.allPdf
-GET  /semantic/all/eLife                      controllers.SemanticExtractor.alleLife
 
 GET  /export                                  controllers.SemanticExtractor.export
 GET  /export/analytic                         controllers.SemanticExtractor.exportAnalytic

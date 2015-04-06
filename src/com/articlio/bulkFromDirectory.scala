@@ -1,3 +1,5 @@
+/*
+
 package com.articlio
 import java.io.File
 import com.articlio.dataExecution._
@@ -55,3 +57,5 @@ class BulkFromDirectory(runID: String) {
   }
   
 }
+
+*/

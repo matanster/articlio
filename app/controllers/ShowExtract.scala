@@ -69,8 +69,7 @@ object ShowExtract extends Controller with Testable {
     import com.articlio.Globals.db
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     
-    FinalDataNew(SemanticData(articleName, pdb, dataID)()) flatMap { data =>
-      println("in processing created FinalDataNew")
+    FinalData(SemanticData(articleName, pdb, dataID)()) flatMap { data =>
       data.accessOrError match {
         case error:  AccessError => {
           Future.failed(new Throwable(s"couldn't find or create data for request: ${data.humanAccessMessage}"))

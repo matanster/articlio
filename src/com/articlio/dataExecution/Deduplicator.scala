@@ -20,25 +20,24 @@ class Deduplicator extends Actor with DataExecution {
   
   val log = Logging(context.system, this)
   
-  // this is the only concrete implementation available out of the box in scala 2.11, for a thread-safe map
+  // the TrieMap is the only concrete implementation available out of the box in scala 2.11, for a thread-safe map
   // (refer to http://stackoverflow.com/questions/18660769/best-practices-for-mixing-in-scala-concurrent-map)
-  val started : scala.collection.concurrent.Map[String, Future[ExecutedData]] = 
+  val inProgress : scala.collection.concurrent.Map[String, Future[ExecutedData]] = 
     scala.collection.concurrent.TrieMap.empty[String, Future[ExecutedData]] 
   
   def hash(data: DataObject) = data.dataType + data.dataTopic 
   
   private def processGet(data: DataObject) = {
     val dataHash = hash(data)  
-    started.get(dataHash) match {
+    inProgress.get(dataHash) match {
       case Some(future) => {
         println(Console.BLUE_B + s"info: multiple requests waiting on creation of $data" + Console.RESET)
         future
       } 
       case None   => {
-        println(Console.RED_B + s"none yet started for $data" + Console.RESET)
         val future = attemptCreate(data)
-        started += ((dataHash, future))            
-        future.onComplete { _ => started.remove(dataHash) }
+        inProgress += ((dataHash, future))            
+        future.onComplete { _ => inProgress.remove(dataHash) }
         future
       }    
     }
@@ -79,8 +78,8 @@ object Deduplicator extends Testable { // companion object for tests
       
       val slowData = DummyWithDuration(testDataTopic, 1000)
       
-      val future1 = FinalDataNew(slowData) // request a test data once 
-      val future2 = FinalDataNew(slowData) // request it again while first request is surely still in progress
+      val future1 = FinalData(slowData) // request a test data once 
+      val future2 = FinalData(slowData) // request it again while first request is surely still in progress
       
       Future.sequence(Seq(future1, future2)) flatMap {_ => 
         allApplicableDataIDs(DummyWithDuration.getClass.getSimpleName.filter(_ != '$'), testDataTopic) map { 
