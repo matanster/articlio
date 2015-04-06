@@ -33,6 +33,7 @@ class Deduplicator extends Actor with DataExecution {
       started.get(dataHash) match {
         case Some(future) => println(Console.BLUE_B + "info: multiple requests waiting on single data creation" + Console.RESET); sender ! future
         case None   => {
+          println(Console.RED_B + s"none yet started for $data.dataType" + Console.RESET)
           val future = attemptCreate(data)
           started + ((dataHash, future))            
           sender ! future
@@ -43,7 +44,7 @@ class Deduplicator extends Actor with DataExecution {
   }
 }
 
-// actor message type 
+// actor message type
 final case class Get(data: DataObject)
 
 object Deduplicator extends Testable { // companion object for tests 
@@ -55,7 +56,7 @@ object Deduplicator extends Testable { // companion object for tests
     def tests = Seq(
         new TestSpec(given  = "a request for data that is already in process of creation", 
                      should = "only create data once",
-                     identicalDataDeduplicate)
+                     identicalDataDeduplicate, Only)
     )
   
     def allApplicableDataIDs(dataType: String, dataTopic: String) = // TODO: collapse and relocate with same function in ShowExtract.scala

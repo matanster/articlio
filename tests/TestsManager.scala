@@ -79,12 +79,10 @@ object UnitTestsRunner {
   //
   // Dispatch all tests, list all results once they are over
   //
-  def doGo: Unit = {
+  private def doGo: Unit = {
     import scala.Console._ // Hopefully this doesn't bite
     val terminalWidth = jline.TerminalFactory.get().getWidth();
     
-    println(BOLD + "running tests..." + RESET)
-
     // line-wraps long string, including left indent and right margin fit
     def lineWrapForConsole(text: String) = {
       val indentLength = 10
@@ -107,6 +105,12 @@ object UnitTestsRunner {
       }
     }
     
+    println(BOLD + "cleaning the database before starting tests..." + RESET)
+    
+    Await.result(com.articlio.Globals.appActorSystem.outDB.dropCreate, Duration.Inf)
+    
+    println(BOLD + "running tests..." + RESET)
+    
     val testMarkedAsOnly = testContainers.map(testable => testable.tests
                                              .map(test => test.maybeRun == Only)).flatten.filter(_ == true)
 
@@ -127,7 +131,6 @@ object UnitTestsRunner {
       }
     }                                         
 
-                                                                 
     waitAll(testablesResults.flatten).map { _ => 
       // once complete, list the results
       val zipped = testablesResults zip testContainers

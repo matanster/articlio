@@ -55,7 +55,7 @@ trait DataExecution extends Connection {
   def unconditionalCreate(data: DataObject): Future[AccessOrError] = { 
     logger.write(s"=== handling unconditional top-level request for data ${data} ===") //
     // UI fit message: s"attempting to create data for ${data.getClass} regardless of whether such data is already available...")
-    attemptCreate(data) map { _.accessOrError} 
+    createOrWait(data) map { _.accessOrError} 
   }
   
   def get(data: DataObject): Future[AccessOrError] = { 
@@ -95,9 +95,11 @@ trait DataExecution extends Connection {
     import akka.pattern.ask
     import akka.util.Timeout
     import scala.concurrent.duration._
-    
-    ask(com.articlio.Globals.appActorSystem.deduplicator, Get(data))(Timeout(1000.days)) map { case e: ExecutedData => e } 
 
+    // jumping through a hoop to get ask's future reply and flatten it
+    val untyped: Future[Any] = ask(com.articlio.Globals.appActorSystem.deduplicator, Get(data))(Timeout(21474835.seconds)) // future for actor's reply
+    val retyped: Future[Future[ExecutedData]] = untyped.mapTo[Future[ExecutedData]]                                        // actor's reply is a future of an ExecutedData 
+    retyped flatMap(identity)                                                                                              // flatten the future of future
   }
   
   def attemptCreate(data: DataObject): Future[ExecutedData] = {
@@ -140,7 +142,7 @@ trait DataExecution extends Connection {
         
         case NotReady(_) => {
           logger.write(s"data for ${data.getClass} is not yet ready... attempting to create it...")
-          attemptCreate(data)
+          createOrWait(data)
         }
       }
     }

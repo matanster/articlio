@@ -10,7 +10,8 @@ import models.Tables._
 import scala.concurrent.duration.Duration
 import scala.concurrent._
 import scala.util.{Success, Failure}
-import scala.concurrent.ExecutionContext.Implicits.global
+//import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 //
 // Database connection abstract type
@@ -74,23 +75,15 @@ case class OutDB(dbHandle: SlickDB) {
   val tables = Seq(Matches, Data, Datadependencies)
   
   def create = {
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     dbHandle.run(DBIO.sequence(tables.map(table => table.schema.create))) 
   }
   
-  def dropCreate = { 
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
+  def dropCreate: Future[Seq[Unit]] = { 
     println("about to recreate tables")
-    dbHandle.run(DBIO.sequence(tables.map(table => table.schema.drop))).onComplete { _ => 
-                            create.onComplete { 
-                              case Success(s) => println("done recreating tables"); Success(s)  
-                              case Failure(f) => println(s"failed recreating tables: $f"); Failure(f)
-                            }
-      }
+    dbHandle.run(DBIO.sequence(tables.map(table => table.schema.drop))) flatMap { _ => create } 
   }
   
   def createIfNeeded {
-    implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
       dbHandle.run(DBIO.sequence(tables.map(table => slick.jdbc.meta.MTable.getTables(table.baseTableRow.tableName) map { 
         result => if (result.isEmpty) {
           println(s"creating table ${table.baseTableRow.tableName}")
