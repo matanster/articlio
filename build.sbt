@@ -1,6 +1,10 @@
 import com.typesafe.sbt.SbtStartScript
 
-import spray.revolver.RevolverPlugin._
+//
+// spray revolver, only for development, not really relevant with play framework
+//
+//import spray.revolver.RevolverPlugin._
+//Revolver.settings 
 
 name := "articlio"
 
@@ -12,7 +16,7 @@ version       := "0.1-SNAPSHOT"
 // akka & spray
 //
 
-scalaVersion  := "2.11.5"
+scalaVersion  := "2.11.6"
 
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
@@ -33,20 +37,13 @@ libraryDependencies ++= {
 
 seq(SbtStartScript.startScriptForClassesSettings: _*)
 
-//
-// spray revolver, only for development, not really relevant with play framework
-//
-
-Revolver.settings 
-
-// spray-json
 libraryDependencies += "io.spray" %%  "spray-json" % "1.3.1"
 
 libraryDependencies += "org.ahocorasick" % "ahocorasick" % "0.2.3"
 
 libraryDependencies += "org.sorm-framework" % "sorm" % "0.3.16"
 
-libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.11.2"
+libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.11.6"
 
 libraryDependencies += "com.github.tototoshi" %% "scala-csv" % "1.0.0"
 
@@ -99,7 +96,7 @@ lazy val play = (project in file(".")).enablePlugins(PlayScala)
 // Add source folder to play project 
 //
 
-unmanagedSourceDirectories in Compile += baseDirectory.value / "src"
+//unmanagedSourceDirectories in Compile += baseDirectory.value / "src"
 
 unmanagedSourceDirectories in Compile += baseDirectory.value / "tests"
 
@@ -217,3 +214,26 @@ slickGenerate := {
 // testing memory database - not in use
 //
 //libraryDependencies += "com.h2database" % "h2" % "1.4.186"
+
+//
+// version increment on compile
+//
+
+//libraryDependencies += "com.typesafe.play" %% "play-json" % "2.3.7"
+//libraryDependencies += "io.argonaut" %% "argonaut" % "6.0.4"    
+
+//compile in Compile <<= (compile in Compile) map { c => 
+//  import scala.io.Source
+//  import spray.json._
+//  import DefaultJsonProtocol._
+//  case class VersionInfo(compileNumber: String)
+//  object MyJsonProtocol extends DefaultJsonProtocol { implicit val format = jsonFormat1(VersionInfo) }
+//  import MyJsonProtocol._
+//  val versionFile = "compile.version"
+//  val compileNumber : String = (Source.fromFile(versionFile).getLines.mkString.parseJson.convertTo[VersionInfo]).compileNumber
+//  val versionInfo = VersionInfo((compileNumber.toInt + 1).toString)
+//  println(versionInfo.toJson.prettyPrint)                                                         
+//  scala.tools.nsc.io.File(versionFile).writeAll(versionInfo.toJson.prettyPrint)
+//  c
+//}
+

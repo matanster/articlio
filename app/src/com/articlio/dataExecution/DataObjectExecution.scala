@@ -17,9 +17,11 @@ import akka.util.Timeout
 //
 // tree structure for holding the status of a data dependency tree.
 // this structure is "needed" since we don't memoize/cache the dependencies 
-// status, so it is used to freeze the status as creation unfolds, for accurate 
+// status, or hold them within the DataObjects. 
+//
+// So this structure is used to freeze the status as creation unfolds, for accurate 
 // error reporting. On later review, may be unnecessary a class, if each
-// dependency kept its error and remained available.
+// dependency kept its AccessOrError status intrinsically.
 //
 case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Future[Seq[ExecutedData]] = Future.successful(Seq())) {
 

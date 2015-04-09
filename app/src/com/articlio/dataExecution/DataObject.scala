@@ -13,6 +13,7 @@ import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import scala.concurrent.Promise
 
 object creationStatusDBtoken {
   val STARTED = "started" 
@@ -36,7 +37,6 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
         catch { 
           case anyException : Throwable =>
           recordException(anyException)
-          //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
           Future.successful(Some(CreateError(anyException.toString))) 
         }
   } 
@@ -69,7 +69,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
       creatorserver          = ownHostName,
       creatorserverstarttime = Some(startTime),
       creatorserverendtime   = None,
-      softwareversion = com.articlio.Version.id)), Duration.Inf))
+      softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion)), Duration.Inf))
 
     // now try this data's creation function
     safeRunCreator(creator(dataID.get, dataType, dataTopic)) map { creationError => 
@@ -87,7 +87,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
         creatorserver          = ownHostName,
         creatorserverstarttime = Some(startTime),
         creatorserverendtime   = Some(localNow),
-        softwareversion = com.articlio.Version.id))
+        softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion))
       ) 
       
       //
@@ -179,7 +179,6 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
   def dependsOn: Seq[DataObject]
   
   var dataID: Option[Long] = None // for caching database auto-assigned ID  
-  
 }
 
 //
