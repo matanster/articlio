@@ -47,8 +47,6 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
     println(s"in create for $this")
     def registerDependencies(data: DataObject): Unit = {
       data.dependsOn.map(dependedOnData => {
-        println("data:      " + data)
-        println("Dep data : " + dependedOnData.successfullyCompletedID)
         db.run(Datadependencies += DatadependenciesRow(data.successfullyCompletedID, dependedOnData.successfullyCompletedID))
         registerDependencies(dependedOnData)
       })
@@ -161,18 +159,19 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
     
   def dependsOn: Seq[DataObject]
   
+  
+  private def getAssumingCompleted[T](promise: Promise[T]) = promise.future.value.get.get
+  
   val dataID = Promise[Long] // for caching database auto-assigned ID  
-  def successfullyCompletedID = dataID.future.value.get.get
+  def successfullyCompletedID = getAssumingCompleted(dataID)
   
   val error = Promise[Option[AccessError]]
-  def getError = {
-    println(this + ":" + error.isCompleted)   
-    error.future.value.get.get
-  }
+  def getError = getAssumingCompleted(error) 
   
-  // recursively serialize the error/Ok status of the entire tree - if this function is still needed 
-  // Note: assumes children's future sequence is already completed when being called
-  private def doSerialize: String = { // TODO: serialize through dependencies rather than the obsolete executionTree construct
+  
+  // recursively serialize the error/Ok status of the entire tree 
+  // Note: assumes dependencies' future sequence is already completed when being called
+  private def doSerialize: String = { 
     
     // maybe a bit ugly string composition, comprising nested formatting strings.
     s"${getError match {

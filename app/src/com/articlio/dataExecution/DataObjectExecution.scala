@@ -60,7 +60,7 @@ trait DataExecution extends Connection {
     }
   }
   
-  private def createOrWait(data: DataObject): Future[Unit] = {
+  private def createOrWait(data: DataObject): Future[DataObject] = {
     
     import akka.pattern.ask
     import akka.util.Timeout
@@ -68,11 +68,11 @@ trait DataExecution extends Connection {
 
     // jumping through a hoop to get ask's future reply, itself a future (flattening it into "just" a future)
     val untyped: Future[Any] = ask(com.articlio.Globals.appActorSystem.deduplicator, Get(data))(Timeout(21474835.seconds)) // future for actor's reply
-    val retyped: Future[Future[Unit]] = untyped.mapTo[Future[Unit]]                                        // actor's reply is a future of an ExecutedData 
+    val retyped: Future[Future[DataObject]] = untyped.mapTo[Future[DataObject]]                                                        // workaround ask's non-type-safe result
     retyped flatMap(identity)                                                                                              // flatten the future of future
   }
   
-  def attemptCreate(data: DataObject): Future[Unit] = {
+  def attemptCreate(data: DataObject): Future[DataObject] = {
     println(s"in attemptCreate for $data")
     
     // recurse for own dependencies, waiting for them all before passing on
@@ -82,18 +82,21 @@ trait DataExecution extends Connection {
     dependencies map { _ => data.dependsOn.forall(dep => dep.getError == None)} flatMap { _ match {
       case false => {
         Future.successful( 
-          data.error complete Success(Some(DepsError(s"some dependencies were not met"))) // retrofit overall to not returning errors within a Success object? 
+          data.error complete Success(Some(DepsError(s"some dependencies were not met"))) // retrofit overall to not returning errors within a Success object?
         )
+        Future.successful(data)
       }
       case true =>
         data.create map { _ match { 
           case Ready(createdDataID) => {
             logger.write(s"data for ${data.getClass} now ready (data id: $createdDataID)")
             //data.dataID complete Success(createdDataID) assigning here seems to have been unnecessary all along? 
-            data.error complete Success(None)  
+            data.error complete Success(None)
+            data
           }
           case NotReady(error) => {
             data.error complete Success(Some(CreateError(s"failed creating data: ${error.get.errorDetail}")))
+            data
           }
         }}
       }   
@@ -112,7 +115,14 @@ trait DataExecution extends Connection {
         
         case NotReady(_) => {
           logger.write(s"data for ${data.getClass} is not yet ready... attempting to create it...")
-          createOrWait(data)
+          createOrWait(data) map { completedData =>
+            // if the dependency was completed by waiting for an equivalent data to complete,
+            // then carry over the completed equivalent's completion status.
+            if (data ne completedData) {
+              data.error  complete Success(completedData.getError)
+              data.dataID complete Success(completedData.successfullyCompletedID)
+            }
+          }
         }
       }
     }
