@@ -43,7 +43,7 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
     import models.Tables._
     import models.Tables.{Data => DataRecord}
     import com.articlio.storage.Connection
-    Datadependencies += DatadependenciesRow(data.dataID.get, dependedOnData.dataID.get)
+    Datadependencies += DatadependenciesRow(data.successfullyCompletedID, dependedOnData.successfullyCompletedID)
   }
   
   def creator(dataID: Long, dataTopic: String, articleName:String) : Future[Option[CreateError]] = {

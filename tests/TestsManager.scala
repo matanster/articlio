@@ -154,9 +154,9 @@ object UnitTestsRunner {
               // case Some(Failure(t))    => RED + BOLD +     "[Failed]  " + RESET + TestDesc + RED + "\n          ∗ " + t.getMessage.take(700) + (if (t.toString.length > 700) "...." else "") + RESET
               case _ => Console.RED + s"[UnitTestsRunner internal error:] test ${testSpec.attempt} not complete: ${result.isCompleted}" + RESET
           })    
-          println(BOLD + "...tests done" + RESET)
         }
       }
+      println(BOLD + "...tests done" + RESET)
     }
   }
 }

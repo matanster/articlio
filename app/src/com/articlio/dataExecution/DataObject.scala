@@ -14,6 +14,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Promise
+import scala.util.Success
 
 object creationStatusDBtoken {
   val STARTED = "started" 
@@ -47,8 +48,8 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
     def registerDependencies(data: DataObject): Unit = {
       data.dependsOn.map(dependedOnData => {
         println("data:      " + data)
-        println("Dep data : " + dependedOnData.dataID.get)
-        db.run(Datadependencies += DatadependenciesRow(data.dataID.get, dependedOnData.dataID.get))
+        println("Dep data : " + dependedOnData.successfullyCompletedID)
+        db.run(Datadependencies += DatadependenciesRow(data.successfullyCompletedID, dependedOnData.successfullyCompletedID))
         registerDependencies(dependedOnData)
       })
     }
@@ -58,9 +59,9 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
 
     //
     // register a new data run, and get its unique auto-ID from the RDBMS.
-    // should be forgivable blocking the thread for a single database insert for now..
+    // work to remove the blocking wait here - should be easy by now
     //
-    dataID = Some(Await.result(db.run(DataRecord.returning(DataRecord.map(_.dataid)) += DataRow(
+    dataID complete Success(Await.result(db.run(DataRecord.returning(DataRecord.map(_.dataid)) += DataRow(
       dataid                 = 0L, // will be auto-generated 
       datatype               = dataType, 
       datatopic              = dataTopic, 
@@ -72,10 +73,10 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
       softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion)), Duration.Inf))
 
     // now try this data's creation function
-    safeRunCreator(creator(dataID.get, dataType, dataTopic)) map { creationError => 
+    safeRunCreator(creator(successfullyCompletedID, dataType, dataTopic)) map { creationError => 
       // now record the outcome - was the data successfully created by this run?
-      db.run(DataRecord.filter(_.dataid === dataID.get).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
-        dataid                 = dataID.get,
+      db.run(DataRecord.filter(_.dataid === successfullyCompletedID).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
+        dataid                 = successfullyCompletedID,
         datatype               = dataType, 
         datatopic              = dataTopic, 
         creationstatus         = creationError match {
@@ -96,7 +97,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
       creationError match {
         case None  => {
           registerDependencies(this)
-          Ready(dataID.get)
+          Ready(successfullyCompletedID)
         }
         case Some(error) => NotReady(Some(error)) 
       }
@@ -122,8 +123,8 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
           //       the overall code currently both propagates the dataID in a return type Ready,
           //       in addition to recording it in this.dataID. 
           //       Probably, the former could be dropped in favor of the latter, across the board.
-          dataID = Some(suppliedRunID)
-          Ready(dataID.get)
+          dataID complete Success(suppliedRunID)
+          Ready(suppliedRunID)
         }
         case false => new NotReady
       }
@@ -149,8 +150,8 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
       result.nonEmpty match {
         case true =>
         {
-          dataID = Option(result.head.dataid)
-          Future.successful(Ready(dataID.get))
+          dataID complete Success(result.head.dataid)
+          Future.successful(Ready(successfullyCompletedID))
         }
         case false =>
           get(creationStatusDBtoken.STARTED) map { result =>
@@ -159,8 +160,8 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
                         case false => {
                           println(s"data creation already in progress for $this - waiting for it...")
                           
-                          dataID = Option(result.head.dataid)
-                          Ready(dataID.get)
+                          dataID complete Success(result.head.dataid)
+                          Ready(result.head.dataid)
                         }
                       }
                    }
@@ -178,7 +179,29 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
   
   def dependsOn: Seq[DataObject]
   
-  var dataID: Option[Long] = None // for caching database auto-assigned ID  
+  var dataID = Promise[Long] // for caching database auto-assigned ID  
+  
+  def successfullyCompletedID = dataID.future.value.get.get
+  
+  // recursively serialize the error/Ok status of the entire tree - if this function is still needed 
+  // Note: assumes children's future sequence is already completed when being called
+  private def doSerialize(executionTree: ExecutedData): String = {
+    
+    val children = executionTree.children.value.get.get // extract the sequence from the (assumed to be completed) Future
+    
+    // maybe a bit ugly string composition, comprising nested formatting strings.
+    s"${executionTree.accessOrError match {
+        case access:      Access      => "created Ok, "
+        case accessError: AccessError => accessError.errorDetail 
+       }}${children.isEmpty match { 
+            case true  => " (had no dependencies)."
+            case false => s". data dependencies were: ${children.map(child =>
+                         s"\ndependency ${child.data} - ${doSerialize(child)}")}"
+          }
+    }"
+  }
+  
+  def serialize(executionTree: ExecutedData) = doSerialize(executionTree: ExecutedData) // (this)  
 }
 
 //
@@ -233,7 +256,7 @@ trait Execute extends RecordException {
       
   val accessOrError: Future[AccessOrError] = targetDataGet(data)
 
-  val dataID: Future[Long] = accessOrError map { _ => data.dataID.get } // ugly way of getting the data ID out of the system.
+  val dataID: Future[Long] = accessOrError map { _ => data.successfullyCompletedID } // ugly way of getting the data ID out of the system.
   
   def humanAccessMessage: Future[String] = {
     accessOrError map { _ match { 

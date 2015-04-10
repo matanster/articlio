@@ -23,7 +23,7 @@ import akka.util.Timeout
 // error reporting. On later review, may be unnecessary a class, if each
 // dependency kept its AccessOrError status intrinsically.
 //
-case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Future[Seq[ExecutedData]] = Future.successful(Seq())) {
+@deprecated("", "") case class ExecutedData(data: DataObject, accessOrError: AccessOrError, children: Future[Seq[ExecutedData]] = Future.successful(Seq())) {
 
   // recursively serialize the error/Ok status of the entire tree. 
   // Note: assumes children's future sequence is already completed when being called
@@ -121,7 +121,7 @@ trait DataExecution extends Connection {
         data.create map { _ match { 
           case Ready(createdDataID) => {
             logger.write(s"data for ${data.getClass} now ready (data id: $createdDataID)")
-            data.dataID = Some(createdDataID)
+            //data.dataID complete Success(createdDataID) assigning here seems to have been unnecessary all along? 
             ExecutedData(data, data.access, immediateDependencies) 
           }
           case NotReady(error) => {

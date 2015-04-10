@@ -75,7 +75,7 @@ object ShowExtract extends Controller with Testable {
           Future.failed(new Throwable(s"couldn't find or create data for request: ${data.humanAccessMessage}"))
         }
         case access: Access => {
-          val dataID = data.dataID.get
+          val dataID = data.dataID.future.value.get.get
           getData(dataID, data.dataType, articleName) map { case (allApplicableDataIDs, contentResult) =>
             (dataID, allApplicableDataIDs, contentResult) }  
         }
