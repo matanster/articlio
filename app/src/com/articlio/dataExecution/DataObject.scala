@@ -28,13 +28,13 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
                           with DataExecution { 
   
   //
-  // tries a function, and collapses its exception into application type 
+  // tries a function, and collapses its exception into application type - can be replaced by the use of Try
   //
   def safeRunCreator(func: => Future[Option[CreateError]]): Future[Option[CreateError]] = { // syntax explanation: 
                                                                                             // this is function passing "by name".
                                                                                             // the function supplied by caller is passed as is,
                                                                                             // so that this function can execute it.
-      try { return func } // TODO: why is `return` used here with futures?!
+      try { return func } 
         catch { 
           case anyException : Throwable =>
           recordException(anyException)
@@ -45,6 +45,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
   // TODO: refine the time stamp values to sub-second granularity (see https://github.com/tototoshi/slick-joda-mapper if helpful)
   def create: Future[ReadyState] = { 
     println(s"in create for $this")
+    
     def registerDependencies(data: DataObject): Unit = {
       data.dependsOn.map(dependedOnData => {
         db.run(Datadependencies += DatadependenciesRow(data.successfullyCompletedID, dependedOnData.successfullyCompletedID))
@@ -55,11 +56,8 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
     val ownHostName = java.net.InetAddress.getLocalHost.getHostName // TODO: move to global initialization object of some sort
     val startTime = localNow
 
-    //
     // register a new data run, and get its unique auto-ID from the RDBMS.
-    // work to remove the blocking wait here - should be easy by now
-    //
-    dataID complete Success(Await.result(db.run(DataRecord.returning(DataRecord.map(_.dataid)) += DataRow(
+    db.run(DataRecord.returning(DataRecord.map(_.dataid)) += DataRow( 
       dataid                 = 0L, // will be auto-generated 
       datatype               = dataType, 
       datatopic              = dataTopic, 
@@ -68,38 +66,41 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
       creatorserver          = ownHostName,
       creatorserverstarttime = Some(startTime),
       creatorserverendtime   = None,
-      softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion)), Duration.Inf))
-
-    // now try this data's creation function
-    safeRunCreator(creator(successfullyCompletedID, dataType, dataTopic)) map { creationError => 
-      // now record the outcome - was the data successfully created by this run?
-      db.run(DataRecord.filter(_.dataid === successfullyCompletedID).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
-        dataid                 = successfullyCompletedID,
-        datatype               = dataType, 
-        datatopic              = dataTopic, 
-        creationstatus         = creationError match {
-                                   case None => creationStatusDBtoken.SUCCESS
-                                   case Some(error) => creationStatusDBtoken.FAILED}, 
-        creationerrordetail    = creationError match { // for now redundant, but if CreationError evolves... need to convert to string like so
-                                   case None => None
-                                   case Some(error) => Some(error.toString)},
-        creatorserver          = ownHostName,
-        creatorserverstarttime = Some(startTime),
-        creatorserverendtime   = Some(localNow),
-        softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion))
-      ) 
+      softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion)
+    ) flatMap { returnedDataID =>
+        
+        dataID complete Success(returnedDataID)
       
-      //
-      // register dependencies if successful creation, and return
-      //
-      creationError match {
-        case None  => {
-          registerDependencies(this)
-          Ready(successfullyCompletedID)
+        // now try this data's creation function
+        safeRunCreator(creator(successfullyCompletedID, dataType, dataTopic)) flatMap { creationError => 
+          // now record the outcome - was the data successfully created by this run?
+          db.run(DataRecord.filter(_.dataid === returnedDataID).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
+            dataid                 = returnedDataID,
+            datatype               = dataType, 
+            datatopic              = dataTopic, 
+            creationstatus         = creationError match {
+                                       case None => creationStatusDBtoken.SUCCESS
+                                       case Some(error) => creationStatusDBtoken.FAILED}, 
+            creationerrordetail    = creationError match { // for now redundant, but if CreationError evolves... need to convert to string like so
+                                       case None => None
+                                       case Some(error) => Some(error.toString)},
+            creatorserver          = ownHostName,
+            creatorserverstarttime = Some(startTime),
+            creatorserverendtime   = Some(localNow),
+            softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion))
+          ) map { _ => 
+                      
+            // register the dependencies of the newly successfully created data 
+            creationError match {
+              case None  => {
+                registerDependencies(this)
+                Ready(successfullyCompletedID)
+              }
+              case Some(error) => NotReady(Some(error)) 
+            }
+          }
         }
-        case Some(error) => NotReady(Some(error)) 
       }
-    }
   } 
 
   def ReadyState: Future[ReadyState] = {
@@ -192,7 +193,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
       case None => s"$dataType for $dataTopic is ready."
       case Some(CreateError(errorDetail))    => s"$dataType for $dataTopic failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
       case Some(DataIDNotFound(errorDetail)) => s"$dataType for $dataTopic with requested data ID ${requestedDataID}, does not exist."
-      case Some(DepsError(errorDetail))      => s"$dataType for $dataTopic failed to create because one or more dependencies were not met: errorDetail"
+      case Some(DepsError(errorDetail))      => s"$dataType for $dataTopic failed to create because one or more dependencies were not met: $errorDetail"
     }
   }  
 }
