@@ -139,32 +139,16 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
     def query = 
       DataRecord.filter(_.datatype === this.getClass.getSimpleName)
                 .filter(_.datatopic === dataTopic)
-                .filter(data => data.creationstatus === creationStatusDBtoken.SUCCESS || data.creationstatus === creationStatusDBtoken.STARTED)
+                .filter(data => data.creationstatus === creationStatusDBtoken.SUCCESS)
     
-    val data = db.query(query)
-    
-    def get(status: String) =
-      data map { result => result.filter(data => data.creationstatus == status) } 
-    
-    get(creationStatusDBtoken.SUCCESS) flatMap { result => 
+    db.query(query) map { result => 
       result.nonEmpty match {
         case true =>
         {
           dataID complete Success(result.head.dataid)
-          Future.successful(Ready(successfullyCompletedID))
+          Ready(successfullyCompletedID)
         }
-        case false =>
-          get(creationStatusDBtoken.STARTED) map { result =>
-                      result.isEmpty match {
-                        case true => new NotReady
-                        case false => {
-                          println(s"data creation already in progress for $this - waiting for it...")
-                          
-                          dataID complete Success(result.head.dataid)
-                          Ready(result.head.dataid)
-                        }
-                      }
-                   }
+        case false => new NotReady
       }
     }
   } 

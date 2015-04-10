@@ -28,13 +28,14 @@ class Deduplicator extends Actor with DataExecution {
   def hash(data: DataObject) = data.dataType + data.dataTopic 
   
   private def processGet(data: DataObject) = {
+    
     val dataHash = hash(data)  
     inProgress.get(dataHash) match {
       case Some(future) => {
         println(Console.BLUE_B + s"info: multiple requests waiting on creation of $data" + Console.RESET)
         future
       } 
-      case None   => {
+      case None => {
         val future = attemptCreate(data)
         inProgress += ((dataHash, future))            
         future.onComplete { _ => inProgress.remove(dataHash) }
