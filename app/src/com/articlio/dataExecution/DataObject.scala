@@ -67,23 +67,23 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
       creatorserverstarttime = Some(startTime),
       creatorserverendtime   = None,
       softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion)
-    ) flatMap { returnedDataID =>
+    ) flatMap { returnedID =>
         
-        dataID complete Success(returnedDataID)
+        dataID complete Success(returnedID)
       
         // now try this data's creation function
         safeRunCreator(creator(successfullyCompletedID, dataType, dataTopic)) flatMap { creationError => 
           // now record the outcome - was the data successfully created by this run?
-          db.run(DataRecord.filter(_.dataid === returnedDataID).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
-            dataid                 = returnedDataID,
+          db.run(DataRecord.filter(_.dataid === returnedID).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
+            dataid                 = returnedID,
             datatype               = dataType, 
             datatopic              = dataTopic, 
             creationstatus         = creationError match {
-                                       case None => creationStatusDBtoken.SUCCESS
-                                       case Some(error) => creationStatusDBtoken.FAILED}, 
-            creationerrordetail    = creationError match { // for now redundant, but if CreationError evolves... need to convert to string like so
+                                       case None =>    creationStatusDBtoken.SUCCESS
+                                       case Some(_) => creationStatusDBtoken.FAILED}, 
+            creationerrordetail    = creationError match { 
                                        case None => None
-                                       case Some(error) => Some(error.toString)},
+                                       case Some(errorDetail) => Some(errorDetail.toString)},
             creatorserver          = ownHostName,
             creatorserverstarttime = Some(startTime),
             creatorserverendtime   = Some(localNow),
@@ -94,7 +94,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
             creationError match {
               case None  => {
                 registerDependencies(this)
-                Ready(successfullyCompletedID)
+                Ready(returnedID)
               }
               case Some(error) => NotReady(Some(error)) 
             }
