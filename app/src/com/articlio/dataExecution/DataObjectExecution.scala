@@ -76,7 +76,7 @@ trait DataExecution extends Connection {
     println(s"in attemptCreate for $data")
     
     // recurse for own dependencies, waiting for them all before passing on
-    val dependencies = Future.sequence(data.dependsOn.map(dep => getDataAccess(dep)))
+    val dependencies: Future[Seq[Unit]] = Future.sequence(data.dependsOn.map(dep => getDataAccess(dep)))
     
     // is entire dependencies tree ready?
     dependencies map { _ => data.dependsOn.forall(dep => dep.getError == None)} flatMap { _ match {

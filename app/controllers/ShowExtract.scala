@@ -27,10 +27,10 @@ object ShowExtract extends Controller with Testable {
     def tests = Seq(
         new TestSpec(given  = "an article file name non-existent in the data directory", 
                      should = "generate an error when semantic data is requested for it", 
-                     TryNonExistentArticle),
+                     TryNonExistentArticle, Only),
         new TestSpec(given  = "an article file name",
                      should = "have content results for it when semantic data is requested for it",
-                     tryExistingArticle)
+                     tryExistingArticle, Only)
     )
         
     val existingArticle = "Learning to Summarise Related Sentences"

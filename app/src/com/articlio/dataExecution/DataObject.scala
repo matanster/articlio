@@ -165,7 +165,10 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
   def successfullyCompletedID = dataID.future.value.get.get
   
   val error = Promise[Option[AccessError]]
-  def getError = error.future.value.get.get
+  def getError = {
+    println(this + ":" + error.isCompleted)   
+    error.future.value.get.get
+  }
   
   // recursively serialize the error/Ok status of the entire tree - if this function is still needed 
   // Note: assumes children's future sequence is already completed when being called
