@@ -24,7 +24,7 @@ object Globals {
     val outDB = OutDB(db) /// no longer an actor, no longer needs to be in an actor system
     
     //import argonaut._, Argonaut._
-    val ownGitVersion = sys.process.Process(Seq("git", "describe", "--always", "--dirty")).!!.dropRight(1) // http://stackoverflow.com/questions/29527908/get-hash-without-committing/29528854#29528854
+    val ownGitVersion = "git " + sys.process.Process(Seq("git", "describe", "--always", "--dirty")).!!.dropRight(1) // http://stackoverflow.com/questions/29527908/get-hash-without-committing/29528854#29528854
     
     def shutdown {                                        
       system.shutdown
