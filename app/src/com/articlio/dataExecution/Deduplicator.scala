@@ -22,8 +22,8 @@ class Deduplicator extends Actor with DataExecution {
   
   // the TrieMap is the only concrete implementation available out of the box in scala 2.11, for a thread-safe map
   // (refer to http://stackoverflow.com/questions/18660769/best-practices-for-mixing-in-scala-concurrent-map)
-  val inProgress : scala.collection.concurrent.Map[String, Future[ExecutedData]] = 
-    scala.collection.concurrent.TrieMap.empty[String, Future[ExecutedData]] 
+  val inProgress : scala.collection.concurrent.Map[String, Future[Unit]] = 
+    scala.collection.concurrent.TrieMap.empty[String, Future[Unit]] 
   
   def hash(data: DataObject) = data.dataType + data.dataTopic 
   

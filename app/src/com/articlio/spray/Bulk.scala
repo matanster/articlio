@@ -58,7 +58,7 @@ object BulkSemanticArbitrary {
 //
 class BulkExecutionManager(dataSeq: Seq[DataObject], sharedDeps: Seq[DataObject]) extends Connection {
   Future.sequence(sharedDeps.map(sharedDep => FinalData(sharedDep) // TODO: latest refactor, to be confirmed
-    map { _.accessOrError.isInstanceOf[Access] })) 
+    map { _.getError == None })) // TODO: squash the double map
     .map {_.forall(_ == true) match {
       case false => DepsError("bulk run aborted as one or more shared dependencies failed.")
       case true  => dataSeq.par.map(data => FinalData(data))

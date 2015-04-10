@@ -62,22 +62,22 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
     }
     
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    FinalData(eLifeJATSDep) flatMap {_.accessOrError match {
-      case access: Access => {
+    FinalData(eLifeJATSDep) flatMap {_.getError match {
+      case None => {
         ReadyJATS.fix()_
         registerDependency(this, eLifeJATSDep)
         Future.successful(None)
       }
-      case error: AccessError =>
-        FinalData(PDFDep) map {_.accessOrError match {
-          case access: Access => {
+      case Some(error) =>
+        FinalData(PDFDep) map {_.getError match {
+          case None => {
             com.articlio.util.Console.log(s"delegating pdf conversion to node.js ($articleName)")
             Await.result(convertSingle(s"${config.config.getString("locations.pdf-source-input")}/$articleName".rooted), 10.seconds) match {
               case None => registerDependency(this, PDFDep); None
               case Some(error) => Some(CreateError(s"failed to convert pdf to JATS - response from http service was: ${error.errorDetail}"))
             }
           }
-          case error: AccessError => Some(CreateError(s"disjunctive dependency for creating JATS for $articleName has not been met")) 
+          case Some(error) => Some(CreateError(s"disjunctive dependency for creating JATS for $articleName has not been met")) 
         }}
     }}
   }

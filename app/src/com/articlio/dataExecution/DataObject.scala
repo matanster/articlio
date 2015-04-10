@@ -175,39 +175,46 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
   
   def creator(dataID: Long, dataTopic: String, articleName: String) : Future[Option[CreateError]]
     
-  def access: Access
-  
   def dependsOn: Seq[DataObject]
   
-  var dataID = Promise[Long] // for caching database auto-assigned ID  
-  
+  val dataID = Promise[Long] // for caching database auto-assigned ID  
   def successfullyCompletedID = dataID.future.value.get.get
+  
+  val error = Promise[Option[AccessError]]
+  def getError = error.future.value.get.get
   
   // recursively serialize the error/Ok status of the entire tree - if this function is still needed 
   // Note: assumes children's future sequence is already completed when being called
-  private def doSerialize(executionTree: ExecutedData): String = {
-    
-    val children = executionTree.children.value.get.get // extract the sequence from the (assumed to be completed) Future
+  private def doSerialize: String = { // TODO: serialize through dependencies rather than the obsolete executionTree construct
     
     // maybe a bit ugly string composition, comprising nested formatting strings.
-    s"${executionTree.accessOrError match {
-        case access:      Access      => "created Ok, "
-        case accessError: AccessError => accessError.errorDetail 
-       }}${children.isEmpty match { 
+    s"${getError match {
+        case None => "created Ok, "
+        case Some(accessError) => accessError.errorDetail 
+       }}${dependsOn.isEmpty match { 
             case true  => " (had no dependencies)."
-            case false => s". data dependencies were: ${children.map(child =>
-                         s"\ndependency ${child.data} - ${doSerialize(child)}")}"
+            case false => s". data dependencies were: ${dependsOn.map(child =>
+                         s"\ndependency ${child} - ${child.doSerialize}")}"
           }
     }"
   }
   
-  def serialize(executionTree: ExecutedData) = doSerialize(executionTree: ExecutedData) // (this)  
+  def serialize = doSerialize
+  
+  def humanAccessMessage = { // TODO: rename
+    getError match { 
+      case None => s"$dataType for $dataTopic is ready."
+      case Some(CreateError(errorDetail))    => s"$dataType for $dataTopic failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
+      case Some(DataIDNotFound(errorDetail)) => s"$dataType for $dataTopic with requested data ID ${requestedDataID}, does not exist."
+      case Some(DepsError(errorDetail))      => s"$dataType for $dataTopic failed to create because one or more dependencies were not met: errorDetail"
+    }
+  }  
 }
 
 //
 // Attempts to Execute a Data Object and Hold Outcome (hence Representing Final State)
 //
-class FinalData(data: DataObject, val accessOrError: AccessOrError) extends DataExecution {
+class FinalData(data: DataObject, val finalStatus: Boolean) extends DataExecution {
   
   // carry over all immutables of the original data object relevant to the finalized state
   val dataType: String = data.dataType
@@ -215,25 +222,18 @@ class FinalData(data: DataObject, val accessOrError: AccessOrError) extends Data
       
   val dataID = data.dataID
   
-  println(s"In FinalData class")
+  val getError = data.getError
   
-  def humanAccessMessage = {
-    accessOrError match { 
-      case dataAccessDetail: Access => s"$dataType for $dataTopic is ready."
-      case error: CreateError       => s"$dataType for $dataTopic failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
-      case error: DataIDNotFound    => s"$dataType for $dataTopic with requested data ID ${data.requestedDataID}, does not exist."
-      case error: DepsError         => s"$dataType for $dataTopic failed to create because one or more dependencies were not met: ${error.errorDetail}"
-      case unexpectedErrorType : AccessError => s"unexpected access error type while tyring to get $this: $unexpectedErrorType"
-      case _ => s"error: unexpected match type ${accessOrError.getClass}"
-    }
-  }
+  val humanAccessMessage = data.humanAccessMessage
+  
+  println(s"In FinalData class")
 }
 
 object FinalData extends DataExecution {
   def apply(data: DataObject): Future[FinalData] = {
-    targetDataGet(data) map { accessOrError =>
-      println(s"In FinalData: $accessOrError")
-      new FinalData(data, accessOrError) }
+    targetDataGet(data) map { finalStatus =>
+      println(s"In FinalData: $finalStatus")
+      new FinalData(data, finalStatus) }
   }
 }
 
@@ -248,25 +248,3 @@ trait Execute extends RecordException {
   } 
 }
 
-@deprecated("", "") case class FinalDataOld(data: DataObject) extends DataExecution {
-  
-  // carry over all immutables of the original data object relevant to the finalized state
-  val dataType: String = data.dataType
-  val dataTopic: String = data.dataTopic
-      
-  val accessOrError: Future[AccessOrError] = targetDataGet(data)
-
-  val dataID: Future[Long] = accessOrError map { _ => data.successfullyCompletedID } // ugly way of getting the data ID out of the system.
-  
-  def humanAccessMessage: Future[String] = {
-    accessOrError map { _ match { 
-        case dataAccessDetail : Access => s"$dataType for $dataTopic is ready."
-        case error: CreateError        => s"$dataType for $dataTopic failed to create. Please contact development with all necessary details (url, and description of what you were doing)"
-        case error: DataIDNotFound     => s"$dataType for $dataTopic with requested data ID ${data.requestedDataID}, does not exist."
-        case error: DepsError          => s"$dataType for $dataTopic failed to create because one or more dependencies were not met: ${error.errorDetail}"
-        case unexpectedErrorType : AccessError => s"unexpected access error type while tyring to get $this: $unexpectedErrorType"
-        case _ => s"error: unexpected match type ${accessOrError.getClass}"
-      }
-    }
-  }
-}

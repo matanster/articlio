@@ -10,7 +10,7 @@ abstract class AccessError extends AccessOrError { val errorDetail: String }
 case     class CreateError    (errorDetail: String) extends AccessError 
 case     class DepsError      (errorDetail: String) extends AccessError
 case     class DataIDNotFound (errorDetail: String) extends AccessError
-class    Access(dataID: Option[Long] = None) extends AccessOrError
+class    Access extends AccessOrError
 
 trait RecordException {
   def recordException(exception: Throwable) {
