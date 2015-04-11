@@ -11,8 +11,6 @@ import scala.concurrent.{Future, Await}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import com.articlio.dataExecution.FinalData
-import com.articlio.dataExecution.AccessOrError
-import com.articlio.dataExecution.Access
 import com.articlio.config
 import com.articlio.storage.ManagedDataFiles._
 

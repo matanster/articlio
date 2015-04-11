@@ -29,12 +29,12 @@ trait DataExecution extends Connection {
   }
 
   /*
-   *  Try to satisfy data request - indicating data status via boolean value.
+   *  Try to satisfy data request - indicating data status through a boolean 
    */
   def targetDataGet(data: DataObject): Future[Boolean] = { 
     logger.write(Console.BLUE_B + s"<<< handling top-level request for data ${data}" + Console.RESET) //
     data.ReadyState flatMap { _ match { 
-        case Ready(dataID) => {
+        case Ready => {
           logger.write(s"Data ${data.getClass.getSimpleName} for ${data.dataTopic} is already ready" + " >>>") 
           Future { true } 
         }
@@ -91,9 +91,8 @@ trait DataExecution extends Connection {
       }
       case true =>
         data.create map { _ match { 
-          case Ready(createdDataID) => {
-            logger.write(s"data for ${data.getClass} now ready (data id: $createdDataID)")
-            //data.dataID complete Success(createdDataID) assigning here seems to have been unnecessary all along? 
+          case Ready => {
+            logger.write(s"data for ${data.getClass} now ready (data id: ${data.successfullyCompletedID})")
             data.error complete Success(None)
             data
           }
@@ -111,8 +110,8 @@ trait DataExecution extends Connection {
   private def getDataAccessAnyID(data: DataObject): Future[Unit] = {
     println(s"in getDataAccessAnyID for $data")
     data.ReadyState flatMap { _ match {
-        case Ready(dataID) => {  
-          logger.write(s"data for ${data.getClass} is ready (data id: $dataID)")
+        case Ready => {  
+          logger.write(s"data for ${data.getClass} is ready (data id: ${data.successfullyCompletedID})")
           Future.successful(Unit)
         }
         
@@ -135,8 +134,8 @@ trait DataExecution extends Connection {
   // returns: access details for ready data, or None if data is not ready
   private def getDataAccessSpecificID(data: DataObject, suppliedRunID: Long): Future[Unit] = {
     data.ReadyState map { _ match {
-        case Ready(dataID) => {  
-          logger.write(s"data for ${data.getClass} with id ${suppliedRunID} is ready")
+        case Ready => {  
+          logger.write(s"data for ${data.getClass} with id $suppliedRunID is ready")
         }
         
         case NotReady(_) => {

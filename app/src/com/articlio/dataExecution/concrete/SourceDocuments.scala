@@ -45,7 +45,6 @@ abstract class Raw(articleName: String, externalSourceDirectory: Option[String] 
         }
     }
   }
-  val access = new Access
 }
 
 case class RawPDF(articleName: String, externalSourceDirectory: Option[String] = None) extends Raw(articleName, externalSourceDirectory) 

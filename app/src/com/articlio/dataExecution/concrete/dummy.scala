@@ -26,7 +26,5 @@ case class DummyWithDuration(dataTopic: String, duration: Long) extends DataObje
       None
     }
   }
-  
-  val access = new Access // no refined access details for now
 }
 

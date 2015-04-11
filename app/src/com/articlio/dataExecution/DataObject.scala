@@ -94,7 +94,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
             creationError match {
               case None  => {
                 registerDependencies(this)
-                Ready(returnedID)
+                Ready
               }
               case Some(error) => NotReady(Some(error)) 
             }
@@ -123,7 +123,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
           //       in addition to recording it in this.dataID. 
           //       Probably, the former could be dropped in favor of the latter, across the board.
           dataID complete Success(suppliedRunID)
-          Ready(suppliedRunID)
+          Ready
         }
         case false => new NotReady
       }
@@ -145,7 +145,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
         case true =>
         {
           dataID complete Success(result.head.dataid)
-          Ready(successfullyCompletedID)
+          Ready
         }
         case false => new NotReady
       }
