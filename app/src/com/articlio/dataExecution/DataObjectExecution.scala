@@ -15,21 +15,13 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import akka.util.Timeout
 
 /*
- * Executes data preparation by dependencies. 
+ * Trait for Satisfying a Data Object  
  */
 
-trait DataExecution extends Connection {
+trait DataExecution extends Connection { // can refactor to using self type a la `this: DataObject =>` rather than a function argument for the methods. 
+                                         // that may also require some common root abstract class to all those that extend this trait.  
 
   val logger = new SimplestLogger("DataExecutionManager")
-
-  /*
-   *  Try to satisfy a data object by attempting to create its data, regardless of satisfiable data being already available.
-   */
-  def unconditionalCreate(data: DataObject): Future[Unit] = { 
-    logger.write(s"=== handling unconditional top-level request for data ${data} ===") //
-    // UI fit message: s"attempting to create data for ${data.getClass} regardless of whether such data is already available...")
-    createOrWait(data) map { _ => Unit } 
-  }
 
   /*
    *  Try to satisfy a data object - ultimately indicating success/failure status through a boolean.
@@ -126,7 +118,8 @@ trait DataExecution extends Connection {
   }
   
   //
-  // Really attempt to create the data
+  // Really attempt to create the data:
+  // Attempts all its dependencies (indirectly recursively), first.
   //
   private[dataExecution] def create(data: DataObject): Future[DataObject] = {
     println(s"in attemptCreate for $data")
@@ -145,5 +138,15 @@ trait DataExecution extends Connection {
       case true =>
         data.create map { _ => data }
     }}
+  }
+  
+  /*
+   *  Try to satisfy a data object by attempting to create its data, regardless of satisfiable data being already available.
+   *  May become handy later or for troubleshoot scenarios.
+   */
+  def unconditionalCreate(data: DataObject): Future[Unit] = { 
+    logger.write(s"=== handling unconditional top-level request for data ${data} ===") //
+    // UI fit message: s"attempting to create data for ${data.getClass} regardless of whether such data is already available...")
+    createOrWait(data) map { _ => Unit } 
   }
 }

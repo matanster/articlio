@@ -16,18 +16,22 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Promise
 import scala.util.Success
 
-object creationStatusDBtoken {
+object CreationStatusDBtoken {
   val STARTED = "started" 
   val SUCCESS = "success"
   val FAILED  = "failed" 
 }
 
-// Data Object That Needs to be Attempted
-abstract class DataObject(val requestedDataID: Option[Long] = None)
-                         (implicit db: SlickDB) extends RecordException 
-                          with DataExecution { 
+/*
+ *  Data Object representing a wish for Data.
+ *  To be fulfilled by either finding satisfiable data through the data catalog, 
+ *  or by creating the data, using the object's `create` function.
+ */
 
-  val dataType = this.getClass.getSimpleName
+abstract class DataObject(val requestedDataID: Option[Long] = None)
+                         (implicit db: SlickDB) extends DataExecution with RecordException { 
+
+  val dataType = this.getClass.getSimpleName // concrete class's name
   
   def dataTopic: String
   
@@ -35,12 +39,12 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
     
   def dependsOn: Seq[DataObject]
   
-  private def getAssumingCompleted[T](promise: Promise[T]) = promise.future.value.get.get
+  private def getAssumingCompleted[T](promise: Promise[T]) = promise.future.value.get.get // TODO: move to util
   
   val dataID = Promise[Long] // to receive a database insert auto-assigned ID  
   def successfullyCompletedID = getAssumingCompleted(dataID)
   
-  val error = Promise[Option[AccessError]]
+  val error = Promise[Option[AccessError]] // to house an error if object cannot be satisfied
   def getError = getAssumingCompleted(error) 
   
   
@@ -81,7 +85,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
       dataid                 = 0L, // will be auto-generated 
       datatype               = dataType, 
       datatopic              = dataTopic, 
-      creationstatus         = creationStatusDBtoken.STARTED, 
+      creationstatus         = CreationStatusDBtoken.STARTED, 
       creationerrordetail    = None,
       creatorserver          = ownHostName,
       creatorserverstarttime = Some(startTime),
@@ -99,8 +103,8 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
             datatype               = dataType, 
             datatopic              = dataTopic, 
             creationstatus         = creationError match {
-                                       case None =>    creationStatusDBtoken.SUCCESS
-                                       case Some(_) => creationStatusDBtoken.FAILED}, 
+                                       case None =>    CreationStatusDBtoken.SUCCESS
+                                       case Some(_) => CreationStatusDBtoken.FAILED}, 
             creationerrordetail    = creationError match { 
                                        case None => None
                                        case Some(errorDetail) => Some(errorDetail.toString)},
@@ -146,7 +150,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
     db.query(DataRecord.filter(_.dataid === suppliedRunID)
                        .filter(_.datatype === this.getClass.getSimpleName)
                        .filter(_.datatopic === dataTopic)
-                       .filter(_.creationstatus === creationStatusDBtoken.SUCCESS)) map { 
+                       .filter(_.creationstatus === CreationStatusDBtoken.SUCCESS)) map { 
       result => result.nonEmpty match {
         case true => { 
           // TODO: these two lines showcase redundancy and therefore bug potential:
@@ -169,7 +173,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
     def query = 
       DataRecord.filter(_.datatype === this.getClass.getSimpleName)
                 .filter(_.datatopic === dataTopic)
-                .filter(data => data.creationstatus === creationStatusDBtoken.SUCCESS)
+                .filter(data => data.creationstatus === CreationStatusDBtoken.SUCCESS)
     
     db.query(query) map { result => 
       result.nonEmpty match {
@@ -215,8 +219,18 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
 }
 
 //
-// Attempted Data's Final State - a bit superfluous a layer - but
-// may come handy in future refactoring for cluster execution
+// Attempts Satisfying the Data Object (creating a derived object representing final state)
+//
+object FinalData extends DataExecution {
+  def apply(data: DataObject): Future[FinalData] = {
+    topLevelGet(data) map { isSuccessful =>
+      new FinalData(data, isSuccessful) }
+  }
+}
+
+//
+// Attempted Data's Final State - a bit superfluous having a special object for this maybe -
+// but may come handy in future refactoring for cluster execution
 //
 class FinalData(data: DataObject, val isSuccessful: Boolean) extends DataExecution {
   // carry over all properties of the underlying data object relevant to the finalized state
@@ -227,15 +241,7 @@ class FinalData(data: DataObject, val isSuccessful: Boolean) extends DataExecuti
   val humanAccessMessage = data.humanAccessMessage
 }
 
-//
-// Attempts to Execute a Data Object and Hold Outcome Representing Final State
-//
-object FinalData extends DataExecution {
-  def apply(data: DataObject): Future[FinalData] = {
-    topLevelGet(data) map { isSuccessful =>
-      new FinalData(data, isSuccessful) }
-  }
-}
+
 
 @deprecated("to be removed","")
 trait Execute extends RecordException {
