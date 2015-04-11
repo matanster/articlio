@@ -1,3 +1,5 @@
+
+
 package com.articlio.ldb
 
 import java.io.File
@@ -15,6 +17,7 @@ import com.articlio.Globals.db
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 
+/*
 //
 // Re-create all data belonging to given bulk id
 //
@@ -33,7 +36,8 @@ object BulkSemanticRecreate extends Connection {
       
     }
   }
-}   
+} 
+*/
 
 //
 // bulk run from a directory

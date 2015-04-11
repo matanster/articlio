@@ -72,7 +72,7 @@ case class OutDB(dbHandle: SlickDB) {
   // Schema handling functions
   //
 
-  val tables = Seq(Matches, Data, Datadependencies)
+  val tables = Seq(Matches, Data, Datadependencies, Datagroupings)
   
   def create = {
     dbHandle.run(DBIO.sequence(tables.map(table => table.schema.create))) 

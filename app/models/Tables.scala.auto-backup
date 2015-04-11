@@ -103,12 +103,12 @@ trait Tables {
    *  @param creatorserver Database column creatorServer SqlType(VARCHAR), Length(45,true)
    *  @param creatorserverstarttime Database column creatorserverstarttime SqlType(TIMESTAMP), Default(None)
    *  @param creatorserverendtime Database column creatorserverendtime SqlType(TIMESTAMP), Default(None)
-   *  @param softwareversion Database column softwareVersion SqlType(INT) */
-  case class DataRow(dataid: Long, datatype: String, datatopic: String, creationstatus: String, creationerrordetail: Option[String] = None, creatorserver: String, creatorserverstarttime: Option[java.sql.Timestamp] = None, creatorserverendtime: Option[java.sql.Timestamp] = None, softwareversion: Int)
+   *  @param softwareversion Database column softwareVersion SqlType(VARCHAR), Length(45,true) */
+  case class DataRow(dataid: Long, datatype: String, datatopic: String, creationstatus: String, creationerrordetail: Option[String] = None, creatorserver: String, creatorserverstarttime: Option[java.sql.Timestamp] = None, creatorserverendtime: Option[java.sql.Timestamp] = None, softwareversion: String)
   /** GetResult implicit for fetching DataRow objects using plain SQL queries */
-  implicit def GetResultDataRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Option[String]], e3: GR[Option[java.sql.Timestamp]], e4: GR[Int]): GR[DataRow] = GR{
+  implicit def GetResultDataRow(implicit e0: GR[Long], e1: GR[String], e2: GR[Option[String]], e3: GR[Option[java.sql.Timestamp]]): GR[DataRow] = GR{
     prs => import prs._
-    DataRow.tupled((<<[Long], <<[String], <<[String], <<[String], <<?[String], <<[String], <<?[java.sql.Timestamp], <<?[java.sql.Timestamp], <<[Int]))
+    DataRow.tupled((<<[Long], <<[String], <<[String], <<[String], <<?[String], <<[String], <<?[java.sql.Timestamp], <<?[java.sql.Timestamp], <<[String]))
   }
   /** Table description of table Data. Objects of this class serve as prototypes for rows in queries. */
   class Data(_tableTag: Tag) extends Table[DataRow](_tableTag, "Data") {
@@ -132,8 +132,8 @@ trait Tables {
     val creatorserverstarttime: Rep[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("creatorserverstarttime", O.Default(None))
     /** Database column creatorserverendtime SqlType(TIMESTAMP), Default(None) */
     val creatorserverendtime: Rep[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("creatorserverendtime", O.Default(None))
-    /** Database column softwareVersion SqlType(INT) */
-    val softwareversion: Rep[Int] = column[Int]("softwareVersion")
+    /** Database column softwareVersion SqlType(VARCHAR), Length(45,true) */
+    val softwareversion: Rep[String] = column[String]("softwareVersion", O.Length(45,varying=true))
   }
   /** Collection-like TableQuery object for table Data */
   lazy val Data = new TableQuery(tag => new Data(tag))
