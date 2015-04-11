@@ -62,14 +62,14 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
     }
     
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-    FinalData(eLifeJATSDep) flatMap {_.getError match {
+    FinalData(eLifeJATSDep) flatMap {_.error match {
       case None => {
         ReadyJATS.fix()_
         registerDependency(this, eLifeJATSDep)
         Future.successful(None)
       }
       case Some(error) =>
-        FinalData(PDFDep) map {_.getError match {
+        FinalData(PDFDep) map {_.error match {
           case None => {
             com.articlio.util.Console.log(s"delegating pdf conversion to node.js ($articleName)")
             Await.result(convertSingle(s"${config.config.getString("locations.pdf-source-input")}/$articleName".rooted), 10.seconds) match {

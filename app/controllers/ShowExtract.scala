@@ -70,12 +70,12 @@ object ShowExtract extends Controller with Testable {
     implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     
     FinalData(SemanticData(articleName, pdb, dataID)()) flatMap { data =>
-      data.getError match {
-        case Some(error) => {
+      data.isSuccessful match {
+        case false => {
           Future.failed(new Throwable(s"couldn't find or create data for request: ${data.humanAccessMessage}"))
         }
-        case None => {
-          val dataID = data.dataID.future.value.get.get
+        case true => {
+          val dataID = data.dataID
           getData(dataID, data.dataType, articleName) map { case (allApplicableDataIDs, contentResult) =>
             (dataID, allApplicableDataIDs, contentResult) }  
         }

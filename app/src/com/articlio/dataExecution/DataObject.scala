@@ -199,28 +199,25 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
 }
 
 //
-// Attempts to Execute a Data Object and Hold Outcome (hence Representing Final State)
+// Attempted Data's Final State - a bit superfluous a layer - but
+// may come handy in future refactoring for cluster execution
 //
-class FinalData(data: DataObject, val finalStatus: Boolean) extends DataExecution {
-  
-  // carry over all immutables of the original data object relevant to the finalized state
-  val dataType: String = data.dataType
-  val dataTopic: String = data.dataTopic
-      
-  val dataID = data.dataID
-  
-  val getError = data.getError
-  
+class FinalData(data: DataObject, val isSuccessful: Boolean) extends DataExecution {
+  // carry over all properties of the underlying data object relevant to the finalized state
+  val dataType  = data.dataType
+  val dataTopic = data.dataTopic
+  val dataID    = data.successfullyCompletedID
+  val error     = data.getError
   val humanAccessMessage = data.humanAccessMessage
-  
-  println(s"In FinalData class")
 }
 
+//
+// Attempts to Execute a Data Object and Hold Outcome Representing Final State
+//
 object FinalData extends DataExecution {
   def apply(data: DataObject): Future[FinalData] = {
-    targetDataGet(data) map { finalStatus =>
-      println(s"In FinalData: $finalStatus")
-      new FinalData(data, finalStatus) }
+    targetDataGet(data) map { isSuccessful =>
+      new FinalData(data, isSuccessful) }
   }
 }
 

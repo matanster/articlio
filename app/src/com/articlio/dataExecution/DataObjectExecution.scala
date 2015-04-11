@@ -27,7 +27,10 @@ trait DataExecution extends Connection {
     // UI fit message: s"attempting to create data for ${data.getClass} regardless of whether such data is already available...")
     createOrWait(data) map { _ => Unit } 
   }
-  
+
+  /*
+   *  Try to satisfy data request - indicating data status via boolean value.
+   */
   def targetDataGet(data: DataObject): Future[Boolean] = { 
     logger.write(Console.BLUE_B + s"<<< handling top-level request for data ${data}" + Console.RESET) //
     data.ReadyState flatMap { _ match { 
