@@ -6,7 +6,7 @@ case class NotReady(error: Option[CreateError] = None) extends ReadyState
 
 //abstract class AccessOrError 
 abstract class Access
-abstract class AccessError { val errorDetail: String }
+sealed abstract class AccessError { val errorDetail: String }
 case     class CreateError    (errorDetail: String) extends AccessError 
 case     class DepsError      (errorDetail: String) extends AccessError
 case     class DataIDNotFound (errorDetail: String) extends AccessError
