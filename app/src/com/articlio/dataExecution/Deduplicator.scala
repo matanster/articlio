@@ -36,7 +36,7 @@ class Deduplicator extends Actor with DataExecution {
         future
       } 
       case None => {
-        val future = attemptCreate(data)
+        val future = create(data)
         inProgress += ((dataHash, future))            
         future.onComplete { _ => inProgress.remove(dataHash) }
         future

@@ -1,15 +1,17 @@
 package com.articlio.dataExecution
 
 sealed abstract class ReadyState
-object Ready extends ReadyState 
-case class NotReady(error: Option[CreateError] = None) extends ReadyState
+object Ready    extends ReadyState 
+object NotReady extends ReadyState
 
 //abstract class AccessOrError 
+
 abstract class Access
+
 sealed abstract class AccessError { val errorDetail: String }
-case     class CreateError    (errorDetail: String) extends AccessError 
-case     class DepsError      (errorDetail: String) extends AccessError
-case     class DataIDNotFound (errorDetail: String) extends AccessError
+case class CreateError    (errorDetail: String) extends AccessError 
+case class DepsError      (errorDetail: String) extends AccessError
+case class DataIDNotFound (errorDetail: String) extends AccessError
 
 trait RecordException {
   def recordException(exception: Throwable) {

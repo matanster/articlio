@@ -22,6 +22,9 @@ trait DataExecution extends Connection {
 
   val logger = new SimplestLogger("DataExecutionManager")
 
+  /*
+   *  Try to satisfy a data object by attempting to create its data, regardless of satisfiable data being already available.
+   */
   def unconditionalCreate(data: DataObject): Future[Unit] = { 
     logger.write(s"=== handling unconditional top-level request for data ${data} ===") //
     // UI fit message: s"attempting to create data for ${data.getClass} regardless of whether such data is already available...")
@@ -29,22 +32,22 @@ trait DataExecution extends Connection {
   }
 
   /*
-   *  Try to satisfy data request - indicating data status through a boolean 
+   *  Try to satisfy a data object - ultimately indicating success/failure status through a boolean.
    */
-  def targetDataGet(data: DataObject): Future[Boolean] = { 
+  def topLevelGet(data: DataObject): Future[Boolean] = { 
     logger.write(Console.BLUE_B + s"<<< handling top-level request for data ${data}" + Console.RESET) //
     data.ReadyState flatMap { _ match { 
         case Ready => {
           logger.write(s"Data ${data.getClass.getSimpleName} for ${data.dataTopic} is already ready" + " >>>") 
           Future { true } 
         }
-        case NotReady(_) => {
+        case NotReady => {
           getDataAccess(data) map { executedTree => 
             logger.write(s"Creating data ${data.getClass.getSimpleName} for ${data.dataTopic}: " + data.serialize + " >>>") // log the entire execution tree 
-            data.getError match { // TODO: rid of match warning
+            data.getError match { 
               case None => true
-              case Some(DepsError(error)) => false   // TODO: revert to passing the error somewhere error.copy(errorDetail = data.serialize)
-              case Some(CreateError(error)) => false // TODO: revert to passing the error somewhereerror.copy(errorDetail = data.serialize)
+              case Some(DepsError(error))      => false // error.copy(errorDetail = data.serialize)
+              case Some(CreateError(error))    => false // error.copy(errorDetail = data.serialize)
               case Some(DataIDNotFound(error)) => false
             }
           }
@@ -54,55 +57,13 @@ trait DataExecution extends Connection {
   } 
 
   //
-  // chooses between two forms of processing this function
+  // chooses between two forms of downstream processing for getting the requested data 
   //
-  private def getDataAccess(data: DataObject): Future[Unit] = { // TODO: rename?
-    data.requestedDataID match {
+  private def getDataAccess(data: DataObject): Future[Unit] = {
+    data.requestedDataID match { 
       case None                => getDataAccessAnyID(data) 
       case Some(suppliedRunID) => getDataAccessSpecificID(data, suppliedRunID) map { _ => Unit }// map { id => ExecutedData(data, id) } 
     }
-  }
-  
-  private def createOrWait(data: DataObject): Future[DataObject] = {
-    
-    import akka.pattern.ask
-    import akka.util.Timeout
-    import scala.concurrent.duration._
-
-    // jumping through a hoop to get ask's future reply, itself a future (flattening it into "just" a future)
-    val untyped: Future[Any] = ask(com.articlio.Globals.appActorSystem.deduplicator, Get(data))(Timeout(21474835.seconds)) // future for actor's reply
-    val retyped: Future[Future[DataObject]] = untyped.mapTo[Future[DataObject]]                                                        // workaround ask's non-type-safe result
-    retyped flatMap(identity)                                                                                              // flatten the future of future
-  }
-  
-  def attemptCreate(data: DataObject): Future[DataObject] = {
-    println(s"in attemptCreate for $data")
-    
-    // recurse for own dependencies, waiting for them all before passing on
-    val dependencies: Future[Seq[Unit]] = Future.sequence(data.dependsOn.map(dep => getDataAccess(dep)))
-    
-    // is entire dependencies tree ready?
-    dependencies map { _ => data.dependsOn.forall(dep => dep.getError == None)} flatMap { _ match {
-      case false => {
-        Future.successful( 
-          data.error complete Success(Some(DepsError(s"some dependencies were not met"))) // retrofit overall to not returning errors within a Success object?
-        )
-        Future.successful(data)
-      }
-      case true =>
-        data.create map { _ match { 
-          case Ready => {
-            logger.write(s"data for ${data.getClass} now ready (data id: ${data.successfullyCompletedID})")
-            data.error complete Success(None)
-            data
-          }
-          case NotReady(error) => {
-            data.error complete Success(Some(CreateError(s"failed creating data: ${error.get.errorDetail}")))
-            data
-          }
-        }}
-      }   
-    } 
   }
   
   // checks whether data already exists. if data doesn't exist yet, attempts to create it.
@@ -115,7 +76,7 @@ trait DataExecution extends Connection {
           Future.successful(Unit)
         }
         
-        case NotReady(_) => {
+        case NotReady => {
           logger.write(s"data for ${data.getClass} is not yet ready... attempting to create it...")
           createOrWait(data) map { completedData =>
             // if the dependency was completed by waiting for an equivalent data to complete,
@@ -138,12 +99,51 @@ trait DataExecution extends Connection {
           logger.write(s"data for ${data.getClass} with id $suppliedRunID is ready")
         }
         
-        case NotReady(_) => {
+        case NotReady => {
           val error = s"there is no data with id ${suppliedRunID} for ${data.getClass}"
           logger.write(error)
           DataIDNotFound(error)  
         }
       }
     }
+  }
+  
+  //
+  // Passes on to actor that attempts to create the data
+  // while collapsing "identical" in-progress data requests 
+  // into a single one
+  //
+  private def createOrWait(data: DataObject): Future[DataObject] = {
+    
+    import akka.pattern.ask
+    import akka.util.Timeout
+    import scala.concurrent.duration._
+
+    // jumping through a hoop to get ask's future reply, itself a future (flattening it into "just" a future)
+    val untyped: Future[Any] = ask(com.articlio.Globals.appActorSystem.deduplicator, Get(data))(Timeout(21474835.seconds)) // future for actor's reply
+    val retyped: Future[Future[DataObject]] = untyped.mapTo[Future[DataObject]]                                            // workaround ask's non-type-safe result
+    retyped flatMap(identity)                                                                                              // flatten the future of future
+  }
+  
+  //
+  // Really attempt to create the data
+  //
+  private[dataExecution] def create(data: DataObject): Future[DataObject] = {
+    println(s"in attemptCreate for $data")
+    
+    // recurse for own dependencies, waiting for them all before passing on
+    val dependencies: Future[Seq[Unit]] = Future.sequence(data.dependsOn.map(dep => getDataAccess(dep)))
+    
+    // is entire dependencies tree ready?
+    dependencies map { _ => data.dependsOn.forall(dep => dep.getError == None)} flatMap { _ match {
+      case false => {
+        Future.successful( 
+          data.error complete Success(Some(DepsError(s"some dependencies were not met"))) // retrofit overall to not returning errors within a Success object?
+        )
+        Future.successful(data)
+      }
+      case true =>
+        data.create map { _ => data }
+    }}
   }
 }
