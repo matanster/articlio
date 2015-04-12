@@ -14,7 +14,7 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema = Array(Abstract.schema, Autoproperties.schema, Bulkdatagroups.schema, Data.schema, Datadependencies.schema, Datagroupings.schema, Diffs.schema, Grading.schema, Headers.schema, Matches.schema, Pdffonts.schema, Pdfmeta.schema, Pdftohtml.schema, Runids.schema, Runs.schema, Sentences.schema, Title.schema).reduceLeft(_ ++ _)
+  lazy val schema = Array(Abstract.schema, Autoproperties.schema, Data.schema, Datadependencies.schema, Datagroupings.schema, Diffs.schema, Grading.schema, Groups.schema, Headers.schema, Matches.schema, Pdffonts.schema, Pdfmeta.schema, Pdftohtml.schema, Runids.schema, Runs.schema, Sentences.schema, Title.schema).reduceLeft(_ ++ _)
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
 
@@ -71,29 +71,6 @@ trait Tables {
   /** Collection-like TableQuery object for table Autoproperties */
   lazy val Autoproperties = new TableQuery(tag => new Autoproperties(tag))
 
-  /** Entity class storing rows of table Bulkdatagroups
-   *  @param bulkid Database column bulkID SqlType(BIGINT), PrimaryKey
-   *  @param dataid Database column dataID SqlType(BIGINT) */
-  case class BulkdatagroupsRow(bulkid: Long, dataid: Long)
-  /** GetResult implicit for fetching BulkdatagroupsRow objects using plain SQL queries */
-  implicit def GetResultBulkdatagroupsRow(implicit e0: GR[Long]): GR[BulkdatagroupsRow] = GR{
-    prs => import prs._
-    BulkdatagroupsRow.tupled((<<[Long], <<[Long]))
-  }
-  /** Table description of table BulkDataGroups. Objects of this class serve as prototypes for rows in queries. */
-  class Bulkdatagroups(_tableTag: Tag) extends Table[BulkdatagroupsRow](_tableTag, "BulkDataGroups") {
-    def * = (bulkid, dataid) <> (BulkdatagroupsRow.tupled, BulkdatagroupsRow.unapply)
-    /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(bulkid), Rep.Some(dataid)).shaped.<>({r=>import r._; _1.map(_=> BulkdatagroupsRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
-
-    /** Database column bulkID SqlType(BIGINT), PrimaryKey */
-    val bulkid: Rep[Long] = column[Long]("bulkID", O.PrimaryKey)
-    /** Database column dataID SqlType(BIGINT) */
-    val dataid: Rep[Long] = column[Long]("dataID")
-  }
-  /** Collection-like TableQuery object for table Bulkdatagroups */
-  lazy val Bulkdatagroups = new TableQuery(tag => new Bulkdatagroups(tag))
-
   /** Entity class storing rows of table Data
    *  @param dataid Database column dataID SqlType(BIGINT), AutoInc, PrimaryKey
    *  @param datatype Database column dataType SqlType(VARCHAR), Length(45,true)
@@ -101,8 +78,8 @@ trait Tables {
    *  @param creationstatus Database column creationStatus SqlType(VARCHAR), Length(45,true)
    *  @param creationerrordetail Database column creationErrorDetail SqlType(VARCHAR), Length(10000,true), Default(None)
    *  @param creatorserver Database column creatorServer SqlType(VARCHAR), Length(45,true)
-   *  @param creatorserverstarttime Database column creatorserverstarttime SqlType(TIMESTAMP), Default(None)
-   *  @param creatorserverendtime Database column creatorserverendtime SqlType(TIMESTAMP), Default(None)
+   *  @param creatorserverstarttime Database column creatorServerStartTime SqlType(TIMESTAMP), Default(None)
+   *  @param creatorserverendtime Database column creatorServerEndTime SqlType(TIMESTAMP), Default(None)
    *  @param softwareversion Database column softwareVersion SqlType(VARCHAR), Length(45,true) */
   case class DataRow(dataid: Long, datatype: String, datatopic: String, creationstatus: String, creationerrordetail: Option[String] = None, creatorserver: String, creatorserverstarttime: Option[java.sql.Timestamp] = None, creatorserverendtime: Option[java.sql.Timestamp] = None, softwareversion: String)
   /** GetResult implicit for fetching DataRow objects using plain SQL queries */
@@ -128,10 +105,10 @@ trait Tables {
     val creationerrordetail: Rep[Option[String]] = column[Option[String]]("creationErrorDetail", O.Length(10000,varying=true), O.Default(None))
     /** Database column creatorServer SqlType(VARCHAR), Length(45,true) */
     val creatorserver: Rep[String] = column[String]("creatorServer", O.Length(45,varying=true))
-    /** Database column creatorserverstarttime SqlType(TIMESTAMP), Default(None) */
-    val creatorserverstarttime: Rep[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("creatorserverstarttime", O.Default(None))
-    /** Database column creatorserverendtime SqlType(TIMESTAMP), Default(None) */
-    val creatorserverendtime: Rep[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("creatorserverendtime", O.Default(None))
+    /** Database column creatorServerStartTime SqlType(TIMESTAMP), Default(None) */
+    val creatorserverstarttime: Rep[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("creatorServerStartTime", O.Default(None))
+    /** Database column creatorServerEndTime SqlType(TIMESTAMP), Default(None) */
+    val creatorserverendtime: Rep[Option[java.sql.Timestamp]] = column[Option[java.sql.Timestamp]]("creatorServerEndTime", O.Default(None))
     /** Database column softwareVersion SqlType(VARCHAR), Length(45,true) */
     val softwareversion: Rep[String] = column[String]("softwareVersion", O.Length(45,varying=true))
   }
@@ -162,27 +139,24 @@ trait Tables {
   lazy val Datadependencies = new TableQuery(tag => new Datadependencies(tag))
 
   /** Entity class storing rows of table Datagroupings
-   *  @param groupid Database column groupID SqlType(INT), PrimaryKey
-   *  @param datatype Database column dataType SqlType(INT), Default(None)
-   *  @param datatopic Database column dataTopic SqlType(VARCHAR), Length(45,true), Default(None) */
-  case class DatagroupingsRow(groupid: Int, datatype: Option[Int] = None, datatopic: Option[String] = None)
+   *  @param groupid Database column GroupID SqlType(BIGINT), PrimaryKey
+   *  @param dataid Database column dataID SqlType(BIGINT) */
+  case class DatagroupingsRow(groupid: Long, dataid: Long)
   /** GetResult implicit for fetching DatagroupingsRow objects using plain SQL queries */
-  implicit def GetResultDatagroupingsRow(implicit e0: GR[Int], e1: GR[Option[Int]], e2: GR[Option[String]]): GR[DatagroupingsRow] = GR{
+  implicit def GetResultDatagroupingsRow(implicit e0: GR[Long]): GR[DatagroupingsRow] = GR{
     prs => import prs._
-    DatagroupingsRow.tupled((<<[Int], <<?[Int], <<?[String]))
+    DatagroupingsRow.tupled((<<[Long], <<[Long]))
   }
   /** Table description of table DataGroupings. Objects of this class serve as prototypes for rows in queries. */
   class Datagroupings(_tableTag: Tag) extends Table[DatagroupingsRow](_tableTag, "DataGroupings") {
-    def * = (groupid, datatype, datatopic) <> (DatagroupingsRow.tupled, DatagroupingsRow.unapply)
+    def * = (groupid, dataid) <> (DatagroupingsRow.tupled, DatagroupingsRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(groupid), datatype, datatopic).shaped.<>({r=>import r._; _1.map(_=> DatagroupingsRow.tupled((_1.get, _2, _3)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(groupid), Rep.Some(dataid)).shaped.<>({r=>import r._; _1.map(_=> DatagroupingsRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
-    /** Database column groupID SqlType(INT), PrimaryKey */
-    val groupid: Rep[Int] = column[Int]("groupID", O.PrimaryKey)
-    /** Database column dataType SqlType(INT), Default(None) */
-    val datatype: Rep[Option[Int]] = column[Option[Int]]("dataType", O.Default(None))
-    /** Database column dataTopic SqlType(VARCHAR), Length(45,true), Default(None) */
-    val datatopic: Rep[Option[String]] = column[Option[String]]("dataTopic", O.Length(45,varying=true), O.Default(None))
+    /** Database column GroupID SqlType(BIGINT), PrimaryKey */
+    val groupid: Rep[Long] = column[Long]("GroupID", O.PrimaryKey)
+    /** Database column dataID SqlType(BIGINT) */
+    val dataid: Rep[Long] = column[Long]("dataID")
   }
   /** Collection-like TableQuery object for table Datagroupings */
   lazy val Datagroupings = new TableQuery(tag => new Datagroupings(tag))
@@ -255,6 +229,26 @@ trait Tables {
   }
   /** Collection-like TableQuery object for table Grading */
   lazy val Grading = new TableQuery(tag => new Grading(tag))
+
+  /** Entity class storing rows of table Groups
+   *  @param groupid Database column groupID SqlType(BIGINT), AutoInc, PrimaryKey */
+  case class GroupsRow(groupid: Long)
+  /** GetResult implicit for fetching GroupsRow objects using plain SQL queries */
+  implicit def GetResultGroupsRow(implicit e0: GR[Long]): GR[GroupsRow] = GR{
+    prs => import prs._
+    GroupsRow(<<[Long])
+  }
+  /** Table description of table Groups. Objects of this class serve as prototypes for rows in queries. */
+  class Groups(_tableTag: Tag) extends Table[GroupsRow](_tableTag, "Groups") {
+    def * = groupid <> (GroupsRow, GroupsRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = Rep.Some(groupid).shaped.<>(r => r.map(_=> GroupsRow(r.get)), (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column groupID SqlType(BIGINT), AutoInc, PrimaryKey */
+    val groupid: Rep[Long] = column[Long]("groupID", O.AutoInc, O.PrimaryKey)
+  }
+  /** Collection-like TableQuery object for table Groups */
+  lazy val Groups = new TableQuery(tag => new Groups(tag))
 
   /** Entity class storing rows of table Headers
    *  @param level Database column level SqlType(INT), Default(None)

@@ -14,7 +14,7 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema = Array(Abstract.schema, Autoproperties.schema, Data.schema, Datadependencies.schema, Datagroupings.schema, Diffs.schema, Grading.schema, Headers.schema, Matches.schema, Pdffonts.schema, Pdfmeta.schema, Pdftohtml.schema, Runids.schema, Runs.schema, Sentences.schema, Title.schema).reduceLeft(_ ++ _)
+  lazy val schema = Array(Abstract.schema, Autoproperties.schema, Data.schema, Datadependencies.schema, Datagroupings.schema, Diffs.schema, Grading.schema, Groups.schema, Headers.schema, Matches.schema, Pdffonts.schema, Pdfmeta.schema, Pdftohtml.schema, Runids.schema, Runs.schema, Sentences.schema, Title.schema).reduceLeft(_ ++ _)
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
 
@@ -139,7 +139,7 @@ trait Tables {
   lazy val Datadependencies = new TableQuery(tag => new Datadependencies(tag))
 
   /** Entity class storing rows of table Datagroupings
-   *  @param groupid Database column GroupID SqlType(BIGINT), PrimaryKey
+   *  @param groupid Database column GroupID SqlType(BIGINT)
    *  @param dataid Database column dataID SqlType(BIGINT) */
   case class DatagroupingsRow(groupid: Long, dataid: Long)
   /** GetResult implicit for fetching DatagroupingsRow objects using plain SQL queries */
@@ -153,8 +153,8 @@ trait Tables {
     /** Maps whole row to an option. Useful for outer joins. */
     def ? = (Rep.Some(groupid), Rep.Some(dataid)).shaped.<>({r=>import r._; _1.map(_=> DatagroupingsRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
-    /** Database column GroupID SqlType(BIGINT), PrimaryKey */
-    val groupid: Rep[Long] = column[Long]("GroupID", O.PrimaryKey)
+    /** Database column GroupID SqlType(BIGINT) */
+    val groupid: Rep[Long] = column[Long]("GroupID")
     /** Database column dataID SqlType(BIGINT) */
     val dataid: Rep[Long] = column[Long]("dataID")
   }
@@ -229,6 +229,26 @@ trait Tables {
   }
   /** Collection-like TableQuery object for table Grading */
   lazy val Grading = new TableQuery(tag => new Grading(tag))
+
+  /** Entity class storing rows of table Groups
+   *  @param groupid Database column groupID SqlType(BIGINT), AutoInc, PrimaryKey */
+  case class GroupsRow(groupid: Long)
+  /** GetResult implicit for fetching GroupsRow objects using plain SQL queries */
+  implicit def GetResultGroupsRow(implicit e0: GR[Long]): GR[GroupsRow] = GR{
+    prs => import prs._
+    GroupsRow(<<[Long])
+  }
+  /** Table description of table Groups. Objects of this class serve as prototypes for rows in queries. */
+  class Groups(_tableTag: Tag) extends Table[GroupsRow](_tableTag, "Groups") {
+    def * = groupid <> (GroupsRow, GroupsRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = Rep.Some(groupid).shaped.<>(r => r.map(_=> GroupsRow(r.get)), (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column groupID SqlType(BIGINT), AutoInc, PrimaryKey */
+    val groupid: Rep[Long] = column[Long]("groupID", O.AutoInc, O.PrimaryKey)
+  }
+  /** Collection-like TableQuery object for table Groups */
+  lazy val Groups = new TableQuery(tag => new Groups(tag))
 
   /** Entity class storing rows of table Headers
    *  @param level Database column level SqlType(INT), Default(None)

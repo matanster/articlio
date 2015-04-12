@@ -51,10 +51,11 @@ object BulkImportRaw extends Controller with Testable {
   }
   
   def api(path: String): Future[Boolean] = {
-    val data = Try(com.articlio.dataExecution.concrete.Importer.bulkImportRaw(path))
-    data match {
-      case Success(s) => Future.sequence(data.get.map(_ map { _.error })) map { _.forall(_ == None) } // can squash the last two maps...
-      case Failure(t) => Future.successful(false)
+    com.articlio.dataExecution.concrete.Importer.bulkImportRaw(path) map { seqOfData => 
+      Try(seqOfData) match {
+        case Success(seq) => seq.forall(_.error == None) 
+        case Failure(t)   => false
+      }
     }
   }
 }

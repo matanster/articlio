@@ -26,7 +26,7 @@ trait DataExecution extends Connection { // can refactor to using self type a la
   /*
    *  Try to satisfy a data object - ultimately indicating success/failure status through a boolean.
    */
-  def topLevelGet(data: DataObject): Future[Boolean] = { 
+  def topLevelGet(data: DataObject, assignToGroup: Option[Long] = None): Future[Boolean] = { 
     logger.write(Console.BLUE_B + s"<<< handling top-level request for data ${data}" + Console.RESET) //
     data.ReadyState flatMap { _ match { 
         case Ready => {
@@ -34,7 +34,7 @@ trait DataExecution extends Connection { // can refactor to using self type a la
           Future { true } 
         }
         case NotReady => {
-          getDataAccess(data) map { executedTree => 
+          getDataAccess(data, assignToGroup) map { executedTree => 
             logger.write(s"Creating data ${data.getClass.getSimpleName} for ${data.dataTopic}: " + data.serialize + " >>>") // log the entire execution tree 
             data.getError match { 
               case None => true
@@ -51,16 +51,16 @@ trait DataExecution extends Connection { // can refactor to using self type a la
   //
   // chooses between two forms of downstream processing for getting the requested data 
   //
-  private def getDataAccess(data: DataObject): Future[Unit] = {
+  private def getDataAccess(data: DataObject, assignToGroup: Option[Long] = None): Future[Unit] = {
     data.requestedDataID match { 
-      case None                => getDataAccessAnyID(data) 
+      case None                => getDataAccessAnyID(data, assignToGroup) 
       case Some(suppliedRunID) => getDataAccessSpecificID(data, suppliedRunID) map { _ => Unit }// map { id => ExecutedData(data, id) } 
     }
   }
   
   // checks whether data already exists. if data doesn't exist yet, attempts to create it.
   // returns: access details for ready data, or None cannot be readied
-  private def getDataAccessAnyID(data: DataObject): Future[Unit] = {
+  private def getDataAccessAnyID(data: DataObject, assignToGroup: Option[Long] = None): Future[Unit] = {
     println(s"in getDataAccessAnyID for $data")
     data.ReadyState flatMap { _ match {
         case Ready => {  
@@ -70,7 +70,7 @@ trait DataExecution extends Connection { // can refactor to using self type a la
         
         case NotReady => {
           logger.write(s"data for ${data.getClass} is not yet ready... attempting to create it...")
-          createOrWait(data) map { completedData =>
+          createOrWait(data, assignToGroup) map { completedData =>
             // if the dependency was completed by waiting for an equivalent data to complete,
             // then carry over the completed equivalent's completion status.
             if (data ne completedData) {
@@ -105,14 +105,14 @@ trait DataExecution extends Connection { // can refactor to using self type a la
   // while collapsing "identical" in-progress data requests 
   // into a single one
   //
-  private def createOrWait(data: DataObject): Future[DataObject] = {
+  private def createOrWait(data: DataObject, assignToGroup: Option[Long] = None): Future[DataObject] = {
     
     import akka.pattern.ask
     import akka.util.Timeout
     import scala.concurrent.duration._
 
     // jumping through a hoop to get ask's future reply, itself a future (flattening it into "just" a future)
-    val untyped: Future[Any] = ask(com.articlio.Globals.appActorSystem.deduplicator, Get(data))(Timeout(21474835.seconds)) // future for actor's reply
+    val untyped: Future[Any] = ask(com.articlio.Globals.appActorSystem.deduplicator, Get(data, assignToGroup))(Timeout(21474835.seconds)) // future for actor's reply
     val retyped: Future[Future[DataObject]] = untyped.mapTo[Future[DataObject]]                                            // workaround ask's non-type-safe result
     retyped flatMap(identity)                                                                                              // flatten the future of future
   }
@@ -121,7 +121,7 @@ trait DataExecution extends Connection { // can refactor to using self type a la
   // Really attempt to create the data:
   // Attempts all its dependencies (indirectly recursively), first.
   //
-  private[dataExecution] def create(data: DataObject): Future[DataObject] = {
+  private[dataExecution] def create(data: DataObject, assignToGroup: Option[Long] = None): Future[DataObject] = {
     println(s"in attemptCreate for $data")
     
     // recurse for own dependencies, waiting for them all before passing on
@@ -136,7 +136,7 @@ trait DataExecution extends Connection { // can refactor to using self type a la
         Future.successful(data)
       }
       case true =>
-        data.create map { _ => data }
+        data.createSelf(assignToGroup) map { _ => data }
     }}
   }
   

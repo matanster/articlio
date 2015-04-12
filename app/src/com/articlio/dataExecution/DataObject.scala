@@ -28,7 +28,7 @@ object CreationStatusDBtoken {
  *  or by creating the data, using the object's `create` function.
  */
 
-abstract class DataObject(val requestedDataID: Option[Long] = None)
+abstract class DataObject(val requestedDataID: Option[Long] = None) 
                          (implicit db: SlickDB) extends DataExecution with RecordException { 
 
   val dataType = this.getClass.getSimpleName // concrete class's name
@@ -66,7 +66,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
   //
   // Creates and registers data, using the data object's `create` function
   //
-  def create: Future[ReadyState] = { 
+  def createSelf(assignToGroup: Option[Long] = None): Future[ReadyState] = { 
     println(s"in create for $this")
 
     // Registers data's dependencies
@@ -76,6 +76,13 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
         registerDependencies(dependedOnData)
       })
     }
+    
+    def registerAsGroupMember(data: DataObject): Unit = {
+      if (assignToGroup != None) {
+        println(Console.GREEN + s"adding dataID ${data.successfullyCompletedID} to group ${assignToGroup.get}" + Console.RESET)
+        db.run(Datagroupings += DatagroupingsRow(assignToGroup.get, data.successfullyCompletedID))
+      }
+    } 
     
     val ownHostName = java.net.InetAddress.getLocalHost.getHostName  // TODO: move to global initialization object of some sort?
     val startTime = localNow  // TODO: refine the time stamp values to sub-second granularity (see https://github.com/tototoshi/slick-joda-mapper if helpful)
@@ -118,6 +125,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
             creationError match {
               case None  => {
                 registerDependencies(this)
+                registerAsGroupMember(this)
                 error complete Success(None)
                 logger.write(s"data for $dataType now ready (data id: $successfullyCompletedID)")
                 Ready
@@ -222,8 +230,9 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
 // Attempts Satisfying the Data Object (creating a derived object representing final state)
 //
 object FinalData extends DataExecution {
-  def apply(data: DataObject): Future[FinalData] = {
-    topLevelGet(data) map { isSuccessful =>
+  def apply(data: DataObject, withNewGroupAssignment: Option[Long] = None): Future[FinalData] = {
+    println(Console.GREEN_B + withNewGroupAssignment + Console.RESET)
+    topLevelGet(data, withNewGroupAssignment) map { isSuccessful =>
       new FinalData(data, isSuccessful) }
   }
 }
@@ -239,18 +248,5 @@ class FinalData(data: DataObject, val isSuccessful: Boolean) extends DataExecuti
   val dataID    = data.successfullyCompletedID
   val error     = data.getError
   val humanAccessMessage = data.humanAccessMessage
-}
-
-
-
-@deprecated("to be removed","")
-trait Execute extends RecordException {
-  def execute[ExpectedType](func: => ExpectedType): Option[ExpectedType] = { // this form of prototype takes a function by name
-    try { return Some(func) } 
-      catch { 
-        case anyException : Throwable =>
-          recordException(anyException)
-          return None }
-  } 
 }
 

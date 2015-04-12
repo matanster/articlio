@@ -25,9 +25,9 @@ class Deduplicator extends Actor with DataExecution {
   val inProgress : scala.collection.concurrent.Map[String, Future[DataObject]] = 
     scala.collection.concurrent.TrieMap.empty[String, Future[DataObject]] 
   
-  def hash(data: DataObject) = data.dataType + data.dataTopic // TODO: can this be a composite key, so equality check is more safe for it?
+  def hash(data: DataObject) = data.dataType + data.dataTopic // TODO: can this become a composite key, so that equality check becomes safer?
   
-  private def processGet(data: DataObject) = {
+  private def processGet(data: DataObject, assignToGroup: Option[Long] = None) = {
     
     val dataHash = hash(data)  
     inProgress.get(dataHash) match {
@@ -36,7 +36,7 @@ class Deduplicator extends Actor with DataExecution {
         future
       } 
       case None => {
-        val future = create(data)
+        val future = create(data, assignToGroup)
         inProgress += ((dataHash, future))            
         future.onComplete { _ => inProgress.remove(dataHash) }
         future
@@ -45,8 +45,8 @@ class Deduplicator extends Actor with DataExecution {
   }
   
   def receive = {
-    case Get(data) =>
-      Try(processGet(data)) match {
+    case Get(data, assignToGroup) =>
+      Try(processGet(data, assignToGroup)) match {
         case Success(future) => sender ! future 
         case Failure(failure) => sender ! akka.actor.Status.Failure(failure.getCause)
       }
@@ -54,7 +54,7 @@ class Deduplicator extends Actor with DataExecution {
 }
 
 // actor message type
-final case class Get(data: DataObject)
+final case class Get(data: DataObject, assignToGroup: Option[Long] = None)
 
 object Deduplicator extends Testable { // companion object for tests 
   object TestContainer extends TestContainer {
