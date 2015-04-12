@@ -33,10 +33,17 @@ class TestSpec (val given: String,
 trait TestContainer { def tests: Seq[TestSpec] } 
 trait Testable      { def TestContainer: TestContainer }
 
+/*
+ *  One or more implicit enhancements to the scala's Future class
+ */
 object FutureAdditions {
   implicit class FutureAdditions[T](future: Future[T]) {
     import scala.concurrent.ExecutionContext
     import scala.concurrent._
+    
+    // 
+    // Reverse the completion status of a future - from failure ( = exception) to success, and vice versa. Useful for test functions.
+    //
     def reverse[S](implicit executor: ExecutionContext): Future[Unit] = {
       val p = Promise[Unit]()
       future.onComplete {
