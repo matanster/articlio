@@ -81,9 +81,9 @@ object Importer { // not for Windows OS...
   
   def bulkImportRaw(path: String, withNewGroupAssignment: Boolean = true): Future[Seq[FinalData]] = { 
     import play.api.libs.concurrent.Execution.Implicits.defaultContext
+    // TODO: do this more asynchronously if it becomes a key process (cf. http://docs.oracle.com/javase/7/docs/api/java/nio/file/DirectoryStream.html or other)
     // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files
     //       to avoid bloated data groups, thus also reducing statistic skew from duplicates
-    // TODO: do this more asynchronously if it becomes a key process (cf. http://docs.oracle.com/javase/7/docs/api/java/nio/file/DirectoryStream.html or other)
 
     import slick.driver.MySQLDriver.api._
     import com.articlio.Globals.db
@@ -97,14 +97,15 @@ object Importer { // not for Windows OS...
     }
     
     groupID flatMap { groupID => 
-    val liftedPath = new java.io.File(path) 
-    liftedPath.exists match {
-      case false => throw new Throwable(s"Cannot import from non-existent directory: $path")
-      case true => {
-        val files = liftedPath.listFiles.filter(_.isFile).map(_.getName).toSeq
-        Future.sequence(files.map(fileName => GuessDataType(fileName, path)).flatten // flatten only takes Somes into the result list
-                        .map(data => FinalData(data, groupID)))
-      }}
+      val liftedPath = new java.io.File(path) 
+      liftedPath.exists match {
+        case false => throw new Throwable(s"Cannot import from non-existent directory: $path")
+        case true => {
+          val files = liftedPath.listFiles.filter(_.isFile).map(_.getName).toSeq
+          Future.sequence(files.map(fileName => GuessDataType(fileName, path)).flatten // flatten only takes Somes into the result list
+                          .map(data => FinalData(data, groupID)))
+        }
+      }
     }
   }
 }
