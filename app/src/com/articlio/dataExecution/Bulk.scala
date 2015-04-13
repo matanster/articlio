@@ -15,7 +15,10 @@ import com.articlio.Globals.db
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 
-trait Bulk {
+/*
+ *  Unlike bulk import, this trait takes care of acting on already-imported data
+ */
+trait BulkOverData {
   def bulkGo(dataObjects: Seq[DataObject], withNewGroupAssignment: Boolean = true): Future[Seq[FinalData]] = {
 
     import slick.driver.MySQLDriver.api._
@@ -46,7 +49,7 @@ trait Bulk {
   }
 }
 
-object BulkImpl extends Bulk {
+object BulkImpl extends BulkOverData {
   
   /* 
    * generate semantic data for every topic included in a group.

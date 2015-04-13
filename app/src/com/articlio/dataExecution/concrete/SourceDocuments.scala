@@ -79,7 +79,7 @@ object RawImporter { // not for Windows OS...
     }
   }
   
-  def bulkImport(path: String, withNewGroupAssignment: Boolean = true): Future[Seq[FinalData]] = { 
+  def bulkImport(path: String, withNewGroupAssignment: Boolean = true): (Future[Seq[FinalData]], Future[Option[Long]]) = { 
     import play.api.libs.concurrent.Execution.Implicits.defaultContext
     // TODO: do this more asynchronously if it becomes a key process (cf. http://docs.oracle.com/javase/7/docs/api/java/nio/file/DirectoryStream.html or other)
     // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files
@@ -96,7 +96,7 @@ object RawImporter { // not for Windows OS...
       case false => Future.successful(None)         
     }
     
-    groupID flatMap { groupID => 
+    (groupID flatMap { groupID => 
       val liftedPath = new java.io.File(path) 
       liftedPath.exists match {
         case false => throw new Throwable(s"Cannot import from non-existent directory: $path")
@@ -106,6 +106,6 @@ object RawImporter { // not for Windows OS...
                           .map(data => FinalData(data, groupID)))
         }
       }
-    }
+    }, groupID) // returns both the data objects and the groupID
   }
 }

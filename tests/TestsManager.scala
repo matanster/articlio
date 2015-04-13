@@ -26,35 +26,13 @@ case class BeenRun(timeRun: Long) extends MaybeRun
 
 class TestSpec (val given: String, 
                 val should: String, 
-                func: => Future[Unit], 
+                func: => Future[Unit],
+                val dependsOn: Seq[TestSpec] = Seq(),
                 val maybeRun: MaybeRun = Run, 
                 val timeLimit: Duration = 10.seconds) { def attempt = func }
 
 trait TestContainer { def tests: Seq[TestSpec] } 
 trait Testable      { def TestContainer: TestContainer }
-
-/*
- *  One or more implicit enhancements to the scala's Future class
- */
-object FutureAdditions {
-  implicit class FutureAdditions[T](future: Future[T]) {
-    import scala.concurrent.ExecutionContext
-    import scala.concurrent._
-    
-    // 
-    // Reverse the completion status of a future - from failure ( = exception) to success, and vice versa. Useful for test functions.
-    //
-    def reverse[S](implicit executor: ExecutionContext): Future[Unit] = {
-      val p = Promise[Unit]()
-      future.onComplete {
-        // reverse the result of the future
-        case Success(r) => p.failure(new Throwable(s"should not have received result (received result: $r)")) 
-        case Failure(t) => p.success(Unit)              
-      }
-      p.future
-    }
-  }
-}
 
 object UnitTestsRunner {
 

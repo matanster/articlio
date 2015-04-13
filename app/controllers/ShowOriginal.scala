@@ -16,7 +16,7 @@ import com.articlio.config
 import com.articlio.storage.ManagedDataFiles._
 
 import com.articlio.test.{TestSpec, TestContainer, Testable}
-import com.articlio.test.FutureAdditions._
+import com.articlio.util.FutureAdditions._
 import scala.util.{Success, Failure}
 
 object showOriginal extends Controller {

@@ -15,7 +15,7 @@ import com.articlio.config
 import com.articlio.storage.ManagedDataFiles._
 import scala.util.{Success, Failure, Try}
 import com.articlio.test.{TestSpec, TestContainer, Testable, Skip, Only}
-import com.articlio.test.FutureAdditions._
+import com.articlio.util.FutureAdditions._
 import scala.util.{Success, Failure}
 import com.articlio.dataExecution.concrete._
 import com.articlio.dataExecution._

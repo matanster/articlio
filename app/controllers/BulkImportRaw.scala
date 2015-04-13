@@ -17,7 +17,7 @@ import com.articlio.storage.ManagedDataFiles._
 import scala.util.{Success, Failure, Try}
 
 import com.articlio.test.{TestSpec, TestContainer, Testable, Skip, Only}
-import com.articlio.test.FutureAdditions._
+import com.articlio.util.FutureAdditions._
 import scala.util.{Success, Failure}
 
 object BulkImportRaw extends Controller with Testable {
@@ -32,21 +32,29 @@ object BulkImportRaw extends Controller with Testable {
                                  failWithNonExistentLocation)
                 )
     
-    def succeedWithTestResources: Future[Unit] = 
-      api("test-resources") map { result => if (!result) throw new Throwable("import failed") }
+    def succeedWithTestResources: Future[Unit] = { 
+      val (dataObjects, _) = api("test-resources") // destructure the api result 
+      dataObjects map { _.forall(_.error == None) match {
+        case false => throw new Throwable("import failed")
+        case true =>  
+      }}
+    }
 
-    def failWithNonExistentLocation = 
-      api("bla bla foo").reverse
+    def failWithNonExistentLocation = { 
+      val (dataObjects, _) = api("bla bla foo")
+      dataObjects.reverse
+    }
   }
 
   def UI(path: String) = Action.async { implicit request =>
-    api(path) map { _ match {
+    val (dataObjects, groupID) = api(path) 
+    dataObjects map { _.forall(_.error == None) match {
       case true =>  Ok("Import successful")
-      case false => Ok("Import failed")
+      case false => Ok("Import failed for one or more items")
     }}
   }
   
-  def api(path: String): Future[Boolean] = {
-    com.articlio.dataExecution.concrete.RawImporter.bulkImport(path) map { _.forall(_.error == None) }
+  def api(path: String): (Future[Seq[FinalData]], Future[Option[Long]]) = {
+    com.articlio.dataExecution.concrete.RawImporter.bulkImport(path) 
   }
 }
