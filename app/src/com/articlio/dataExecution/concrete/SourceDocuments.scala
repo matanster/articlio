@@ -63,7 +63,7 @@ case class RawTxtFile(articleName: String, externalSourceDirectory: Option[Strin
   val directory = config.config.getString("locations.txtFile-source-input").rooted
 }
 
-object Importer { // not for Windows OS...
+object RawImporter { // not for Windows OS...
 
   def filePathEscape(path: String) = path.replace(" ", "\\ ")
   
@@ -79,7 +79,7 @@ object Importer { // not for Windows OS...
     }
   }
   
-  def bulkImportRaw(path: String, withNewGroupAssignment: Boolean = true): Future[Seq[FinalData]] = { 
+  def bulkImport(path: String, withNewGroupAssignment: Boolean = true): Future[Seq[FinalData]] = { 
     import play.api.libs.concurrent.Execution.Implicits.defaultContext
     // TODO: do this more asynchronously if it becomes a key process (cf. http://docs.oracle.com/javase/7/docs/api/java/nio/file/DirectoryStream.html or other)
     // TODO: implement a variant of this, that avoids md5 hash-wise duplicate files

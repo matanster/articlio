@@ -43,6 +43,8 @@ object Global extends GlobalSettings {
       
       case "/test"     => com.articlio.test.UnitTestsRunner.go; Some(DefaultResponder("starting tests...").go)
       
+      //case "/"
+      
       case _ => Play.maybeApplication.flatMap(_.routes.flatMap {
         router => router.handlerFor(request)
       })

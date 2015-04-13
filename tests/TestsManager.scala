@@ -62,7 +62,8 @@ object UnitTestsRunner {
   
   val testables: Seq[Testable] = Seq(controllers.ShowExtract,
                                      controllers.BulkImportRaw,
-                                     com.articlio.dataExecution.Deduplicator)
+                                     com.articlio.dataExecution.Deduplicator,
+                                     controllers.BulkFromRaw)
   
   val testContainers = testables.map(testable => testable.TestContainer)
 

@@ -15,8 +15,56 @@ import com.articlio.Globals.db
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
 
+trait Bulk {
+  def bulkGo(dataObjects: Seq[DataObject], withNewGroupAssignment: Boolean = true): Future[Seq[FinalData]] = {
+
+    import slick.driver.MySQLDriver.api._
+    import com.articlio.Globals.db
+    import com.articlio.storage.SlickDB
+    import slick.jdbc.meta._
+    import models.Tables._
+    import play.api.libs.concurrent.Execution.Implicits.defaultContext
+    
+    val groupID: Future[Option[Long]] = withNewGroupAssignment match {
+      case true  => db.run(Groups.returning(Groups.map(_.groupid)) += GroupsRow(0L)).map(Some(_))
+      case false => Future.successful(None)         
+    }
+    
+    groupID flatMap { groupID => Future.sequence(dataObjects.map(dataObject => FinalData(dataObject, groupID))) }
+  }
+  
+  def getGroupData(groupID: Long) = {
+    val query = for {
+      g <- Datagroupings if g.groupid === groupID
+      d <- Data if g.dataid === d.dataid 
+    } yield d
+
+    db.query(query) map { result => result.toList.nonEmpty match {
+      case true  => result
+      case false => throw new Throwable(s"group $groupID does not exist")
+    }}
+  }
+}
+
+object BulkImpl extends Bulk {
+  
+  /* 
+   * generate semantic data for every topic included in a group.
+   * this can be used for e.g. building up semantic data for a group of imported raw documents,
+   * or for a group of 
+   */
+  def SemanticForGroup(groupID: Long, ldb: LDBData): Future[Seq[FinalData]] = {
+    getGroupData(groupID) flatMap { datas =>
+      bulkGo(datas.map(data => SemanticData(data.datatopic)(LDB = ldb))) }
+  }  
+}
+
+
+
+
+
 /*
- *  these functions will cause the shared dependencies to be executed as top data requests.. an undesireable side-effect
+ *  these deprecated functions will cause the shared dependencies to be executed as top data requests.. an undesirable side-effect
  *  in current architecture.  
  */
 

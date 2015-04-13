@@ -154,17 +154,12 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
   // checks whether data satisfying the filter criteria and a specific data ID exists
   //
   def ReadyStateSpecific(suppliedRunID: Long): Future[ReadyState] = {
-    //implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
     db.query(DataRecord.filter(_.dataid === suppliedRunID)
                        .filter(_.datatype === this.getClass.getSimpleName)
                        .filter(_.datatopic === dataTopic)
                        .filter(_.creationstatus === CreationStatusDBtoken.SUCCESS)) map { 
       result => result.nonEmpty match {
         case true => { 
-          // TODO: these two lines showcase redundancy and therefore bug potential:
-          //       the overall code currently both propagates the dataID in a return type Ready,
-          //       in addition to recording it in this.dataID. 
-          //       Probably, the former could be dropped in favor of the latter, across the board.
           dataID complete Success(suppliedRunID)
           Ready
         }

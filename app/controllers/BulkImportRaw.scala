@@ -47,6 +47,6 @@ object BulkImportRaw extends Controller with Testable {
   }
   
   def api(path: String): Future[Boolean] = {
-    com.articlio.dataExecution.concrete.Importer.bulkImportRaw(path) map { _.forall(_.error == None) }
+    com.articlio.dataExecution.concrete.RawImporter.bulkImport(path) map { _.forall(_.error == None) }
   }
 }
