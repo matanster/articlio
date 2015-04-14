@@ -44,7 +44,7 @@ trait BulkOverData {
 
     db.query(query) map { result => result.toList.nonEmpty match {
       case true  => result
-      case false => throw new Throwable(s"group $groupID does not exist")
+      case false => println(Console.GREEN_B + "about to throw exception"); throw new Throwable(s"group $groupID does not exist")
     }}
   }
 }
@@ -57,8 +57,9 @@ object BulkImpl extends BulkOverData {
    * or for a group of 
    */
   def SemanticForGroup(groupID: Long, ldb: LDBData): Future[Seq[FinalData]] = {
-    getGroupData(groupID) flatMap { datas =>
-      bulkGo(datas.map(data => SemanticData(data.datatopic)(LDB = ldb))) }
+    getGroupData(groupID) flatMap { datas => 
+      val a = datas.map(data => SemanticData(data.datatopic)(LDB = ldb))
+      println(Console.BLUE_B + "Starting to process for group"); bulkGo(a) }
   }  
 }
 

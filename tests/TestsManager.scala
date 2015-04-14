@@ -16,6 +16,7 @@ import scala.util.{Success, Failure, Try}
 import scala.concurrent.Awaitable
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class MaybeRun
 object Run extends MaybeRun
@@ -26,13 +27,23 @@ case class BeenRun(timeRun: Long) extends MaybeRun
 
 class TestSpec (val given: String, 
                 val should: String, 
-                func: => Future[Unit],
-                val dependsOn: Seq[TestSpec] = Seq(),
+                func: => Future[Any],
                 val maybeRun: MaybeRun = Run, 
-                val timeLimit: Duration = 10.seconds) { def attempt = func }
+                val timeLimit: Duration = 10.seconds)
+                 { def attempt = { val a = func; a.onComplete { aa => println("in test manager " + aa.isSuccess)}; a } }
 
 trait TestContainer { def tests: Seq[TestSpec] } 
-trait Testable      { def TestContainer: TestContainer }
+trait Testable { def TestContainer: TestContainer }
+
+object Foo extends Testable {
+  object TestContainer extends TestContainer {
+    def tests = Seq(new TestSpec(given = "nothing",
+                                 should = "do nothing",
+                                 test, Only))
+    
+    def test = Future.failed(new Throwable("mock failed")) map { _ => 3}
+  }
+}
 
 object UnitTestsRunner {
 
@@ -82,7 +93,7 @@ object UnitTestsRunner {
       (List.fill(lines)(indent) zip wrapped map { case (i, w) => i + w + "\n" }).mkString 
     } 
 
-    def timedAttempt(test: TestSpec) = {
+    def timedAttempt(test: TestSpec): Future[BeenRun] = {
       val time = System.currentTimeMillis
       test.attempt map {_ => 
         val elapsedTime = System.currentTimeMillis() - time 
@@ -91,15 +102,13 @@ object UnitTestsRunner {
     }
     
     println(BOLD + "cleaning the database before starting tests..." + RESET)
-    
     Await.result(com.articlio.Globals.appActorSystem.outDB.dropCreate, Duration.Inf)
-    
     println(BOLD + "running tests..." + RESET)
     
-    val testMarkedAsOnly = testContainers.map(testable => testable.tests
+    val testsMarkedAsOnly = testContainers.map(testable => testable.tests
                                              .map(test => test.maybeRun == Only)).flatten.filter(_ == true)
 
-    val testablesResults: Seq[Seq[Future[MaybeRun]]] = (testMarkedAsOnly.isEmpty) match {
+    val testablesResults: Seq[Seq[Future[MaybeRun]]] = (testsMarkedAsOnly.isEmpty) match {
       case true  => testContainers.map(testable => testable.tests
                                                            .map(test => test.maybeRun match {
                                                              case Run  => timedAttempt(test)
@@ -124,8 +133,8 @@ object UnitTestsRunner {
     }
     
     
+    // once complete, list the results
     waitAll(testablesResults.flatten).map { _ => 
-      // once complete, list the results
       val zipped = testablesResults zip testContainers
       (testablesResults zip testContainers).map { case(testableResults, testable) =>
         println(WHITE_B + BLACK + BOLD + s"          ${testable.getClass.getName.dropRight(15)}".padTo(terminalWidth, ' ') + RESET)
@@ -138,7 +147,7 @@ object UnitTestsRunner {
               case Some(Failure(t))              => RED + BOLD +    "[Failed]  " + RESET + TestDesc + 
                                                     RED + "\n" + lineWrapForConsole(getStackTraceString(t)) + RESET
               // case Some(Failure(t))    => RED + BOLD +     "[Failed]  " + RESET + TestDesc + RED + "\n          ∗ " + t.getMessage.take(700) + (if (t.toString.length > 700) "...." else "") + RESET
-              case _ => Console.RED + s"[UnitTestsRunner internal error:] test ${testSpec.attempt} not complete: ${result.isCompleted}" + RESET
+              case _ => Console.RED + s"[UnitTestsRunner internal error:] test $testSpec not complete: ${result.isCompleted}" + RESET
           })    
         }
       }

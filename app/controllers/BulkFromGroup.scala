@@ -26,12 +26,22 @@ object BulkFromRaw extends Controller with Testable {
     
     def tests = Seq(new TestSpec(given = "an existing groupID of Raw data type",
                                  should = "generate semantic data for them all",
-                                 test)
+                                 teste)
                 )
     
-    def test: Future[Unit] = 
-      api(300) map { seq => if (!seq.forall(_.error == None)) 
-        throw new Throwable(s"bulk failed for the following item/s: ${seq.filter(_.error != None)}") }
+    def teste: Future[Unit] = {
+      controllers.BulkImportRaw.TestContainer.succeedWithTestResources map { groupID => 
+        println(Console.GREEN_B + "returned groupID: " + groupID.get + Console.RESET)
+        val a = api(groupID.get)
+        //throw new Throwable("booooo")
+        a.onComplete { 
+          case Failure(t) => println(t)
+          case Success(s) => println(s)
+        }
+        a.map { seq => println(Console.RED_B + "in map of api return"); if (!seq.forall(_.error == None)) 
+          throw new Throwable(s"bulk failed for the following item/s: ${seq.filter(_.error != None)}") }
+      }     
+    }
   }
 
   def UI(groupID: Long) = Action.async { implicit request =>

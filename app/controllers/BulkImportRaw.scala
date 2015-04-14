@@ -16,7 +16,7 @@ import com.articlio.config
 import com.articlio.storage.ManagedDataFiles._
 import scala.util.{Success, Failure, Try}
 
-import com.articlio.test.{TestSpec, TestContainer, Testable, Skip, Only}
+import com.articlio.test.{TestSpec, TestContainer, Testable, Skip, Only, ResultCache}
 import com.articlio.util.FutureAdditions._
 import scala.util.{Success, Failure}
 
@@ -32,11 +32,11 @@ object BulkImportRaw extends Controller with Testable {
                                  failWithNonExistentLocation)
                 )
     
-    def succeedWithTestResources: Future[Unit] = { 
-      val (dataObjects, _) = api("test-resources") // destructure the api result 
-      dataObjects map { _.forall(_.error == None) match {
+    def succeedWithTestResources: Future[Option[Long]] = { 
+      val (dataObjects, groupID) = api("test-resources") // destructure the api result 
+      dataObjects flatMap { _.forall(_.error == None) match {
         case false => throw new Throwable("import failed")
-        case true =>  
+        case true => groupID 
       }}
     }
 

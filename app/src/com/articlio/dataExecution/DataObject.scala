@@ -55,10 +55,11 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
                                                                                             // this is function passing "by name".
                                                                                             // the function supplied by caller is passed as is,
                                                                                             // so that this function can execute it.
-      try { return func } 
+      try { func } 
         catch { 
           case anyException : Throwable =>
           recordException(anyException)
+          println(Console.RED_B + "saferuncreator captured exception")
           Future.successful(Some(CreateError(anyException.toString))) 
         }
   } 
@@ -240,8 +241,10 @@ class FinalData(data: DataObject, val isSuccessful: Boolean) extends DataExecuti
   // carry over all properties of the underlying data object relevant to the finalized state
   val dataType  = data.dataType
   val dataTopic = data.dataTopic
-  val dataID    = data.successfullyCompletedID
-  val error     = data.getError
+
+  lazy val dataID    = data.successfullyCompletedID
+  lazy val error     = data.getError
+  
   val humanAccessMessage = data.humanAccessMessage
 }
 
