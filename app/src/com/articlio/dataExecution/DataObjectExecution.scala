@@ -30,8 +30,8 @@ trait DataExecution extends Connection { // can refactor to using self type a la
     logger.write(Console.BLUE_B + s"<<< handling top-level request for data ${data}" + Console.RESET) //
     data.ReadyState flatMap { _ match { 
         case Ready => {
-          logger.write(s"Data ${data.getClass.getSimpleName} for ${data.dataTopic} is already ready" + " >>>") 
-          Future { true } 
+          logger.write(s"Data ${data.getClass.getSimpleName} for ${data.dataTopic} is already ready" + " >>>")
+          Future.successful(true) 
         }
         case NotReady => {
           getDataAccess(data, assignToGroup) map { executedTree => 

@@ -53,7 +53,7 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
       import play.api.libs.ws.WS
       import play.api.Play.current
       implicit val context = play.api.libs.concurrent.Execution.Implicits.defaultContext
-      WS.url("http://localhost:3000/handleInputFile").withQueryString("localLocation" -> s"$articleName.pdf")
+      WS.url("http://localhost:3000/handleInputFile").withQueryString("localLocation" -> s"$articleName")
                                                                        .get.map(response =>
         response.status match { 
           case 200 => None  //Ok("successfully converted pdf to JATS")
@@ -69,7 +69,6 @@ case class JATSDataDisjunctiveSourced(articleName: String) extends JATSData
         Future.successful(None)
       }
       case Some(error) =>
-        println("got here")
         FinalData(PDFDep) map {f => println("f is " + f); f.error match {
           case None => {
             com.articlio.util.Console.log(s"delegating pdf conversion to node.js ($articleName)")

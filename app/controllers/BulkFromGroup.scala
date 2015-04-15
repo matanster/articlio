@@ -20,25 +20,26 @@ import scala.util.{Success, Failure}
 import com.articlio.dataExecution.concrete._
 import com.articlio.dataExecution._
 
-object BulkFromRaw extends Controller with Testable {
+object BulkFromGroup extends Controller with Testable {
   
   object TestContainer extends TestContainer {
     
     def tests = Seq(new TestSpec(given = "an existing groupID of Raw data type",
                                  should = "generate semantic data for them all",
-                                 teste)
+                                 teste, Only)
                 )
     
     def teste: Future[Unit] = {
       controllers.BulkImportRaw.TestContainer.succeedWithTestResources map { groupID => 
-        println(Console.GREEN_B + "returned groupID: " + groupID.get + Console.RESET)
-        val a = api(groupID.get)
-        //throw new Throwable("booooo")
+        println(Console.GREEN_B + "new groupID: " + groupID + Console.RESET)
+        val a: Future[Seq[FinalData]] = api(groupID.get)
+        
         a.onComplete { 
-          case Failure(t) => println(t)
+          case Failure(t) => println(Console.RESET + "failed future in teste: "); t.printStackTrace()
           case Success(s) => println(s)
         }
-        a.map { seq => println(Console.RED_B + "in map of api return"); if (!seq.forall(_.error == None)) 
+        
+        a map { seq => if (!seq.forall(_.error == None)) 
           throw new Throwable(s"bulk failed for the following item/s: ${seq.filter(_.error != None)}") }
       }     
     }

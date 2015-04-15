@@ -59,7 +59,6 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
         catch { 
           case anyException : Throwable =>
           recordException(anyException)
-          println(Console.RED_B + "saferuncreator captured exception")
           Future.successful(Some(CreateError(anyException.toString))) 
         }
   } 
@@ -80,7 +79,6 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
     
     def registerAsGroupMember(data: DataObject): Unit = {
       if (assignToGroup != None) {
-        println(Console.GREEN + s"adding dataID ${data.successfullyCompletedID} to group ${assignToGroup.get}" + Console.RESET)
         db.run(Datagroupings += DatagroupingsRow(assignToGroup.get, data.successfullyCompletedID))
       }
     } 
@@ -161,6 +159,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
                        .filter(_.creationstatus === CreationStatusDBtoken.SUCCESS)) map { 
       result => result.nonEmpty match {
         case true => { 
+          error complete Success(None)
           dataID complete Success(suppliedRunID)
           Ready
         }
@@ -179,10 +178,11 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
                 .filter(_.datatopic === dataTopic)
                 .filter(data => data.creationstatus === CreationStatusDBtoken.SUCCESS)
     
-    db.query(query) map { result => 
+    db.query(query) map { result =>  
       result.nonEmpty match {
         case true =>
         {
+          error complete Success(None)
           dataID complete Success(result.head.dataid)
           Ready
         }
@@ -227,7 +227,6 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
 //
 object FinalData extends DataExecution {
   def apply(data: DataObject, withNewGroupAssignment: Option[Long] = None): Future[FinalData] = {
-    println(Console.GREEN_B + withNewGroupAssignment + Console.RESET)
     topLevelGet(data, withNewGroupAssignment) map { isSuccessful =>
       new FinalData(data, isSuccessful) }
   }
@@ -245,6 +244,6 @@ class FinalData(data: DataObject, val isSuccessful: Boolean) extends DataExecuti
   lazy val dataID    = data.successfullyCompletedID
   lazy val error     = data.getError
   
-  val humanAccessMessage = data.humanAccessMessage
+  lazy val humanAccessMessage = data.humanAccessMessage
 }
 

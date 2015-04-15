@@ -28,12 +28,14 @@ trait BulkOverData {
     import models.Tables._
     import play.api.libs.concurrent.Execution.Implicits.defaultContext
     
+    println(Console.BLUE_B + "inside bulkGo" + dataObjects + withNewGroupAssignment)
+    
     val groupID: Future[Option[Long]] = withNewGroupAssignment match {
       case true  => db.run(Groups.returning(Groups.map(_.groupid)) += GroupsRow(0L)).map(Some(_))
       case false => Future.successful(None)         
     }
     
-    groupID flatMap { groupID => Future.sequence(dataObjects.map(dataObject => FinalData(dataObject, groupID))) }
+    groupID flatMap { groupID => println(groupID); Future.sequence(dataObjects.map(dataObject => FinalData(dataObject, groupID))) }
   }
   
   def getGroupData(groupID: Long) = {
@@ -43,7 +45,7 @@ trait BulkOverData {
     } yield d
 
     db.query(query) map { result => result.toList.nonEmpty match {
-      case true  => result
+      case true  => result.toList
       case false => println(Console.GREEN_B + "about to throw exception"); throw new Throwable(s"group $groupID does not exist")
     }}
   }
@@ -58,8 +60,10 @@ object BulkImpl extends BulkOverData {
    */
   def SemanticForGroup(groupID: Long, ldb: LDBData): Future[Seq[FinalData]] = {
     getGroupData(groupID) flatMap { datas => 
-      val a = datas.map(data => SemanticData(data.datatopic)(LDB = ldb))
-      println(Console.BLUE_B + "Starting to process for group"); bulkGo(a) }
+      println(datas)
+      val a: Seq[DataObject] = datas.map(data => SemanticData(data.datatopic)(LDB = ldb))
+      println(Console.BLUE_B + s"Starting to process for group $a")
+      bulkGo(a) }
   }  
 }
 
