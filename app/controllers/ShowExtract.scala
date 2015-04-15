@@ -28,7 +28,7 @@ object ShowExtract extends Controller with Testable {
                      TryNonExistentArticle),
         new TestSpec(given  = "an article file name",
                      should = "have content results for it when semantic data is requested for it",
-                     tryExistingArticle, Only)
+                     tryExistingArticle)
     )
         
     val existingArticle = "Learning to Summarise Related Sentences.pdf"
