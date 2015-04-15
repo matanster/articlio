@@ -19,8 +19,8 @@ abstract class Raw(articleName: String, externalSourceDirectory: Option[String] 
   
   val dependsOn = Seq()
   
-  val expectedFileExtension: String
-  lazy val fileName = s"$articleName.$expectedFileExtension"
+  val typicalFileExtension: String
+  lazy val fileName = articleName
   
   val directory: String
   lazy val fullPath = s"$directory/$fileName".rooted
@@ -47,19 +47,19 @@ abstract class Raw(articleName: String, externalSourceDirectory: Option[String] 
 
 case class RawPDF(articleName: String, externalSourceDirectory: Option[String] = None) extends Raw(articleName, externalSourceDirectory) 
 {
-  override val expectedFileExtension = "pdf"
+  override val typicalFileExtension = "pdf"
   override val directory = config.config.getString("locations.pdf-source-input").rooted
 }
 
 case class RaweLifeJATS(articleName: String, externalSourceDirectory: Option[String] = None) extends Raw(articleName, externalSourceDirectory) 
 {
-  val expectedFileExtension = "xml"
+  val typicalFileExtension = "xml"
   val directory = config.config.getString("locations.JATS-input.input").rooted
 }
 
 case class RawTxtFile(articleName: String, externalSourceDirectory: Option[String] = None) extends Raw(articleName, externalSourceDirectory) 
 {
-  val expectedFileExtension = "txt"
+  val typicalFileExtension = "txt"
   val directory = config.config.getString("locations.txtFile-source-input").rooted
 }
 
@@ -70,8 +70,7 @@ object RawImporter { // not for Windows OS...
   // guessfully type raw input
   def GuessDataType(fileName: String, path: String): Option[Raw] = {
     println(s"importing file $fileName")
-    //val fileName = path.split("/").last 
-    fileName match {
+    fileName match { // this match could be based on the typicalFileExtension class variable...
       case s: String if s.endsWith(".pdf") => Some(RawPDF(fileName, Some(path)))
       case s: String if s.endsWith(".xml") => Some(RaweLifeJATS(fileName, Some(path)))
       case s: String if s.endsWith(".txt") => Some(RawTxtFile(fileName, Some(path)))

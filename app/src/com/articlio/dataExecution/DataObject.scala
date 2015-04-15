@@ -87,38 +87,42 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
     val startTime = localNow  // TODO: refine the time stamp values to sub-second granularity (see https://github.com/tototoshi/slick-joda-mapper if helpful)
 
     // register a new data run, and get its unique auto-ID from the RDBMS.
-    db.run(DataRecord.returning(DataRecord.map(_.dataid)) += DataRow( 
-      dataid                 = 0L, // will be auto-generated 
-      datatype               = dataType, 
-      datatopic              = dataTopic, 
-      creationstatus         = CreationStatusDBtoken.STARTED, 
-      creationerrordetail    = None,
-      creatorserver          = ownHostName,
-      creatorserverstarttime = Some(startTime),
-      creatorserverendtime   = None,
-      softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion)
-    ) flatMap { returnedID =>
+    db.run(DataRecord.returning(DataRecord.map(_.dataid)) += 
+      DataRow(dataid                 = 0L, // will be auto-generated 
+              datatype               = dataType, 
+              datatopic              = dataTopic, 
+              creationstatus         = CreationStatusDBtoken.STARTED, 
+              creationerrordetail    = None,
+              creatorserver          = ownHostName,
+              creatorserverstarttime = Some(startTime),
+              creatorserverendtime   = None,
+              softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion)
+    ) flatMap { 
+      
+      returnedID =>
         
         dataID complete Success(returnedID)
       
         // now try this data's creation function
         safeRunCreator(creator(successfullyCompletedID, dataType, dataTopic)) flatMap { creationError => 
           // now record the outcome - was the data successfully created by this run?
-          db.run(DataRecord.filter(_.dataid === returnedID).update(DataRow( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
-            dataid                 = returnedID,
-            datatype               = dataType, 
-            datatopic              = dataTopic, 
-            creationstatus         = creationError match {
-                                       case None =>    CreationStatusDBtoken.SUCCESS
-                                       case Some(_) => CreationStatusDBtoken.FAILED}, 
-            creationerrordetail    = creationError match { 
-                                       case None => None
-                                       case Some(errorDetail) => Some(errorDetail.toString)},
-            creatorserver          = ownHostName,
-            creatorserverstarttime = Some(startTime),
-            creatorserverendtime   = Some(localNow),
-            softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion))
-          ) map { _ => 
+          db.run(DataRecord.filter(_.dataid === returnedID).update( // cleaner way for only modifying select fields at http://stackoverflow.com/questions/23994003/updating-db-row-scala-slick
+            DataRow(dataid                 = returnedID,
+                    datatype               = dataType, 
+                    datatopic              = dataTopic, 
+                    creationstatus         = creationError match {
+                                               case None =>    CreationStatusDBtoken.SUCCESS
+                                               case Some(_) => CreationStatusDBtoken.FAILED}, 
+                    creationerrordetail    = creationError match { 
+                                               case None => None
+                                               case Some(errorDetail) => Some(errorDetail.toString)},
+                    creatorserver          = ownHostName,
+                    creatorserverstarttime = Some(startTime),
+                    creatorserverendtime   = Some(localNow),
+                    softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion)
+          )) map { 
+            
+            _ => 
                       
             // register the dependencies of the newly successfully created data 
             creationError match {

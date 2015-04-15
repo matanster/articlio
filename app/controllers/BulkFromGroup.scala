@@ -26,7 +26,7 @@ object BulkFromGroup extends Controller with Testable {
     
     def tests = Seq(new TestSpec(given = "an existing groupID of Raw data type",
                                  should = "generate semantic data for them all",
-                                 teste, Only)
+                                 teste)
                 )
     
     def teste: Future[Unit] = {

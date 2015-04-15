@@ -31,7 +31,7 @@ object ShowExtract extends Controller with Testable {
                      tryExistingArticle, Only)
     )
         
-    val existingArticle = "Learning to Summarise Related Sentences"
+    val existingArticle = "Learning to Summarise Related Sentences.pdf"
     val nonExistingArticle = "bla"
                                  
     def tryExistingArticle = {
