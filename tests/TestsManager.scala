@@ -18,6 +18,10 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
+abstract class testSuiteRunMode
+object Parallel extends testSuiteRunMode
+object Serial extends testSuiteRunMode
+
 abstract class MaybeRun
 object Run extends MaybeRun
 object Skip extends MaybeRun
@@ -35,7 +39,7 @@ class TestSpec (val given: String,
 trait TestContainer { def tests: Seq[TestSpec] } 
 trait Testable { def TestContainer: TestContainer }
 
-object Foo extends Testable {
+object SelfTestOfTestManager extends Testable {
   object TestContainer extends TestContainer {
     def tests = Seq(new TestSpec(given = "nothing",
                                  should = "do nothing",
@@ -66,19 +70,18 @@ object UnitTestsRunner {
     futures.map(_.map { Success(_) }.recover { case t => println(Console.YELLOW_B + t); Failure(t) })
   }
 
-  @volatile var running = false // avoid inadvertant concurrent run
-  
-  def go: Unit = {
+  @volatile var running = false // (mostly) avoid inadvertant concurrent run. a perfect way would use an atomic construct not a volatile var
+  def go(suiteRunMode: testSuiteRunMode): Unit = {
     running match {
       case true  => println(Console.BLUE_B + "tests already running - request ignore" + Console.RESET)
-      case false => running = true; goDo map {_ => running = false }
+      case false => running = true; goDo(suiteRunMode) map {_ => running = false }
     }
   }
     
   //
   // Dispatch all tests, list all results once they are over
   //
-  private def goDo: Future[Any] = {
+  private def goDo(suiteRunMode: testSuiteRunMode): Future[Any] = {
     import scala.Console._ // Hopefully this doesn't bite
     val terminalWidth = jline.TerminalFactory.get().getWidth();
     
@@ -96,11 +99,31 @@ object UnitTestsRunner {
       (List.fill(lines)(indent) zip wrapped map { case (i, w) => i + w + "\n" }).mkString 
     } 
 
+    val lock = new Object
+    def serializedAttempt(test: TestSpec): Future[BeenRun] = lock.synchronized {
+      
+      println(WHITE_B + BLACK + BOLD + s"starting test $test" + Console.RESET)  // cf. https://groups.google.com/forum/#!searchin/scala-user/reflection$20function$20name/scala-user/q2L_cWxy-tE/eVWND_5Lty4J for getting the method name
+      val result: Try[BeenRun] = Try(Await.result(timedAttempt(test), Duration.Inf)) // await the future, but lift it to persist future semantics also in case of exception completion
+      println(WHITE_B + BLACK + BOLD + s"finished test $test - test resulted in $result" + Console.RESET)
+      
+      result match { // unlift from Try to regular future, as rest of this module uses plain futures for now
+        case Success(s) => Future.successful(s)
+        case Failure(t) => Future.failed(t)
+      }
+    }
+    
     def timedAttempt(test: TestSpec): Future[BeenRun] = {
       val time = System.currentTimeMillis
-      test.attempt map {_ => 
-        val elapsedTime = System.currentTimeMillis() - time 
-        BeenRun(elapsedTime)
+          test.attempt map {_ => 
+            val elapsedTime = System.currentTimeMillis() - time 
+            BeenRun(elapsedTime)
+          }
+    }
+    
+    def attempt(test: TestSpec): Future[BeenRun] = {
+      suiteRunMode match {
+        case Parallel => timedAttempt(test)
+        case Serial   => serializedAttempt(test)
       }
     }
     
@@ -114,7 +137,7 @@ object UnitTestsRunner {
     val testablesResults: Seq[Seq[Future[MaybeRun]]] = (testsMarkedAsOnly.isEmpty) match {
       case true  => testContainers.map(testable => testable.tests
                                                            .map(test => test.maybeRun match {
-                                                             case Run  => timedAttempt(test)
+                                                             case Run  => attempt(test)
                                                              case Skip => Future.successful(Skip)
                                                            }))
 
@@ -122,19 +145,18 @@ object UnitTestsRunner {
         println(YELLOW + BOLD + """One or more tests are flagged as "Only" - running only those tests and skipping all others""" + RESET)
         testContainers.map(testable => testable.tests
                       .map(test => test.maybeRun match {
-                        case Only       => timedAttempt(test)
+                        case Only       => attempt(test)
                         case Run | Skip => Future.successful(Skip)
                       }))
       }
     }                                         
 
-    def getStackTraceString(t: Throwable) = {
+    def getStackTraceString(t: Throwable) = { // TODO: move to util, trait, or something
       val w = new java.io.StringWriter
       val p = new java.io.PrintWriter(w)
       t.printStackTrace(p)
       w.toString
     }
-    
     
     // once complete, list the results
     waitAll(testablesResults.flatten).map { _ => 

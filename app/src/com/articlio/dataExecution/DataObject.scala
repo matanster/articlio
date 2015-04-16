@@ -52,10 +52,10 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
   // Tries a function, and collapses its exception into application type - can be replaced by the use of Try
   //
   private def safeRunCreator(func: => Future[Option[CreateError]]): Future[Option[CreateError]] = { // syntax explanation: 
-                                                                                            // this is function passing "by name".
-                                                                                            // the function supplied by caller is passed as is,
-                                                                                            // so that this function can execute it.
-      try { func } 
+                                                                                                    // this is function passing "by name".
+                                                                                                    // the function supplied by caller is passed as is,
+                                                                                                    // so that this function can execute it.
+      try { func } // TODO: switch to Try so that fatal JVM-wide errors are automatically treated differently 
         catch { 
           case anyException : Throwable =>
           recordException(anyException)
@@ -79,6 +79,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
     
     def registerAsGroupMember(data: DataObject): Unit = {
       if (assignToGroup != None) {
+        println(Console.GREEN_B + "assign to group " + assignToGroup + Console.RESET)
         db.run(Datagroupings += DatagroupingsRow(assignToGroup.get, data.successfullyCompletedID))
       }
     } 

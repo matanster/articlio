@@ -46,7 +46,7 @@ trait BulkOverData {
 
     db.query(query) map { result => result.toList.nonEmpty match {
       case true  => result.toList
-      case false => println(Console.GREEN_B + "about to throw exception"); throw new Throwable(s"group $groupID does not exist")
+      case false => println(Console.GREEN_B + "about to throw exception"); throw new Throwable(s"no data assigned to group $groupID")
     }}
   }
 }

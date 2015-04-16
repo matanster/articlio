@@ -23,13 +23,14 @@ import scala.concurrent.blocking
 import play.api.mvc._
 import play.api.{db => _, _}
 import play.api.mvc._
+import com.articlio.test.{Parallel, Serial}
 
 object Global extends GlobalSettings {
 
   play.api.Logger.info("Global object started")
   println("Global object started")
   
-  case class DefaultResponder(message: String) extends Controller {
+  case class DefaultResponder(message: String) extends Controller { // TODO: simplify to a function rather than a class...?
     def go = Action { implicit request => Ok(message) }
   }
   
@@ -41,7 +42,9 @@ object Global extends GlobalSettings {
       
       case "/override" => println("intercepted"); Some(controllers.index.go)
       
-      case "/test"     => com.articlio.test.UnitTestsRunner.go; Some(DefaultResponder("starting tests...").go)
+      case "/test"     => com.articlio.test.UnitTestsRunner.go(Parallel); Some(DefaultResponder("starting tests...").go)
+      
+      case "/testSerially" => com.articlio.test.UnitTestsRunner.go(Serial); Some(DefaultResponder("starting tests...").go)
       
       //case "/"
       
