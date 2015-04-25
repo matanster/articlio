@@ -51,8 +51,7 @@ libraryDependencies += "com.google.code.findbugs" % "jsr305" % "2.0.2"
 
 libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % "3.0.0-RC2",
-  "com.zaxxer" % "HikariCP-java6" % "2.0.1",
-  "org.slf4j" % "slf4j-nop" % "1.6.4")
+  "com.zaxxer" % "HikariCP-java6" % "2.0.1")
 
 libraryDependencies += "mysql" % "mysql-connector-java" % "latest.release"
 

@@ -31,7 +31,7 @@ abstract class Expander {
 
 object DefaultExpander extends Expander {
   def apply(msg: String, tags: Seq[logTag]) : String = {
-    tags.map(tag => "(" + tag.getClass.getSimpleName.dropRight(1) + ")").mkString(" ") + ": " + msg
+    tags.map(tag => "(" + tag.getClass.getSimpleName.dropRight(1) + ")").mkString(" ") + " " + msg
   }
 }
 
@@ -43,11 +43,10 @@ object DefaultUnderlyingExternalLogger extends UnderlyingExternalLogger {
   //import org.slf4j._
   //import org.slf4j.LoggerFactory._
   val externalLogger = {
-    org.slf4j.LoggerFactory.getLogger("Default")
+    org.slf4j.LoggerFactory.getLogger("application")
   }
 
   def apply(finalMessage: String) = {
-    println(s"logging $finalMessage")
     externalLogger.info(finalMessage)
   }
 } 
@@ -60,7 +59,6 @@ case class Logger(tagFilter: TagFilter, expander: Expander, underlyingExternalLo
     commonTags.nonEmpty match {
       case true =>
         DefaultUnderlyingExternalLogger(expander(msg, commonTags))
-        //DefaultUnderlyingExternalLogger(msg)
         console match {
           case Some(ConsoleMirror) => Console.print(msg)
           case Some(_) =>
@@ -82,7 +80,7 @@ object LoggerTest extends Testable {
       object DummyTag extends logTag
       
       val logger = Logger(VoidTagFilter, DefaultExpander, DefaultUnderlyingExternalLogger)
-      logger.log("bla") match {
+      logger.log("logging test log message") match {
         case true  => Future.successful(Unit)
         case false => Future.failed(new Throwable("didn't log any message"))
       }
