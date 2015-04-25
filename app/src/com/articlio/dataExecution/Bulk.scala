@@ -14,6 +14,8 @@ import com.articlio.storage.Connection
 import com.articlio.Globals.db
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import scala.concurrent.Future
+import slick.profile.SqlAction
+import models.Tables
 
 /*
  *  Unlike bulk import, this trait takes care of acting on already-imported data

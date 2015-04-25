@@ -6,7 +6,7 @@ import scala.collection.JavaConverters._
 import com.articlio.Globals.appActorSystem
 import akka.actor.Actor
 import akka.event.Logging
-import com.articlio.logger._
+import com.articlio.dataLogger._
 import akka.actor.Props
 
 //

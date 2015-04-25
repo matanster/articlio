@@ -24,7 +24,7 @@ import com.articlio.storage.Connection
 import slick.driver.MySQLDriver.simple._
 import slick.jdbc.meta._
 import com.articlio.dataExecution.CreateError 
-import com.articlio.logger._
+import com.articlio.dataLogger._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /*

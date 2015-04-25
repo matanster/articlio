@@ -5,7 +5,7 @@ import models.Tables._
 import slick.driver.MySQLDriver.simple._
 import slick.jdbc.meta._
 import com.articlio.storage.Connection
-import com.articlio.logger._
+import com.articlio.dataLogger._
 import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration

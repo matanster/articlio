@@ -56,6 +56,8 @@ libraryDependencies ++= Seq(
 
 libraryDependencies += "mysql" % "mysql-connector-java" % "latest.release"
 
+libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.12"
+
 resolvers += "Sonatype releases" at "http://oss.sonatype.org/content/repositories/releases/"
 
 libraryDependencies += "com.github.verbalexpressions" %% "scalaverbalexpression" % "1.0.1"

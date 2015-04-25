@@ -139,7 +139,7 @@ trait Tables {
   lazy val Datadependencies = new TableQuery(tag => new Datadependencies(tag))
 
   /** Entity class storing rows of table Datagroupings
-   *  @param groupid Database column GroupID SqlType(BIGINT), PrimaryKey
+   *  @param groupid Database column GroupID SqlType(BIGINT)
    *  @param dataid Database column dataID SqlType(BIGINT) */
   case class DatagroupingsRow(groupid: Long, dataid: Long)
   /** GetResult implicit for fetching DatagroupingsRow objects using plain SQL queries */
@@ -153,8 +153,8 @@ trait Tables {
     /** Maps whole row to an option. Useful for outer joins. */
     def ? = (Rep.Some(groupid), Rep.Some(dataid)).shaped.<>({r=>import r._; _1.map(_=> DatagroupingsRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
-    /** Database column GroupID SqlType(BIGINT), PrimaryKey */
-    val groupid: Rep[Long] = column[Long]("GroupID", O.PrimaryKey)
+    /** Database column GroupID SqlType(BIGINT) */
+    val groupid: Rep[Long] = column[Long]("GroupID")
     /** Database column dataID SqlType(BIGINT) */
     val dataid: Rep[Long] = column[Long]("dataID")
   }

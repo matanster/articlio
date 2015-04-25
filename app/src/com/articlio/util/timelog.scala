@@ -1,7 +1,7 @@
 package com.articlio.util
 import akka.actor.Actor
 import com.articlio.Globals.appActorSystem
-import com.articlio.logger._
+import com.articlio.dataLogger._
 
 
 //

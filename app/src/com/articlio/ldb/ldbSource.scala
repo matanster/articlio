@@ -8,7 +8,7 @@ import org.ahocorasick.trie._
 import scala.collection.JavaConverters._
 import com.github.tototoshi.csv._
 import com.github.verbalexpressions.VerbalExpression._
-import com.articlio.logger._
+import com.articlio.dataLogger._
 import com.articlio.storage.ManagedDataFiles._
 
 //

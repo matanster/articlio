@@ -1,4 +1,4 @@
-package com.articlio.logger
+package com.articlio.dataLogger
 
 /*
  *  Semantically route text output to destinations, currently only to local file destinations
@@ -27,7 +27,7 @@ object LogManager {
   
   val base = config.config.getString("locations.logging")
   if (!Files.exists(Paths.get(base))) Files.createDirectory(Paths.get(base)) // create base folder if it doesn't yet exist
-  println("articlio logger starting...")
+  println("articlio data logger starting...")
   
   // initialize a logging path under the logging base directory and overall logger name
   private def initialize(logicalPath:Seq[String]): java.nio.file.Path = {

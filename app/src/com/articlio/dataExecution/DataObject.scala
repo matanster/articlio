@@ -87,8 +87,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
     val ownHostName = java.net.InetAddress.getLocalHost.getHostName  // TODO: move to global initialization object of some sort?
     val startTime = localNow  // TODO: refine the time stamp values to sub-second granularity (see https://github.com/tototoshi/slick-joda-mapper if helpful)
 
-    // register a new data run, and get its unique auto-ID from the RDBMS.
-    db.run(DataRecord.returning(DataRecord.map(_.dataid)) += 
+    val registerNewID = DataRecord.returning(DataRecord.map(_.dataid)) += 
       DataRow(dataid                 = 0L, // will be auto-generated 
               datatype               = dataType, 
               datatopic              = dataTopic, 
@@ -98,7 +97,9 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
               creatorserverstarttime = Some(startTime),
               creatorserverendtime   = None,
               softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion)
-    ) flatMap { 
+    
+    // register a new data run, and get its unique auto-ID from the RDBMS.
+    db.run(registerNewID) flatMap { 
       
       returnedID =>
         

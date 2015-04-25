@@ -14,7 +14,7 @@ import com.articlio.Globals.db
 import slick.util.CloseableIterator
 import com.articlio.Globals.AppActorSystem
 import models.Tables._
-import com.articlio.logger.SimpleLogger
+import com.articlio.dataLogger.SimpleLogger
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 

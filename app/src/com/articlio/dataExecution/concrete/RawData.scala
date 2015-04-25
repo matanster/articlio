@@ -87,7 +87,6 @@ object RawImporter { // not for Windows OS...
     import slick.driver.MySQLDriver.api._
     import com.articlio.Globals.db
     import com.articlio.storage.SlickDB
-    import slick.jdbc.meta._
     import models.Tables._
     
     val groupID: Future[Option[Long]] = withNewGroupAssignment match {

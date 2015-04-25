@@ -11,7 +11,7 @@ import scala.concurrent.Await
 import com.articlio.SelfMonitor
 import akka.actor.ActorSystem
 import com.articlio.Globals.appActorSystem
-import com.articlio.logger._
+import com.articlio.dataLogger._
 import slick.driver.MySQLDriver.simple._
 import slick.jdbc.meta._
 import com.articlio.config
@@ -58,7 +58,7 @@ object Global extends GlobalSettings {
   
   override def onStart(app: Application) {
     println("Global object starting non-Play stuff...")
-    val logger = com.articlio.logger.LogManager
+    val logger = com.articlio.dataLogger.LogManager
     play.api.Logger.info("Global object starting non-Play stuff...")
 
     appActorSystem.outDB.createIfNeeded

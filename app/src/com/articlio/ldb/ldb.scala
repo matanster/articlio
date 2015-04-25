@@ -1,6 +1,6 @@
 package com.articlio.ldb
 
-import com.articlio.logger._
+import com.articlio.dataLogger._
 import com.articlio.util.text._
 import com.articlio.Globals.appActorSystem
 import com.articlio.LanguageModel._
