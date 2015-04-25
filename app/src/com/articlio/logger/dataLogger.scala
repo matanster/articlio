@@ -43,7 +43,7 @@ object DefaultUnderlyingExternalLogger extends UnderlyingExternalLogger {
   //import org.slf4j._
   //import org.slf4j.LoggerFactory._
   val externalLogger = {
-    org.slf4j.LoggerFactory.getLogger("application")
+    org.slf4j.LoggerFactory.getLogger("articlio")
   }
 
   def apply(finalMessage: String) = {
