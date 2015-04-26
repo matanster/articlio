@@ -96,6 +96,12 @@ case class Logger(tagFilter: TagFilter,
   }
 }
 
+/*
+ *  CODE
+ * -------
+ *  TESTS 
+ */
+
 object LoggerTest extends Testable {
   object TestContainer extends TestContainer {
     
