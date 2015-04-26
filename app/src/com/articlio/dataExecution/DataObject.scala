@@ -96,7 +96,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
               creatorserver          = ownHostName,
               creatorserverstarttime = Some(startTime),
               creatorserverendtime   = None,
-              softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion)
+              softwareversion        = com.articlio.Globals.ownGitVersion)
     
     // register a new data run, and get its unique auto-ID from the RDBMS.
     db.run(registerNewID) flatMap { 
@@ -121,7 +121,7 @@ abstract class DataObject(val requestedDataID: Option[Long] = None)
                     creatorserver          = ownHostName,
                     creatorserverstarttime = Some(startTime),
                     creatorserverendtime   = Some(localNow),
-                    softwareversion        = com.articlio.Globals.appActorSystem.ownGitVersion)
+                    softwareversion        = com.articlio.Globals.ownGitVersion)
           )) map { 
             
             _ => 

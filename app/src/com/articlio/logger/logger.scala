@@ -113,19 +113,19 @@ object LoggerTest extends Testable {
     
     def tests = Seq(new TestSpec(given =  "a logger without filters",
                                  should = "log a message",
-                                 logWithoutFilter, Only),
+                                 logWithoutFilter),
                     new TestSpec(given =  "a logger with an inclusive filter",
                                  should = "log a message that matches the filter",
-                                 logWithInclusiveFilter1, Only),                             
+                                 logWithInclusiveFilter1),                             
                     new TestSpec(given =  "a logger with an inclusive filter",
                                  should = "not log a message that does not match the filter",
-                                 logWithInclusiveFilter2, Only),
+                                 logWithInclusiveFilter2),
                     new TestSpec(given =  "a logger with an inclusive filter",
                                  should = "log a message that does not match the filter, if that message is of type Error",
-                                 logWithInclusiveFilter3, Only),
+                                 logWithInclusiveFilter3),
                     new TestSpec(given =  "a logger with an exclusive filter",
                                  should = "log a message that is not excluded by the filter",
-                                 logWithExclusiveFilter1, Only)          
+                                 logWithExclusiveFilter1)          
     )
                                  
     def logWithoutFilter: Future[Unit] = {

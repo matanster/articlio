@@ -10,7 +10,7 @@ import scala.concurrent.duration._
 import scala.concurrent.Await
 import com.articlio.SelfMonitor
 import akka.actor.ActorSystem
-import com.articlio.Globals.appActorSystem
+import com.articlio.Globals._
 import com.articlio.dataLogger._
 import slick.driver.MySQLDriver.simple._
 import slick.jdbc.meta._
@@ -61,7 +61,7 @@ object Global extends GlobalSettings {
     val logger = com.articlio.dataLogger.LogManager
     play.api.Logger.info("Global object starting non-Play stuff...")
 
-    appActorSystem.outDB.createIfNeeded
+    outDB.createIfNeeded
    
     nodejsControl.startIfDown
     
@@ -80,7 +80,7 @@ object Global extends GlobalSettings {
   override def onStop(app: Application) {
     println("Global object stopping non-Play stuff...")
     play.api.Logger.info("Global object stopping non-Play stuff...")
-    appActorSystem.shutdown
+    shutdown
     com.articlio.Globals.db.db.close
     //SelfMonitor.shutdown
   }  

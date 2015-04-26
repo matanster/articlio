@@ -2,7 +2,7 @@ package com.articlio.ldb
 import com.articlio.config
 import com.articlio.util._
 import com.articlio.util.text._
-import com.articlio.Globals.appActorSystem
+import com.articlio.Globals._
 import scala.io.Source
 import org.ahocorasick.trie._
 import scala.collection.JavaConverters._
@@ -43,7 +43,7 @@ object CSV {
   //
   def loadPatternsFromCSV(csvFile: String): Seq[RawCSVInput] = {
 
-    appActorSystem.timelog ! "reading CSV"
+    timelog ! "reading CSV"
 
     //val reader = CSVReader.open("ldb/July 24 2014 database - Markers - filtered.csv")
     //val reader = CSVReader.open("ldb/Normalized from July 24 2014 database - Markers - filtered - take 1.csv")
@@ -71,7 +71,7 @@ object CSV {
 
     if (totalOff > 0) println(s"$totalOff rules disabled in input CSV, see input CSV for details")
 
-    appActorSystem.timelog ! "reading CSV"
+    timelog ! "reading CSV"
     reader.close
 
     rawInput
@@ -113,7 +113,7 @@ object CSV {
       }
     }
   
-    appActorSystem.timelog ! "manipulating CSV input"
+    timelog ! "manipulating CSV input"
 
     val rules = scala.collection.mutable.Seq.newBuilder[RuleInput]
     val rawInput = loadPatternsFromCSV(csvFile)
@@ -147,7 +147,7 @@ object CSV {
       rules += new RuleInput(rawInputRule.pattern, rawInputRule.indication, if (ruleProperties.result.nonEmpty) Some(ruleProperties.result) else None)
     }
 
-    appActorSystem.timelog ! "manipulating CSV input"
+    timelog ! "manipulating CSV input"
     val logger = new SimpleLogger("input-ldb")
     logger.write(rules.result.mkString("\n"), "db-rules")
     return rules.result

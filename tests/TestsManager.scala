@@ -129,7 +129,7 @@ object UnitTestsRunner {
     }
     
     println(BOLD + "cleaning the database before starting tests..." + RESET)
-    Await.result(com.articlio.Globals.appActorSystem.outDB.dropCreate, Duration.Inf)
+    Await.result(com.articlio.Globals.outDB.dropCreate, Duration.Inf)
     println(BOLD + "running tests..." + RESET)
     
     val testsMarkedAsOnly = testContainers.map(testable => testable.tests

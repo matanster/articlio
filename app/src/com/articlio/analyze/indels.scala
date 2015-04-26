@@ -12,7 +12,7 @@ import slick.jdbc.meta._
 import com.articlio.storage.SlickDB
 import com.articlio.Globals.db
 import slick.util.CloseableIterator
-import com.articlio.Globals.AppActorSystem
+import com.articlio.Globals._
 import models.Tables._
 import com.articlio.dataLogger.SimpleLogger
 import scala.concurrent.Await

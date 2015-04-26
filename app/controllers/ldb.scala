@@ -13,7 +13,7 @@ import slick.jdbc.meta._
 import play.api.http.MimeTypes
 import com.articlio.dataExecution._
 import com.articlio.dataExecution.concrete._
-import com.articlio.Globals.appActorSystem
+import com.articlio.Globals._
     
 object SemanticExtractor extends Controller {
 
@@ -76,7 +76,7 @@ object SemanticExtractor extends Controller {
   }
 
   def purge = Action { implicit request =>
-    appActorSystem.outDB.dropCreate
+    outDB.dropCreate
     Ok("purging all data...") // fire and forget
   }
 }

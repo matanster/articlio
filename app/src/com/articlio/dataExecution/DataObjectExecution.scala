@@ -112,7 +112,7 @@ trait DataExecution extends Connection { // can refactor to using self type a la
     import scala.concurrent.duration._
 
     // jumping through a hoop to get ask's future reply, itself a future (flattening it into "just" a future)
-    val untyped: Future[Any] = ask(com.articlio.Globals.appActorSystem.deduplicator, Get(data, assignToGroup))(Timeout(21474835.seconds)) // future for actor's reply
+    val untyped: Future[Any] = ask(com.articlio.Globals.deduplicator, Get(data, assignToGroup))(Timeout(21474835.seconds)) // future for actor's reply
     val retyped: Future[Future[DataObject]] = untyped.mapTo[Future[DataObject]]                                            // workaround ask's non-type-safe result
     retyped flatMap(identity)                                                                                              // flatten the future of future
   }
