@@ -2,23 +2,21 @@ package com.articlio.logger
 import com.articlio.test._
 import scala.concurrent.Future
 
-abstract class logTag
+abstract class logTag 
+object Default     extends logTag 
 object Performance extends logTag
-object Default extends logTag
+object RDBMS       extends logTag
 
 abstract class MessageType
 object Normal extends MessageType
 object Error extends MessageType
-
-abstract class Console
-object ConsoleMirror extends Console
 
 abstract class TagFilter { 
   def apply(msgTags: Seq[logTag]) : Seq[logTag]
 }
 
 object VoidTagFilter extends TagFilter {
-  def apply(msgTags: Seq[logTag]) = Seq(Default)
+  def apply(msgTags: Seq[logTag]) = msgTags
 }
 
 class ExclusiveTagFilter(excludeTags: Seq[logTag]) extends TagFilter { 
@@ -69,10 +67,8 @@ case class Logger(tagFilter: TagFilter,
                   expander: Expander, 
                   underlyingExternalLogger: UnderlyingExternalLogger) {
   
-  def log(msg:         String, 
-          tags:        Seq[logTag]     = Seq(), 
-          console:     Option[Console] = None, 
-          messageType: MessageType     = Normal) : Boolean = {
+  def log(msg: String, console: Boolean = false, messageType: MessageType = Normal)
+         (implicit tags: Seq[logTag] = Seq()): Boolean = {
 
     import Console._
     
@@ -87,14 +83,21 @@ case class Logger(tagFilter: TagFilter,
           case true => 
             underlyingExternalLogger(expander(msg, commonTags, messageType), messageType)
             console match {
-              case Some(ConsoleMirror) => Console.println(msg)
-              case Some(_) => 
-              case None =>
+              case true => Console.println(msg)
+              case false =>
             }        
             true
           case false => false
         }
     }
+  }
+}
+
+object ActiveLogger {
+  val logger = com.articlio.Globals.mode match {
+    case Some("real") | None => Logger(VoidTagFilter, DefaultExpander, DefaultUnderlyingExternalLogger)
+    case Some("test")        => Logger(VoidTagFilter, DefaultExpander, TestDefaultUnderlyingExternalLogger)
+    case Some(other)         => throw new Throwable(s"Invalid mode parameter: $other")  
   }
 }
 
@@ -145,7 +148,7 @@ object LoggerTest extends Testable {
       val tagFilter = new InclusiveTagFilter(Seq(TestTag))
       
       val logger = Logger(tagFilter, DefaultExpander, TestDefaultUnderlyingExternalLogger)
-      logger.log("test log message from logWithInclusiveFilter1", Seq(TestTag, TestTag1)) match {
+      logger.log("test log message from logWithInclusiveFilter1")(Seq(TestTag, TestTag1)) match {
         case true  => Future.successful(Unit)
         case false => Future.failed(new Throwable("didn't log message"))
       }
@@ -156,7 +159,7 @@ object LoggerTest extends Testable {
       val tagFilter = new InclusiveTagFilter(Seq(TestTag))
       
       val logger = Logger(tagFilter, DefaultExpander, TestDefaultUnderlyingExternalLogger)
-      logger.log("test log message from logWithInclusiveFilter2", Seq(TestTag1)) match {
+      logger.log("test log message from logWithInclusiveFilter2")(Seq(TestTag1)) match {
         case true  => Future.failed(new Throwable("should not have logged message"))
         case false => Future.successful(Unit)
       }
@@ -167,7 +170,7 @@ object LoggerTest extends Testable {
       val tagFilter = new InclusiveTagFilter(Seq(TestTag))
       
       val logger = Logger(tagFilter, DefaultExpander, TestDefaultUnderlyingExternalLogger)
-      logger.log("test error log message from logWithInclusiveFilter3", Seq(TestTag1), messageType = Error) match {
+      logger.log("test error log message from logWithInclusiveFilter3", messageType = Error)(Seq(TestTag1)) match {
         case true  => Future.successful(Unit)
         case false => Future.failed(new Throwable("didn't log message"))
       }
@@ -178,7 +181,7 @@ object LoggerTest extends Testable {
       val tagFilter = new ExclusiveTagFilter(Seq(TestTag))
       
       val logger = Logger(tagFilter, DefaultExpander, TestDefaultUnderlyingExternalLogger)
-      logger.log("test log message from logWithExclusiveFilter1", Seq(TestTag1)) match {
+      logger.log("test log message from logWithExclusiveFilter1")(Seq(TestTag1)) match {
         case true  => Future.successful(Unit)
         case false => Future.failed(new Throwable("didn't log message"))
       }

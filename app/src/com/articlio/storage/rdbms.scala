@@ -12,6 +12,11 @@ import scala.concurrent._
 import scala.util.{Success, Failure}
 //import scala.concurrent.ExecutionContext.Implicits.global
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import com.articlio.logger._, com.articlio.logger.ActiveLogger.logger._
+
+object logTags {
+  implicit val tags = Seq(RDBMS)
+}; import logTags.tags
 
 //
 // Database connection abstract type
@@ -27,7 +32,7 @@ trait SlickDB {
   // example function for inquiring JDBC configuration
   def printJDBCconfig = {
     val getAutoCommit = SimpleDBIO[Boolean](_.connection.getAutoCommit); 
-    println(s"autocommit is: ${Await.result(db.run(getAutoCommit), Duration.Inf)}")
+    log(s"autocommit is: ${Await.result(db.run(getAutoCommit), Duration.Inf)}")
   }
 }
 
@@ -51,9 +56,7 @@ case class OutDB(dbHandle: SlickDB) {
   //
   
   def write (data: Seq[MatchesRow]) = {
-    println
-    println(s"writing ${data.length} records to database")
-    println
+    log(s"writing ${data.length} records to database")
     dbHandle.run(Matches ++= data)
   }
   
@@ -62,7 +65,7 @@ case class OutDB(dbHandle: SlickDB) {
   var buffer = Seq.empty[MatchesRow]
   def addToBuffer (data: Seq[MatchesRow]) = buffer ++= data
   def flushToDB = {
-    println("Flushing bulk run's results to database")
+    log("Flushing bulk run's results to database")
     write(buffer) map { _ => 
       buffer = Seq.empty[MatchesRow]
     }
@@ -79,14 +82,14 @@ case class OutDB(dbHandle: SlickDB) {
   }
   
   def dropCreate: Future[Seq[Unit]] = { 
-    println("about to recreate tables")
+    log("about to recreate tables", console = true)
     dbHandle.run(DBIO.sequence(tables.map(table => table.schema.drop))) flatMap { _ => create } 
   }
   
   def createIfNeeded {
       dbHandle.run(DBIO.sequence(tables.map(table => slick.jdbc.meta.MTable.getTables(table.baseTableRow.tableName) map { 
         result => if (result.isEmpty) {
-          println(s"creating table ${table.baseTableRow.tableName}")
+          log(s"creating table ${table.baseTableRow.tableName}", console = true)
           dbHandle.run(table.schema.create) 
         }})))
   }

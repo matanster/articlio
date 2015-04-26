@@ -40,11 +40,5 @@ object Globals {
     case Some(other)         => throw new Throwable(s"Invalid mode parameter: $other")
   }
 
-  val logger = mode match {
-    case Some("real") | None => Logger(VoidTagFilter, DefaultExpander, DefaultUnderlyingExternalLogger)
-    case Some("test")        => Logger(VoidTagFilter, DefaultExpander, TestDefaultUnderlyingExternalLogger)
-    case Some(other)         => throw new Throwable(s"Invalid mode parameter: $other")  
-  }
-
   println("Initialized")
 }
