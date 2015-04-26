@@ -40,12 +40,10 @@ object Util {
 object DefaultExpander extends Expander {
   def apply(msg: String, tags: Seq[logTag], messageType: MessageType) : String = {
     import Console._
-    val tagString = tags.map(tag => "(" + getObjectName(tag) + ")").mkString(" ")
-    val result = GREEN + BOLD + tagString + " " + RESET + msg
+    val tagString = tags.map(tag => "[" + getObjectName(tag) + "]").mkString(" ")
     messageType match {
-      case Normal => GREEN + BOLD + tagString + " " + RESET + msg  
-      case Error  => RED + BOLD + tagString + " " + RED_B + WHITE + BOLD + " ERROR " + RESET + " " + msg
-        //RED_B + WHITE + BOLD + " ERROR " + RESET + RED + " " + result + " " + RESET
+      case Normal => WHITE + tagString + RESET + " " + BLUE + BOLD + msg  
+      case Error  => WHITE + tagString + RESET + " " + RED + msg // + " " + RED_B + WHITE + BOLD + " ERROR "
     }
   }
 }
@@ -139,7 +137,7 @@ object LoggerTest extends Testable {
       val tagFilter = new InclusiveTagFilter(Seq(TestTag))
       
       val logger = Logger(tagFilter, DefaultExpander, DefaultUnderlyingExternalLogger)
-      logger.log("logging test log message from logWithInclusiveFilter1", Seq(TestTag, TestTag1)) match {
+      logger.log("test log message from logWithInclusiveFilter1", Seq(TestTag, TestTag1)) match {
         case true  => Future.successful(Unit)
         case false => Future.failed(new Throwable("didn't log message"))
       }
@@ -150,7 +148,7 @@ object LoggerTest extends Testable {
       val tagFilter = new InclusiveTagFilter(Seq(TestTag))
       
       val logger = Logger(tagFilter, DefaultExpander, DefaultUnderlyingExternalLogger)
-      logger.log("logging test log message from logWithInclusiveFilter2", Seq(TestTag1)) match {
+      logger.log("test log message from logWithInclusiveFilter2", Seq(TestTag1)) match {
         case true  => Future.failed(new Throwable("should not have logged message"))
         case false => Future.successful(Unit)
       }
@@ -161,7 +159,7 @@ object LoggerTest extends Testable {
       val tagFilter = new InclusiveTagFilter(Seq(TestTag))
       
       val logger = Logger(tagFilter, DefaultExpander, DefaultUnderlyingExternalLogger)
-      logger.log("logging test error log message from logWithInclusiveFilter3", Seq(TestTag1), messageType = Error) match {
+      logger.log("test error log message from logWithInclusiveFilter3", Seq(TestTag1), messageType = Error) match {
         case true  => Future.successful(Unit)
         case false => Future.failed(new Throwable("didn't log message"))
       }
@@ -172,7 +170,7 @@ object LoggerTest extends Testable {
       val tagFilter = new ExclusiveTagFilter(Seq(TestTag))
       
       val logger = Logger(tagFilter, DefaultExpander, DefaultUnderlyingExternalLogger)
-      logger.log("logging test log message from logWithExclusiveFilter1", Seq(TestTag1)) match {
+      logger.log("test log message from logWithExclusiveFilter1", Seq(TestTag1)) match {
         case true  => Future.successful(Unit)
         case false => Future.failed(new Throwable("didn't log message"))
       }
