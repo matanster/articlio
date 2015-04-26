@@ -5,10 +5,7 @@ import akka.actor.Props
 import com.articlio.util.Timelog
 import com.articlio.storage.OutDB
 import com.articlio.storage.SlickDB
-
-/*
- * an actor system, and some specific actors
- */
+import com.articlio.logger._
 
 object Globals {
   class AppActorSystem(implicit val db: SlickDB) {
@@ -36,16 +33,22 @@ object Globals {
   implicit val db = mode match {
     case Some("real") | None => com.articlio.storage.slickDb 
     case Some("test")        => com.articlio.storage.slickTestDb
-    case Some(other)         => throw new Throwable("Invalid mode parameter: $other")
+    case Some(other)         => throw new Throwable(s"Invalid mode parameter: $other")
   }
   
   implicit val dataFilesRoot = mode match {
     case Some("real") | None => "../data/" 
     case Some("test")        => "../test-data/"
-    case Some(other)         => throw new Throwable("Invalid mode parameter: $other")
+    case Some(other)         => throw new Throwable(s"Invalid mode parameter: $other")
   }
 
   val appActorSystem = new AppActorSystem
+  
+  val logger = mode match {
+    case Some("real") | None => Logger(VoidTagFilter, DefaultExpander, DefaultUnderlyingExternalLogger)
+    case Some("test")        => Logger(VoidTagFilter, DefaultExpander, TestDefaultUnderlyingExternalLogger)
+    case Some(other)         => throw new Throwable(s"Invalid mode parameter: $other")  
+  }
   
   println("Initialized")
 }

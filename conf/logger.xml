@@ -3,8 +3,15 @@
     
   <conversionRule conversionWord="coloredLevel" converterClass="play.api.Logger$ColoredLevel" />
   
-  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+  <appender name="LOGFILE" class="ch.qos.logback.core.FileAppender">
      <file>${application.home}/logs/application.log</file>
+     <encoder>
+       <pattern>%gray(%date %-8logger) %message%xException%n</pattern>
+     </encoder>
+   </appender>
+
+  <appender name="TESTLOGFILE" class="ch.qos.logback.core.FileAppender">
+     <file>${application.home}/logs/test.log</file>
      <encoder>
        <pattern>%gray(%date %-8logger) %message%xException%n</pattern>
      </encoder>
@@ -17,8 +24,13 @@
   </appender>
   
   <logger name="articlio" level="INFO" additivity="false">
-    <appender-ref ref="FILE" />
+    <appender-ref ref="LOGFILE" />
   </logger>
+
+  <logger name="test" level="INFO" additivity="false">
+    <appender-ref ref="TESTLOGFILE" />
+  </logger>
+
   <logger name="play" level="INFO" />
   <logger name="application" level="DEBUG" />
 
@@ -31,7 +43,7 @@
 
   <root level="ERROR">
     <appender-ref ref="STDOUT" />
-    <appender-ref ref="FILE" />
+    <appender-ref ref="LOGFILE" />
   </root>
   
 </configuration>
