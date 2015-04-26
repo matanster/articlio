@@ -16,9 +16,12 @@
     </encoder>
   </appender>
   
-  <logger name="articlio" level="INFO" />
+  <logger name="articlio" level="INFO" additivity="false">
+    <appender-ref ref="FILE" />
+  </logger>
   <logger name="play" level="INFO" />
   <logger name="application" level="DEBUG" />
+
   
   <!-- Off these ones as they are annoying, and anyway we manage configuration ourself -->
   <logger name="com.avaje.ebean.config.PropertyMapLoader" level="OFF" />
