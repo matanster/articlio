@@ -14,6 +14,7 @@ import scala.util.{Success, Failure}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import com.articlio.logger._, com.articlio.logger.ActiveLogger.logger._
 
+// set log tags
 object logTags {
   implicit val tags = Seq(RDBMS)
 }; import logTags.tags

@@ -40,8 +40,8 @@ object DefaultExpander extends Expander {
     import Console._
     val tagString = tags.map(tag => "[" + getObjectName(tag) + "]").mkString(" ")
     messageType match {
-      case Normal => WHITE + tagString + RESET + " " + BLUE + BOLD + msg  
-      case Error  => WHITE + tagString + RESET + " " + RED + msg // + " " + RED_B + WHITE + BOLD + " ERROR "
+      case Normal => WHITE + tagString + RESET + " " + BLUE + BOLD + msg + RESET  
+      case Error  => WHITE + tagString + " " + RESET + RED_B + WHITE + " Error " + RESET + " " + RED + msg + RESET // + " " + RED_B + WHITE + BOLD + " ERROR "
     }
   }
 }
@@ -68,7 +68,7 @@ case class Logger(tagFilter: TagFilter,
                   underlyingExternalLogger: UnderlyingExternalLogger) {
   
   def log(msg: String, console: Boolean = false, messageType: MessageType = Normal)
-         (implicit tags: Seq[logTag] = Seq()): Boolean = {
+         (implicit tags: Seq[logTag] = Seq(Default)): Boolean = {
 
     import Console._
     
