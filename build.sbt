@@ -1,10 +1,10 @@
-import com.typesafe.sbt.SbtStartScript
+//import com.typesafe.sbt.SbtStartScript
 
 //
 // spray revolver, only for development, not really relevant with play framework
 //
 //import spray.revolver.RevolverPlugin._
-//Revolver.settings 
+//Revolver.settings
 
 name := "articlio"
 
@@ -35,7 +35,7 @@ libraryDependencies ++= {
   )
 }
 
-seq(SbtStartScript.startScriptForClassesSettings: _*)
+//seq(SbtStartScript.startScriptForClassesSettings: _*)
 
 libraryDependencies += "io.spray" %%  "spray-json" % "1.3.1"
 
@@ -64,10 +64,8 @@ libraryDependencies += "com.github.verbalexpressions" %% "scalaverbalexpression"
 //
 // anorm
 //
-
-resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"
-
-libraryDependencies += "com.typesafe.play" %% "anorm" % "2.3.6"
+//resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases/"
+//libraryDependencies += "com.typesafe.play" %% "anorm" % "2.3.6"
 
 
 scalacOptions ++= Seq( "-unchecked", "-feature" )
@@ -84,17 +82,16 @@ resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repos
 
 libraryDependencies ++= Seq(
   jdbc,
-  anorm,
   cache,
   ws,
   //"com.typesafe.play" %% "play-slick" % "0.8.1",
   "mysql" % "mysql-connector-java" % "latest.release"
-)     
+)
 
 lazy val play = (project in file(".")).enablePlugins(PlayScala)
 
 //
-// Add source folder to play project 
+// Add source folder to play project
 //
 
 //unmanagedSourceDirectories in Compile += baseDirectory.value / "src"
@@ -107,7 +104,7 @@ unmanagedSourceDirectories in Compile += baseDirectory.value / "tests"
 
 scalacOptions ++= Seq(
   "-feature", // Shows warnings in detail in the stdout
-  "-language:reflectiveCalls" 
+  "-language:reflectiveCalls"
 )
 
 //
@@ -134,8 +131,7 @@ libraryDependencies ++= Seq(
 //
 // play auto refresh plugin based on websocket, (and avoid it opening a browser window on startup)
 //
-
-com.jamesward.play.BrowserNotifierKeys.shouldOpenBrowser := false
+//com.jamesward.play.BrowserNotifierKeys.shouldOpenBrowser := false
 
 //
 // Riak
@@ -166,7 +162,7 @@ slickGenerate := {
   val dbName = "articlio"
   val userName = "articlio"
   val password = "" // no password for this user
-  val url = s"jdbc:mysql://localhost:3306/$dbName" 
+  val url = s"jdbc:mysql://localhost:3306/$dbName"
   val jdbcDriver = "com.mysql.jdbc.Driver"
   val slickDriver = "slick.driver.MySQLDriver"
   val resultRelativeDir = "app"
@@ -180,13 +176,13 @@ slickGenerate := {
   (runner in Compile).value.run("slick.codegen.SourceCodeGenerator", (dependencyClasspath in Compile).value.files, Array(slickDriver, jdbcDriver, url, resultRelativeDir, targetPackageName, userName, password), streams.value.log)
   println(format + s"Result: file://${baseDirectory.value}/$resultFilePath" + scala.Console.RESET)
   val diff = (s"diff -u $resultFilePath $backupFilePath" #| "colordiff").!!
-  println(scala.Console.BLUE + s"Changes compared to previous mappings saved as backup, follow, if any.\n\n $diff") 
+  println(scala.Console.BLUE + s"Changes compared to previous mappings saved as backup, follow, if any.\n\n $diff")
   Seq(file(resultFilePath))
 }
 
 // workaround/fix for http://stackoverflow.com/questions/28104968/scala-ide-4-0-0-thinks-theres-errors-in-an-out-of-the-box-play-framework-2-3-7/28550840#28550840 (tentatively related: https://github.com/typesafehub/sbteclipse/pull/242)
 //
-//EclipseKeys.createSrc := EclipseCreateSrc.All
+EclipseKeys.createSrc := EclipseCreateSrc.All
 
 //
 // rackspace api
@@ -221,9 +217,9 @@ slickGenerate := {
 //
 
 //libraryDependencies += "com.typesafe.play" %% "play-json" % "2.3.7"
-//libraryDependencies += "io.argonaut" %% "argonaut" % "6.0.4"    
+//libraryDependencies += "io.argonaut" %% "argonaut" % "6.0.4"
 
-//compile in Compile <<= (compile in Compile) map { c => 
+//compile in Compile <<= (compile in Compile) map { c =>
 //  import scala.io.Source
 //  import spray.json._
 //  import DefaultJsonProtocol._
@@ -233,8 +229,17 @@ slickGenerate := {
 //  val versionFile = "compile.version"
 //  val compileNumber : String = (Source.fromFile(versionFile).getLines.mkString.parseJson.convertTo[VersionInfo]).compileNumber
 //  val versionInfo = VersionInfo((compileNumber.toInt + 1).toString)
-//  println(versionInfo.toJson.prettyPrint)                                                         
+//  println(versionInfo.toJson.prettyPrint)
 //  scala.tools.nsc.io.File(versionFile).writeAll(versionInfo.toJson.prettyPrint)
 //  c
 //}
 
+//
+// verifier of source code acyclicity - https://github.com/lihaoyi/acyclic
+//
+//
+//libraryDependencies += "com.lihaoyi" %% "acyclic" % "0.1.2" % "provided"
+//
+//autoCompilerPlugins := true
+//
+//addCompilerPlugin("com.lihaoyi" %% "acyclic" % "0.1.2")
